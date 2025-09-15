@@ -1,17 +1,42 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import DemoForm from './pages/demo'
+import { BrowserRouter } from "react-router-dom";
+import "./App.css";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { AppRouter } from "./routes/Routes";
+import { FormSheetProvider } from "./contexts/FormSheetContext/index";
+import { GlobalFormSheets } from "./components/GlobalFormSheets";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ToastContainer } from "react-toastify";
+import { PermissionProvider } from "./contexts/PermissionContext";
+
+const queryClient = new QueryClient();
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <DemoForm />
-    </>
-  )
+    <BrowserRouter basename="/test/">
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+        <PermissionProvider>
+          <FormSheetProvider>
+            <AppRouter />
+            <GlobalFormSheets />
+            <ToastContainer
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+            />
+          </FormSheetProvider>
+          </PermissionProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
