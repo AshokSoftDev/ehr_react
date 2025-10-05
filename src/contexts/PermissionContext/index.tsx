@@ -15,8 +15,8 @@ interface Permission {
 interface PermissionContextType {
   permissions: Permission[];
   loading: boolean;
-  hasModuleAccess: (moduleName: string) => boolean;
-  hasSubModuleAccess: (moduleName: string, subModuleName: string) => boolean;
+  hasModuleAccess: (moduleId: string) => boolean;
+  hasSubModuleAccess: (moduleId: string, subModuleId: string) => boolean;
   refreshPermissions: () => Promise<void>;
 }
 
@@ -48,7 +48,7 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
       // Since we already have the group info, we just need to get that group's details with permissions
       const response = await api.get(`/groups/${user.groupId}`);
       const groupData = response.data.data;
-      console.log(groupData);
+      console.log("groupData: ", groupData);
       
       
       // If the group has permissions in the response, use them
@@ -58,11 +58,12 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
           moduleName: perm.module.name,
           hasAccess: perm.hasAccess,
           subModules: perm.subModulePermissions?.map((sub: any) => ({
-            subModuleId: sub.subModuleId,
+            subModuleId: sub.subModule.id,
             subModuleName: sub.subModule.name,
             allowed: sub.allowed,
           })) || [],
         }));
+        console.log("transformedPermissions: ", transformedPermissions);
         
         setPermissions(transformedPermissions);
       } else {
@@ -82,6 +83,7 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
               allowed: true,
             })) || [],
           }));
+          alert("j")
           
           setPermissions(fullPermissions);
         } else {
@@ -101,19 +103,25 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
     fetchUserPermissions();
   }, []);
 
-  const hasModuleAccess = (moduleName: string): boolean => {
-    const permission = permissions.find(p => p.moduleName === moduleName);
+  const hasModuleAccess = (moduleId: string): boolean => {
+    console.log(permissions);
+    
+    const permission = permissions.find(p => p.moduleId === moduleId);
+    console.log(permission);
+    
     return permission?.hasAccess || false;
   };
-
-  const hasSubModuleAccess = (moduleName: string, subModuleName: string): boolean => {
-    const permission = permissions.find(p => p.moduleName === moduleName);
+  
+  const hasSubModuleAccess = (moduleId: string, subModuleId: string): boolean => {
+    console.log(permissions);
+    const permission = permissions.find(p => p.moduleId === moduleId);
     if (!permission?.hasAccess) return false;
     
-    const subModule = permission.subModules.find(sub => sub.subModuleName === subModuleName);
+    const subModule = permission.subModules.find(sub => sub.subModuleId === subModuleId);
+    console.log(permission, subModule);
     return subModule?.allowed || false;
   };
-
+  
   return (
     <PermissionContext.Provider 
       value={{ 

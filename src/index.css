@@ -1,7 +1,5 @@
-
 @import "tailwindcss";
 @import "tw-animate-css";
-
 
 @custom-variant dark (&:is(.dark *));
 
@@ -25,7 +23,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground); /* Added destructive-foreground */
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -46,115 +44,186 @@
   --color-sidebar-hover-bg: var(--sidebar-hover-bg);
 }
 
+
 :root {
   --radius: 0.625rem;
-  /* --background: oklch(0.97 0.01 230);  */
-
-  /* Blue Theme */
-  --background: oklch(0.9729 0.0029 264.54);       /* Light blue-gray */
-  --foreground: oklch(0.15 0.02 230);       /* Dark slate blue */
-  --card: oklch(1 0 0);                      /* White */
-  --card-foreground: oklch(0.15 0.02 230);   /* Dark slate blue */
-  --popover: oklch(1 0 0);                   /* White */
-  --popover-foreground: oklch(0.15 0.02 230);/* Dark slate blue */
-
-  /* Primary action blue */
-  --primary: oklch(0.6 0.2 250);             /* Vivid blue */
-  --primary-foreground: oklch(0.98 0 0);     /* White */
-
-  /* Secondary blue accent */
-  --secondary: oklch(0.75 0.15 240);         /* Lighter blue */
-  --secondary-foreground: oklch(0.2 0.03 240);/* Darker blue */
-
-  /* Muted UI elements */
-  --muted: oklch(0.92 0.02 230);             /* Light gray-blue */
-  --muted-foreground: oklch(0.45 0.03 230);  /* Medium gray-blue */
-
-  /* Accent colors */
-  --accent: oklch(0.96 0.03 240);            /* Very light blue */
-  --accent-foreground: oklch(0.25 0.04 240); /* Dark blue */
-
-  /* States */
-  --destructive: oklch(0.65 0.25 25);        /* Clinical red */
-  --destructive-foreground: oklch(0.985 0 0);/* White */
-  --border: oklch(0.7544 0.1233 230);            /* Light blue-gray border */
-  --input: oklch(0.9 0.02 230);              /* Light blue-gray input */
-  --ring: oklch(0.6 0.2 250);                /* Vivid blue for ring */
-
-  /* Charts */
-  --chart-1: oklch(0.6 0.2 250);  /* Blue */
-  --chart-2: oklch(0.7 0.18 200); /* Cyan */
-  --chart-3: oklch(0.75 0.16 145);/* Green */
-  --chart-4: oklch(0.8 0.16 80);  /* Yellow */
-  --chart-5: oklch(0.65 0.18 330);/* Magenta */
-
-  /* Sidebar */
-  /* --sidebar: oklch(0.97 0.01 230); */
-  --sidebar: oklch(1 0 0); 
-  --sidebar-foreground: oklch(0.2 0.02 230);
-  --primary-sidebar: oklch(0.6 0.2 250);
-  --primary-sidebar-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.94 0.03 240);
-  --sidebar-accent-foreground: oklch(0.2 0.02 230);
-  --sidebar-border: oklch(0.9 0.01 230);
-  --sidebar-ring: oklch(0.6 0.2 250);
+  
+  /* Primary gradient colors for rich blue effect */
+  --primary-gradient-start: oklch(0.55 0.25 265);  /* Deep rich blue */
+  --primary-gradient-mid: oklch(0.62 0.22 250);    /* Vibrant blue */
+  --primary-gradient-end: oklch(0.68 0.18 235);    /* Lighter blue */
+  
+  /* Primary as base color (middle of gradient) */
+  --primary: oklch(0.62 0.22 250);
+  --primary-foreground: oklch(0.98 0 0);
+  
+  /* Light theme colors based on primary blue */
+  --background: oklch(0.98 0.005 250);              /* Very light blue tint */
+  --foreground: oklch(0.15 0.02 250);               /* Dark blue-black */
+  --card: oklch(1 0 0);                             /* Pure white */
+  --card-foreground: oklch(0.15 0.02 250);          /* Dark blue-black */
+  --popover: oklch(1 0 0);                          /* Pure white */
+  --popover-foreground: oklch(0.15 0.02 250);       /* Dark blue-black */
+  
+  /* Secondary - complementary to primary */
+  --secondary: oklch(0.88 0.06 245);                /* Light blue */
+  --secondary-foreground: oklch(0.25 0.04 250);     /* Dark blue */
+  
+  /* Muted - subtle blue tones */
+  --muted: oklch(0.94 0.015 250);                   /* Very light blue-gray */
+  --muted-foreground: oklch(0.45 0.02 250);         /* Medium blue-gray */
+  
+  /* Accent - lighter variation of primary */
+  --accent: oklch(0.92 0.04 245);                   /* Light accent blue */
+  --accent-foreground: oklch(0.25 0.04 250);        /* Dark blue */
+  
+  /* States and inputs */
+  --destructive: oklch(0.65 0.25 25);               /* Red for errors */
+  --destructive-foreground: oklch(0.98 0 0);        /* White */
+  --border: oklch(0.88 0.015 250);                  /* Light blue-gray border */
+  --input: oklch(0.95 0.01 250);                    /* Very light blue input */
+  --ring: var(--primary);                           /* Primary blue for focus */
+  
+  /* Chart colors - blue spectrum */
+  --chart-1: oklch(0.62 0.22 250);                  /* Primary blue */
+  --chart-2: oklch(0.65 0.18 220);                  /* Blue-purple */
+  --chart-3: oklch(0.68 0.16 200);                  /* Sky blue */
+  --chart-4: oklch(0.70 0.14 180);                  /* Cyan-blue */
+  --chart-5: oklch(0.58 0.20 270);                  /* Deep purple-blue */
+  
+  /* Sidebar with blue theme */
+  --sidebar: oklch(1 0 0);                          /* White */
+  --sidebar-foreground: oklch(0.2 0.02 250);        /* Dark blue */
+  --primary-sidebar: var(--primary);                /* Primary blue */
+  --primary-sidebar-foreground: oklch(1 0 0);       /* White */
+  --sidebar-accent: oklch(0.94 0.03 245);           /* Light blue accent */
+  --sidebar-accent-foreground: oklch(0.2 0.02 250); /* Dark blue */
+  --sidebar-border: oklch(0.92 0.01 250);           /* Light blue border */
+  --sidebar-ring: var(--primary);                   /* Primary blue */
   --sidebar-active-bg: var(--primary-sidebar);
   --sidebar-hover-bg: var(--sidebar-accent);
 }
 
 .dark {
-  /* Dark Blue Theme */
-  --background: oklch(0.15 0.02 230);       /* Deep dark blue */
-  --foreground: oklch(1 0 0);               /* White */
-  --card: oklch(0.2 0.02 230);              /* Dark blue-gray card */
-  --card-foreground: oklch(1 0 0);          /* White */
-  --popover: oklch(0.2 0.02 230);           /* Dark blue-gray popover */
-  --popover-foreground: oklch(1 0 0);        /* White */
-
-  /* Primary action blue */
-  --primary: oklch(0.7 0.22 250);            /* Brighter vivid blue */
-  --primary-foreground: oklch(0.98 0 0);    /* White */
-
-  /* Secondary blue accent */
-  --secondary: oklch(0.5 0.15 240);          /* Deeper blue */
-  --secondary-foreground: oklch(1 0 0);        /* White */
-
-  /* Muted UI elements */
-  --muted: oklch(0.25 0.03 230);            /* Darker gray-blue */
-  --muted-foreground: oklch(1 0 0);         /* White */
-
-  /* Accent colors */
-  --accent: oklch(0.3 0.04 240);             /* Darker accent blue */
-  --accent-foreground: oklch(1 0 0);         /* White */
-
-  /* States */
-  --destructive: oklch(0.68 0.24 25);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.4214 0.1036 230);             /* Dark blue-gray border */
-  --input: oklch(0.28 0.02 230);            /* Dark blue-gray input */
-  --ring: oklch(0.7 0.22 250);               /* Brighter vivid blue for ring */
-
-  /* Charts */
-  --chart-1: oklch(0.7 0.22 250);  /* Blue */
-  --chart-2: oklch(0.65 0.2 200);  /* Cyan */
-  --chart-3: oklch(0.7 0.18 145);  /* Green */
-  --chart-4: oklch(0.75 0.18 80);  /* Yellow */
-  --chart-5: oklch(0.7 0.2 330);   /* Magenta */
-
-  /* Sidebar */
-  --sidebar: oklch(0.2 0.02 230);
-  --sidebar-foreground: oklch(1 0 0);
-  --primary-sidebar: oklch(0.7 0.22 250);
-  --primary-sidebar-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.3 0.03 240);
-  --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0.28 0.02 230);
-  --sidebar-ring: oklch(0.7 0.22 250);
+  /* Dark theme with rich blue tones */
+  --primary-gradient-start: oklch(0.65 0.28 265);   /* Bright deep blue */
+  --primary-gradient-mid: oklch(0.72 0.25 250);     /* Bright vibrant blue */
+  --primary-gradient-end: oklch(0.78 0.20 235);     /* Bright light blue */
+  
+  --primary: oklch(0.72 0.25 250);                  /* Bright primary blue */
+  --primary-foreground: oklch(0.98 0 0);            /* White */
+  
+  --background: oklch(0.12 0.015 250);              /* Very dark blue */
+  --foreground: oklch(0.98 0 0);                    /* Pure white - FIXED */
+  --card: oklch(0.16 0.015 250);                    /* Dark blue card */
+  --card-foreground: oklch(0.98 0 0);               /* Pure white - FIXED */
+  --popover: oklch(0.16 0.015 250);                 /* Dark blue popover */
+  --popover-foreground: oklch(0.98 0 0);            /* Pure white - FIXED */
+  
+  --secondary: oklch(0.35 0.08 245);                /* Muted dark blue */
+  --secondary-foreground: oklch(0.98 0 0);          /* Pure white - FIXED */
+  
+  --muted: oklch(0.22 0.02 250);                    /* Dark muted blue */
+  --muted-foreground: oklch(0.70 0.01 250);         /* Lighter blue-gray - FIXED */
+  
+  --accent: oklch(0.28 0.05 245);                   /* Dark accent blue */
+  --accent-foreground: oklch(0.98 0 0);             /* Pure white - FIXED */
+  
+  --destructive: oklch(0.68 0.24 25);               /* Bright red */
+  --destructive-foreground: oklch(0.98 0 0);        /* White */
+  --border: oklch(0.25 0.02 250);                   /* Dark blue border */
+  --input: oklch(0.20 0.015 250);                   /* Dark blue input */
+  --ring: var(--primary);                           /* Primary blue */
+  
+  /* Chart colors - vibrant blue spectrum for dark mode */
+  --chart-1: oklch(0.72 0.25 250);                  /* Bright primary blue */
+  --chart-2: oklch(0.70 0.22 220);                  /* Bright blue-purple */
+  --chart-3: oklch(0.75 0.20 200);                  /* Bright sky blue */
+  --chart-4: oklch(0.78 0.18 180);                  /* Bright cyan-blue */
+  --chart-5: oklch(0.68 0.24 270);                  /* Bright purple-blue */
+  
+  --sidebar: oklch(0.14 0.015 250);                 /* Dark blue sidebar */
+  --sidebar-foreground: oklch(0.98 0 0);            /* Pure white - FIXED */
+  --primary-sidebar: var(--primary);                /* Primary blue */
+  --primary-sidebar-foreground: oklch(1 0 0);       /* White */
+  --sidebar-accent: oklch(0.22 0.03 245);           /* Dark blue accent */
+  --sidebar-accent-foreground: oklch(0.98 0 0);     /* Pure white - FIXED */
+  --sidebar-border: oklch(0.20 0.015 250);          /* Dark blue border */
+  --sidebar-ring: var(--primary);                   /* Primary blue */
   --sidebar-active-bg: var(--primary-sidebar);
   --sidebar-hover-bg: var(--sidebar-accent);
 }
 
-/* @keyframes and @animation */
+input,
+textarea,
+select {
+  color: var(--foreground);
+  background: var(--card) !important;
+}
+
+/* Ensure proper text color inheritance */
+.dark input,
+.dark textarea,
+.dark select {
+  color: var(--foreground);
+  background: var(--card) !important;
+}
+
+/* Placeholder text color */
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.8;
+}
+
+/* Focus states */
+input:focus,
+textarea:focus,
+select:focus {
+  color: var(--foreground);
+}
+
+
+
+/* Gradient classes for primary color */
+.bg-primary-gradient {
+  background: linear-gradient(135deg, 
+    var(--primary-gradient-start) 0%, 
+    var(--primary-gradient-mid) 50%, 
+    var(--primary-gradient-end) 100%);
+}
+
+.bg-primary-gradient-radial {
+  background: radial-gradient(circle at center, 
+    var(--primary-gradient-mid) 0%, 
+    var(--primary-gradient-start) 70%);
+}
+
+.text-primary-gradient {
+  background: linear-gradient(135deg, 
+    var(--primary-gradient-start) 0%, 
+    var(--primary-gradient-end) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hover states with gradient */
+.hover\:bg-primary-gradient:hover {
+  background: linear-gradient(135deg, 
+    var(--primary-gradient-start) 0%, 
+    var(--primary-gradient-mid) 50%, 
+    var(--primary-gradient-end) 100%);
+}
+
+/* Button gradient variations */
+.bg-primary-gradient-subtle {
+  background: linear-gradient(135deg, 
+    var(--primary) 0%, 
+    color-mix(in oklch, var(--primary) 85%, var(--primary-gradient-end)) 100%);
+}
+
+/* Rest of your animations and utility classes remain the same */
 @keyframes accordion-down {
   from { height: 0; }
   to { height: var(--radix-accordion-content-height); }
@@ -173,29 +242,23 @@
   animation: accordion-up 0.2s ease-out;
 }
 
-/* Tailwind CSS classes for custom colors */
+/* Existing Tailwind CSS classes */
 .bg-background { background-color: var(--background); }
 .text-foreground { color: var(--foreground); }
 .bg-card { background-color: var(--card); }
 .text-card-foreground { color: var(--card-foreground); }
 .bg-popover { background-color: var(--popover); }
 .text-popover-foreground { color: var(--popover-foreground); }
-
 .bg-primary { background-color: var(--primary); }
 .text-primary-foreground { color: var(--primary-foreground); }
-
 .bg-secondary { background-color: var(--secondary); }
 .text-secondary-foreground { color: var(--secondary-foreground); }
-
 .bg-destructive { background-color: var(--destructive); }
 .text-destructive-foreground { color: var(--destructive-foreground); }
-
 .bg-muted { background-color: var(--muted); }
 .text-muted-foreground { color: var(--muted-foreground); }
-
 .bg-accent { background-color: var(--accent); }
 .text-accent-foreground { color: var(--accent-foreground); }
-
 .border-border { border-color: var(--border); }
 .border-input { border-color: var(--input); }
 .ring-ring { --tw-ring-color: var(--ring); }
@@ -221,19 +284,25 @@
 .text-sidebar-accent-foreground { color: var(--sidebar-accent-foreground); }
 .border-sidebar-border { border-color: var(--sidebar-border); }
 .ring-sidebar-ring { --tw-ring-color: var(--sidebar-ring); }
-
-/* Sidebar custom active/hover backgrounds */
 .bg-sidebar-active { background: var(--sidebar-active-bg); }
 .hover\:bg-sidebar-hover:hover { background: var(--sidebar-hover-bg); }
 
-/* Tailwind CSS classes for border-radius */
+/* Border radius classes */
 .rounded-lg { border-radius: var(--radius-lg); }
 .rounded-md { border-radius: var(--radius-md); }
 .rounded-sm { border-radius: var(--radius-sm); }
-
 
 canvas {
   image-rendering: crisp-edges;
   image-rendering: pixelated;
   user-select: none;
+}
+
+
+/* .border {
+  border-color: var(--border);
+} */
+
+* {
+  border-color: var(--border);
 }

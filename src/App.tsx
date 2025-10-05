@@ -3,7 +3,7 @@ import "./App.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AppRouter } from "./routes/Routes";
 import { FormSheetProvider } from "./contexts/FormSheetContext/index";
-import { GlobalFormSheets } from "./components/GlobalFormSheets";
+// import { GlobalFormSheets } from "./components/GlobalFormSheets";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
 import { PermissionProvider } from "./contexts/PermissionContext";
@@ -18,7 +18,7 @@ function App() {
         <PermissionProvider>
           <FormSheetProvider>
             <AppRouter />
-            <GlobalFormSheets />
+            {/* <GlobalFormSheets /> */}
             <ToastContainer
               position="top-right"
               autoClose={3000}

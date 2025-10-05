@@ -33,6 +33,8 @@ type FormFloatingSelectProps<
   className?: string;
   triggerClassName?: string;
   disabled?: boolean;
+  value?: string;
+  onValueChange?: (value: string) => void;
 };
 
 export function FormFloatingSelect<
@@ -48,8 +50,64 @@ export function FormFloatingSelect<
     className,
     triggerClassName,
     disabled,
+    value,
+    onValueChange,
   } = props;
 
+  // If external value/onChange provided, use them instead of form control
+  if (value !== undefined && onValueChange) {
+    const hasValue = value.length > 0;
+    
+    return (
+      <FormItem className={cn("relative group", className)}>
+        <label
+          className={cn(
+            "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
+            "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            "bg-background/0 group-focus-within:bg-background/100",
+            !hasValue
+              ? "top-1/2 -translate-y-1/2"
+              : "top-0 -translate-y-1/2 text-xs",
+            "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs"
+          )}
+        >
+          {label}
+        </label>
+
+        <Select
+          disabled={disabled}
+          onValueChange={onValueChange}
+          value={value}
+        >
+          <SelectTrigger
+            className={cn(
+              "h-12 min-h-[48px] pt-3 pb-2 px-3 w-full",
+              "border border-input bg-background rounded-md",
+              "focus-visible:ring-2 focus-visible:ring-ring",
+              "text-left",
+              triggerClassName,
+              "bg-card"
+            )}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="max-h-72 overflow-auto z-[9999]">
+            {options.map((opt) => (
+              <SelectItem
+                key={opt.value}
+                value={opt.value || 'none'}
+                disabled={opt.disabled}
+              >
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormItem>
+    );
+  }
+
+  // Default behavior with form control
   return (
     <Controller
       control={control}
@@ -63,11 +121,8 @@ export function FormFloatingSelect<
             <label
               className={cn(
                 "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
-                // smoother transitions
-                "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
-                // bg 0 by default, 100 on focus
+                "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
                 "bg-background/0 group-focus-within:bg-background/100",
-                // float behavior
                 !hasValue
                   ? "top-1/2 -translate-y-1/2"
                   : "top-0 -translate-y-1/2 text-xs",
@@ -94,13 +149,13 @@ export function FormFloatingSelect<
                     triggerClassName
                   )}
                 >
-                  <SelectValue  />
+                  <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="max-h-72 overflow-auto">
+                <SelectContent className="max-h-72 overflow-auto z-[9999]">
                   {options.map((opt) => (
                     <SelectItem
                       key={opt.value}
-                      value={opt.value}
+                      value={opt.value || 'none'}
                       disabled={opt.disabled}
                     >
                       {opt.label}

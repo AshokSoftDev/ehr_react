@@ -111,6 +111,7 @@ export function FormSearchSelectWithCreate<
                       "focus-visible:ring-2 focus-visible:ring-ring",
                       hasError &&
                         "border-destructive focus-visible:ring-destructive",
+                        "!bg-card",
                       buttonClassName
                     )}
                   >

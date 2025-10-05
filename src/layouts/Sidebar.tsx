@@ -27,7 +27,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   
   // Filter routes based on permissions
   const accessibleRoutes = routes.filter(route => 
-    !route.module || hasModuleAccess(route.module)
+    // !route.module || hasModuleAccess(route.module)
+    route.showInNav
   );
   console.log(accessibleRoutes);
   

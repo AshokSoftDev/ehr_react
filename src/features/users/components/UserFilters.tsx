@@ -1,14 +1,10 @@
 import React from 'react';
 import { Input } from '../../../components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../../components/ui/select';
 import { Button } from '../../../components/ui/button';
-import { Search, X } from 'lucide-react';
+import { Search, X, Grid, List } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import { FormFloatingSelect } from '../../../components/form/form-floating-select';
+import { useForm } from 'react-hook-form';
 
 interface Group {
   id: string;
@@ -27,6 +23,8 @@ interface UserFiltersProps {
   groups: Group[];
   onReset: () => void;
   hasActiveFilters: boolean;
+  viewMode: 'grid' | 'list';
+  onViewModeChange: (mode: 'grid' | 'list') => void;
 }
 
 export const UserFilters: React.FC<UserFiltersProps> = ({
@@ -41,75 +39,112 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
   groups,
   onReset,
   hasActiveFilters,
+  viewMode,
+  onViewModeChange,
 }) => {
-  // Handle select changes to convert "all" back to empty string
-  const handleGroupChange = (value: string) => {
-    onGroupChange(value === 'all' ? '' : value);
-  };
+  const form = useForm({
+    defaultValues: {
+      groupId: groupId || '',
+      status: status || '',
+      accountType: accountType || '',
+    }
+  });
 
-  const handleStatusChange = (value: string) => {
-    onStatusChange(value === 'all' ? '' : value);
-  };
+  // Group options
+  const groupOptions = [
+    { label: 'All Groups', value: '' },
+    ...groups.map(group => ({
+      label: group.name,
+      value: group.id,
+    }))
+  ];
 
-  const handleAccountTypeChange = (value: string) => {
-    onAccountTypeChange(value === 'all' ? '' : value);
-  };
+  const statusOptions = [
+    { label: 'All Status', value: '' },
+    { label: 'Active', value: '1' },
+    { label: 'Inactive', value: '0' },
+  ];
+
+  const accountTypeOptions = [
+    { label: 'All Types', value: '' },
+    { label: 'Parent', value: 'parent' },
+    { label: 'Child', value: 'child' },
+  ];
 
   return (
     <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search users by name or email..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+      <div className="flex gap-3 items-start">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
+          <Input
+            placeholder="Search users by name or email..."
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-10 bg-background/50 border-primary/20 focus:border-primary/40 h-12"
+          />
+        </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Select value={groupId || 'all'} onValueChange={handleGroupChange}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by group" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Groups</SelectItem>
-            {groups.map((group) => (
-              <SelectItem key={group.id} value={group.id}>
-                {group.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-3 items-end">
+          <div className="w-[180px]">
+            <FormFloatingSelect
+              control={form.control}
+              name="groupId"
+              label="Filter by Group"
+              options={groupOptions}
+              value={groupId}
+              onValueChange={onGroupChange}
+              triggerClassName="bg-background/50 h-12"
+            />
+          </div>
 
-        <Select value={status || 'all'} onValueChange={handleStatusChange}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="1">Active</SelectItem>
-            <SelectItem value="0">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
+          <div className="w-[150px]">
+            <FormFloatingSelect
+              control={form.control}
+              name="status"
+              label="Status"
+              options={statusOptions}
+              value={status}
+              onValueChange={onStatusChange}
+              triggerClassName="bg-background/50 h-12"
+            />
+          </div>
 
-        <Select value={accountType || 'all'} onValueChange={handleAccountTypeChange}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="parent">Parent</SelectItem>
-            <SelectItem value="child">Child</SelectItem>
-          </SelectContent>
-        </Select>
+          <div className="w-[150px]">
+            <FormFloatingSelect
+              control={form.control}
+              name="accountType"
+              label="Account Type"
+              options={accountTypeOptions}
+              value={accountType}
+              onValueChange={onAccountTypeChange}
+              triggerClassName="bg-background/50 h-12"
+            />
+          </div>
 
-        {hasActiveFilters && (
-          <Button variant="ghost" onClick={onReset} className="gap-2">
-            <X className="h-4 w-4" />
-            Clear filters
-          </Button>
-        )}
+          {hasActiveFilters && (
+            <Button 
+              variant="ghost" 
+              onClick={onReset} 
+              className="gap-2 h-12"
+            >
+              <X className="h-4 w-4" />
+              Clear
+            </Button>
+          )}
+
+          <div className="h-12">
+            <Tabs value={viewMode} onValueChange={(v) => onViewModeChange(v as 'grid' | 'list')}>
+              <TabsList className="h-12">
+                <TabsTrigger value="grid" className="px-3 h-10">
+                  <Grid className="h-4 w-4" />
+                </TabsTrigger>
+                <TabsTrigger value="list" className="px-3 h-10">
+                  <List className="h-4 w-4" />
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
       </div>
     </div>
   );

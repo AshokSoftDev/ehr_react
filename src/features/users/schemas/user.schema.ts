@@ -10,7 +10,7 @@ const passwordSchema = z
 
 export const createUserSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  fullName: z.string().min(1, 'Full name is required'),
+  // fullName: z.string().min(1, 'Full name is required'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Invalid email address'),
@@ -22,7 +22,7 @@ export const createUserSchema = z.object({
 
 export const updateUserSchema = z.object({
   title: z.string().min(1, 'Title is required').optional(),
-  fullName: z.string().min(1, 'Full name is required').optional(),
+  // fullName: z.string().min(1, 'Full name is required').optional(),
   firstName: z.string().min(1, 'First name is required').optional(),
   lastName: z.string().min(1, 'Last name is required').optional(),
   phoneNumber: z.string().optional(),

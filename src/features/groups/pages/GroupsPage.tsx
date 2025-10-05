@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { Plus, Search, Loader2 } from 'lucide-react';
+import { Plus, Search, Loader2, Grid, List } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,14 +12,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../../../components/ui/alert-dialog';
-import { GroupTable } from '../components/GroupTable';
+import { GroupGrid } from '../components/GroupGrid';
 import { GroupForm } from '../components/GroupForm';
 import { useGroups, useCreateGroup, useUpdateGroup, useDeleteGroup, useModules } from '../hooks/useGroups';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { useDebounce } from '../../../hooks/use-debounce';
-// import { toast } from 'react-toastify';
-
-// Import the GroupFormData type
+import { Tabs, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import { ScrollArea } from '../../../components/ui/scroll-area';
+import { cn } from '../../../lib/utils';
 import type { GroupFormData } from '../../shared/types/form.types';
 
 interface GroupData {
@@ -89,12 +89,13 @@ export const GroupsPage: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState<GroupData | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState<GroupData | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const debouncedSearch = useDebounce(search, 500);
 
   const { data, isLoading } = useGroups({ 
     page, 
-    limit: 10, 
+    limit: 12, 
     search: debouncedSearch 
   });
   
@@ -121,10 +122,8 @@ export const GroupsPage: React.FC = () => {
     }
   };
 
-  // Update the type to match what GroupForm expects
   const handleFormSubmit = async (formData: GroupFormData): Promise<void> => {
     try {
-      // Convert to plain object for the API
       const submitData = JSON.parse(JSON.stringify(formData));
       
       if (selectedGroup) {
@@ -136,32 +135,9 @@ export const GroupsPage: React.FC = () => {
       setFormOpen(false);
       setSelectedGroup(null);
     } catch (error) {
-      // Error is handled by the mutation hooks
-      console.log(error);
-      
+      console.error(error);
     }
   };
-
-  // const handleExport = () => {
-  //   // toast.info('Export functionality coming soon');
-  // };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <Skeleton className="h-10 w-full" />
-        <div className="space-y-2">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </div>
-      </div>
-    );
-  }
 
   const responseData = data as GroupsResponse;
   const groups = responseData?.data.groups || [];
@@ -169,58 +145,180 @@ export const GroupsPage: React.FC = () => {
   const modules = (modulesData as ModulesResponse)?.data || [];
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Group Management</h1>
-        <Button
-          onClick={() => {
-            setSelectedGroup(null);
-            setFormOpen(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Group
-        </Button>
+    <div className="h-full flex flex-col bg-background">
+      {/* Header Section */}
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                Group Management
+              </h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Manage user groups and their permissions
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                setSelectedGroup(null);
+                setFormOpen(true);
+              }}
+              className="bg-primary-gradient hover:opacity-90 shadow-lg"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create Group
+            </Button>
+          </div>
+
+          {/* Search and View Mode */}
+          <div className="flex gap-3 items-center">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search groups by name or description..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-10 bg-background/50 border-primary/20 focus:border-primary/40"
+              />
+            </div>
+            
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'grid' | 'list')}>
+              <TabsList className="grid w-[100px] grid-cols-2">
+                <TabsTrigger value="grid" className="px-2">
+                  <Grid className="h-4 w-4" />
+                </TabsTrigger>
+                <TabsTrigger value="list" className="px-2">
+                  <List className="h-4 w-4" />
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          {/* Summary Stats */}
+          <div className="flex gap-4 mt-4">
+            <div className="text-sm">
+              <span className="text-muted-foreground">Total Groups:</span>
+              <span className="ml-2 font-semibold text-foreground">{pagination?.total || 0}</span>
+            </div>
+            <div className="text-sm">
+              <span className="text-muted-foreground">Page:</span>
+              <span className="ml-2 font-semibold text-foreground">
+                {page} of {pagination?.totalPages || 1}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search groups..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="pl-10"
-        />
-      </div>
+      {/* Main Content Area */}
+      <ScrollArea className="flex-1">
+        <div className="container mx-auto px-6 py-6">
+          {isLoading ? (
+            viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {[...Array(8)].map((_, i) => (
+                  <Skeleton key={i} className="h-[260px] rounded-lg" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-[80px] rounded-lg" />
+                ))}
+              </div>
+            )
+          ) : (
+            <GroupGrid
+              groups={groups}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              viewMode={viewMode}
+            />
+          )}
+        </div>
+      </ScrollArea>
 
-      <GroupTable
-        groups={groups}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-
-      {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {pagination.totalPages}
-          </span>
-          <Button
-            variant="outline"
-            onClick={() => setPage(p => p + 1)}
-            disabled={page === pagination.totalPages}
-          >
-            Next
-          </Button>
+      {/* Pagination */}
+      {!isLoading && pagination && pagination.totalPages > 1 && (
+        <div className="border-t bg-card/50 backdrop-blur-sm">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Showing {((page - 1) * pagination.limit) + 1} to{' '}
+                {Math.min(page * pagination.limit, pagination.total)} of{' '}
+                {pagination.total} groups
+              </p>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                >
+                  First
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex gap-1">
+                  {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
+                    let pageNum;
+                    if (pagination.totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (page <= 3) {
+                      pageNum = i + 1;
+                    } else if (page >= pagination.totalPages - 2) {
+                      pageNum = pagination.totalPages - 4 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={i}
+                        variant={page === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPage(pageNum)}
+                        className={cn(
+                          "w-10",
+                          page === pageNum && "bg-primary-gradient"
+                        )}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={page === pagination.totalPages}
+                >
+                  Next
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(pagination.totalPages)}
+                  disabled={page === pagination.totalPages}
+                >
+                  Last
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

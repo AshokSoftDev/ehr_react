@@ -3,6 +3,7 @@ import {
   LayoutDashboardIcon,
   Users,
   Settings,
+  ThermometerIcon,
 } from 'lucide-react';
 import { type RouteConfig } from '../interface/routes.interface';
 
@@ -18,6 +19,9 @@ const GroupManagement = lazy(() =>
     default: module.GroupsPage 
   }))
 );
+
+const Doctors = lazy(()=> import('../features/doctors/pages/DoctorsPage').then(module => ({default: module.DoctorsPage})))
+const DoctorsDetails = lazy(()=> import('../features/doctors/pages/DoctorDetailsPage').then(module => ({default: module.DoctorDetailsPage})))
 
 export const routes: RouteConfig[] = [
   {
@@ -39,6 +43,26 @@ export const routes: RouteConfig[] = [
     roles: [1],
     showInNav: true,
     module: 'User Management', // Add module name
+  },
+  {
+    id: 'doctor-management',
+    path: '/main/doctor',
+    name: 'Doctor Management',
+    icon: ThermometerIcon,
+    component: Doctors,
+    roles: [1],
+    showInNav: true,
+    module: 'Doctor Management',
+  },
+  {
+    id: 'doctor-details-management',
+    path: '/main/doctor/:id',
+    name: 'Doctor Management',
+    icon: ThermometerIcon,
+    component: DoctorsDetails,
+    roles: [1],
+    showInNav: false,
+    module: 'Doctor Details Management',
   },
   {
     id: 'settings',

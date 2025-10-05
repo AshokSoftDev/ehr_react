@@ -32,7 +32,7 @@ export interface GroupFormData {
     lastName?: string;
     phoneNumber?: string;
     groupId?: string;
-    userStatus?: number;
+    userStatus?: string;
     dob?: string;
   }
   

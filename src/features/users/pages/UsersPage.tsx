@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '../../../components/ui/button';
-import { Plus, Loader2, Download } from 'lucide-react';
+import { Plus, Loader2, Download, Grid, List } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../../../components/ui/alert-dialog';
-import { UserTable } from '../components/UserTable';
+import { UserGrid } from '../components/UserGrid';
 import { UserForm } from '../components/UserForm';
 import { UserFilters } from '../components/UserFilters';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '../hooks/useUsers';
@@ -20,9 +20,9 @@ import type { User, CreateUserDto, UpdateUserDto } from '../types/user.types';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { useDebounce } from '../../../hooks/use-debounce';
 import { toast } from 'react-toastify';
-
-// Remove the local interface since it should match the service response
-// The service now returns the proper type
+import { Tabs, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import { ScrollArea } from '../../../components/ui/scroll-area';
+import { cn } from '../../../lib/utils';
 
 export const UsersPage: React.FC = () => {
   const [search, setSearch] = useState('');
@@ -34,13 +34,14 @@ export const UsersPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const debouncedSearch = useDebounce(search, 500);
 
   const { data: groupsData } = useGroups();
   const { data, isLoading } = useUsers({
     page,
-    limit: 10,
+    limit: 12,
     search: debouncedSearch,
     groupId: groupFilter || undefined,
     userStatus: statusFilter ? parseInt(statusFilter) : undefined,
@@ -69,16 +70,13 @@ export const UsersPage: React.FC = () => {
     }
   };
 
-  // Fix: Handle create and update separately
   const handleFormSubmit = async (data: CreateUserDto | UpdateUserDto) => {
     if (selectedUser) {
-      // For update, we know it's UpdateUserDto
       await updateMutation.mutateAsync({ 
         id: selectedUser.userId, 
         data: data as UpdateUserDto 
       });
     } else {
-      // For create, we know it's CreateUserDto
       await createMutation.mutateAsync(data as CreateUserDto);
     }
   };
@@ -97,37 +95,9 @@ export const UsersPage: React.FC = () => {
     toast.info('Export functionality coming soon');
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-48" />
-          <div className="flex gap-2">
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-10 w-full" />
-          <div className="flex gap-2">
-            <Skeleton className="h-10 w-48" />
-            <Skeleton className="h-10 w-48" />
-            <Skeleton className="h-10 w-48" />
-          </div>
-        </div>
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
-  }
-
-  // Now data should have the correct type from the service
   const users = data?.data.users || [];
   const pagination = data?.data.pagination;
-  console.log("Users", users);
-  console.log("Pagination", pagination);
   
-  
-  // Type the groups response properly
   interface GroupsResponse {
     data: {
       groups: Array<{
@@ -140,96 +110,202 @@ export const UsersPage: React.FC = () => {
   const groups = ((groupsData as GroupsResponse | undefined)?.data?.groups || [])
     .filter(group => group.id && group.id !== '');
 
-    console.log("Groups", groups);
-    
-
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage system users and their access
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button
-            onClick={() => {
-              setSelectedUser(null);
-              setFormOpen(true);
+    <div className="h-full flex flex-col bg-background">
+      {/* Header Section */}
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                User Management
+              </h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Manage system users, permissions and access control
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+              <Button
+                onClick={() => {
+                  setSelectedUser(null);
+                  setFormOpen(true);
+                }}
+                className="bg-primary-gradient hover:opacity-90 shadow-lg"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create User
+              </Button>
+            </div>
+          </div>
+
+          {/* Filters and View Toggle */}
+          <UserFilters
+            search={search}
+            onSearchChange={(value) => {
+              setSearch(value);
+              setPage(1);
             }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add User
-          </Button>
+            groupId={groupFilter}
+            onGroupChange={(value) => {
+              setGroupFilter(value);
+              setPage(1);
+            }}
+            status={statusFilter}
+            onStatusChange={(value) => {
+              setStatusFilter(value);
+              setPage(1);
+            }}
+            accountType={accountTypeFilter}
+            onAccountTypeChange={(value) => {
+              setAccountTypeFilter(value);
+              setPage(1);
+            }}
+            groups={groups}
+            onReset={resetFilters}
+            hasActiveFilters={hasActiveFilters}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+
+          {/* Summary Stats */}
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex gap-6">
+              <div className="text-sm">
+                <span className="text-muted-foreground">Total Users:</span>
+                <span className="ml-2 font-semibold text-foreground">{pagination?.total || 0}</span>
+              </div>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Active:</span>
+                <span className="ml-2 font-semibold text-green-600">
+                  {users.filter(u => u.userStatus === 1).length}
+                </span>
+              </div>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Inactive:</span>
+                <span className="ml-2 font-semibold text-destructive">
+                  {users.filter(u => u.userStatus === 0).length}
+                </span>
+              </div>
+            </div>
+            {pagination && (
+              <div className="text-sm text-muted-foreground">
+                Showing {((page - 1) * 12) + 1} to {Math.min(page * 12, pagination.total)} of {pagination.total}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <UserFilters
-        search={search}
-        onSearchChange={(value) => {
-          setSearch(value);
-          setPage(1);
-        }}
-        groupId={groupFilter}
-        onGroupChange={(value) => {
-          setGroupFilter(value);
-          setPage(1);
-        }}
-        status={statusFilter}
-        onStatusChange={(value) => {
-          setStatusFilter(value);
-          setPage(1);
-        }}
-        accountType={accountTypeFilter}
-        onAccountTypeChange={(value) => {
-          setAccountTypeFilter(value);
-          setPage(1);
-        }}
-        groups={groups}
-        onReset={resetFilters}
-        hasActiveFilters={hasActiveFilters}
-      />
+      {/* Main Content Area */}
+      <ScrollArea className="flex-1">
+        <div className="container mx-auto px-6 py-6">
+          {isLoading ? (
+            viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {[...Array(8)].map((_, i) => (
+                  <Skeleton key={i} className="h-[300px] rounded-lg" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-[100px] rounded-lg" />
+                ))}
+              </div>
+            )
+          ) : (
+            <UserGrid
+              users={users}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              viewMode={viewMode}
+            />
+          )}
+        </div>
+      </ScrollArea>
 
-      <div className="space-y-4">
-        {pagination && (
-          <div className="text-sm text-muted-foreground">
-            Showing {(page - 1) * 10 + 1} to {Math.min(page * 10, pagination.total)} of {pagination.total} users
+      {/* Pagination */}
+      {!isLoading && pagination && pagination.totalPages > 1 && (
+        <div className="border-t bg-card/50 backdrop-blur-sm">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Page {page} of {pagination.totalPages}
+              </p>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                >
+                  First
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex gap-1">
+                  {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
+                    let pageNum;
+                    if (pagination.totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (page <= 3) {
+                      pageNum = i + 1;
+                    } else if (page >= pagination.totalPages - 2) {
+                      pageNum = pagination.totalPages - 4 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={i}
+                        variant={page === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPage(pageNum)}
+                        className={cn(
+                          "w-10",
+                          page === pageNum && "bg-primary-gradient"
+                        )}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={page === pagination.totalPages}
+                >
+                  Next
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(pagination.totalPages)}
+                  disabled={page === pagination.totalPages}
+                >
+                  Last
+                </Button>
+              </div>
+            </div>
           </div>
-        )}
-
-        <UserTable
-          users={users}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-
-        {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {page} of {pagination.totalPages}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => setPage(p => p + 1)}
-              disabled={page === pagination.totalPages}
-            >
-              Next
-            </Button>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <UserForm
         open={formOpen}
