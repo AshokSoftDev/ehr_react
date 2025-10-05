@@ -104,7 +104,7 @@ export function FormSearchSelect<
                     className={cn(
                       "w-full justify-between h-12 pt-3 pb-2 px-3 text-left truncate",
                       "border border-input bg-background rounded-md",
-                      "focus-visible:ring-2 focus-visible:ring-ring",
+                      "focus-visible:ring-2 focus-visible:ring-ring bg-card",
                       hasError &&
                         "border-destructive focus-visible:ring-destructive",
                       buttonClassName

@@ -142,7 +142,7 @@ export function FormFloatingSelect<
                   className={cn(
                     "h-12 min-h-[48px] pt-3 pb-2 px-3 w-full",
                     "border border-input bg-background rounded-md",
-                    "focus-visible:ring-2 focus-visible:ring-ring",
+                    "focus-visible:ring-2 focus-visible:ring-ring bg-card",
                     hasError &&
                       "border-destructive focus-visible:ring-destructive",
                     "text-left",

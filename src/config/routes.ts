@@ -22,6 +22,7 @@ const GroupManagement = lazy(() =>
 
 const Doctors = lazy(()=> import('../features/doctors/pages/DoctorsPage').then(module => ({default: module.DoctorsPage})))
 const DoctorsDetails = lazy(()=> import('../features/doctors/pages/DoctorDetailsPage').then(module => ({default: module.DoctorDetailsPage})))
+const PatientsPage = lazy(()=> import('../features/patients/pages/PatientsPage').then(module => ({default: module.PatientsPage})))
 
 export const routes: RouteConfig[] = [
   {
@@ -51,7 +52,7 @@ export const routes: RouteConfig[] = [
     icon: ThermometerIcon,
     component: Doctors,
     roles: [1],
-    showInNav: true,
+    showInav: true,
     module: 'Doctor Management',
   },
   {
@@ -63,6 +64,16 @@ export const routes: RouteConfig[] = [
     roles: [1],
     showInNav: false,
     module: 'Doctor Details Management',
+  },
+  {
+    id: 'patient-management',
+    path: '/main/patients',
+    name: 'Patient Management',
+    icon: Users,
+    component: PatientsPage,
+    roles: [1],
+    showInNav: true,
+    module: 'Patient Management',
   },
   {
     id: 'settings',

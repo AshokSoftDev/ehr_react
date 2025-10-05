@@ -3,7 +3,7 @@ import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
 import { Search, X, Grid, List } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '../../../components/ui/tabs';
-import { FormFloatingSelect } from '../../../components/form/form-floating-select';
+import { FormFloatingSelect } from '../../../components/form/FormFloatingSelect';
 import { useForm } from 'react-hook-form';
 
 interface Group {

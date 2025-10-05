@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../../component
 import { Button } from '../../../components/ui/button';
 import { Form } from '../../../components/ui/form';
 import { FormFloatingInput } from '../../../components/form/form-floating-input';
-import { FormFloatingSelect } from '../../../components/form/form-floating-select';
+import { FormFloatingSelect } from '../../../components/form/FormFloatingSelect';
 import { FormSearchSelectWithCreate } from '../../../components/form/FormSearchSelectWithCreate';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover';

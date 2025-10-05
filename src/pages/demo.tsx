@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormField } from "@/components/ui/form";
 import { FormFloatingInput } from "@/components/form/form-floating-input";
-import { FormFloatingSelect } from "@/components/form/form-floating-select";
+import { FormFloatingSelect } from "@/components/form/FormFloatingSelect";
 import { FormSearchSelect } from "@/components/form/form-search-select";
 import { Card } from "@/components/ui/card";
 

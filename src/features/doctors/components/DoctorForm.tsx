@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui
 import { Label } from '../../../components/ui/label';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { FormFloatingInput } from '../../../components/form/form-floating-input';
-import { FormFloatingSelect } from '../../../components/form/form-floating-select';
+import { FormFloatingSelect } from '../../../components/form/FormFloatingSelect';
 import { doctorFormSchema, timeBlockValues, type DoctorFormData } from '../schemas/doctor.schema';
 import type { Doctor } from '../types/doctor.types';
 
