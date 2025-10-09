@@ -99,15 +99,13 @@ const Login: React.FC = () => {
     // Create subtle gradient background
     const bgGradient = ctx.createLinearGradient(0, 0, width, 0);
     const isDark = document.documentElement.classList.contains('dark');
-    
     if (isDark) {
-      bgGradient.addColorStop(0, 'rgba(30, 41, 59, 0.5)');
-      bgGradient.addColorStop(1, 'rgba(51, 65, 85, 0.5)');
+      bgGradient.addColorStop(0, 'rgba(12, 74, 110, 0.95)');
+      bgGradient.addColorStop(1, 'rgba(8, 47, 73, 0.95)');
     } else {
-      bgGradient.addColorStop(0, 'rgba(248, 250, 252, 1)');
-      bgGradient.addColorStop(1, 'rgba(241, 245, 249, 1)');
+      bgGradient.addColorStop(0, 'rgba(13, 110, 253, 0.95)');
+      bgGradient.addColorStop(1, 'rgba(49, 196, 255, 0.95)');
     }
-    
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
   
@@ -175,29 +173,8 @@ const Login: React.FC = () => {
       // Create gradient for each letter
       const charGradient = ctx.createLinearGradient(0, -fontSize/2, 0, fontSize/2);
       
-      if (isDark) {
-        // Elegant colors for dark mode
-        const darkColors = [
-          ['rgb(147, 197, 253)', 'rgb(196, 181, 253)'], // blue to purple
-          ['rgb(134, 239, 172)', 'rgb(147, 197, 253)'], // green to blue
-          ['rgb(253, 186, 116)', 'rgb(251, 146, 60)'],  // orange gradient
-          ['rgb(196, 181, 253)', 'rgb(167, 139, 250)'], // purple gradient
-        ];
-        const [start, end] = darkColors[i % darkColors.length];
-        charGradient.addColorStop(0, start);
-        charGradient.addColorStop(1, end);
-      } else {
-        // Sophisticated colors for light mode
-        const lightColors = [
-          ['rgb(79, 70, 229)', 'rgb(67, 56, 202)'],    // indigo gradient
-          ['rgb(59, 130, 246)', 'rgb(37, 99, 235)'],   // blue gradient
-          ['rgb(168, 85, 247)', 'rgb(147, 51, 234)'],  // purple gradient
-          ['rgb(236, 72, 153)', 'rgb(219, 39, 119)'],  // pink gradient
-        ];
-        const [start, end] = lightColors[i % lightColors.length];
-        charGradient.addColorStop(0, start);
-        charGradient.addColorStop(1, end);
-      }
+      charGradient.addColorStop(0, 'rgba(255,255,255,1)');
+      charGradient.addColorStop(1, 'rgba(255,255,255,0.85)');
       
       // Apply gradient fill
       ctx.fillStyle = charGradient;
