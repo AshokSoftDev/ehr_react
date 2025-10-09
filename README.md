@@ -1,69 +1,83 @@
-m# React + TypeScript + Vite
+EHR React Frontend (Vite + TypeScript)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Overview
+- Modern React 19 + TypeScript app powered by Vite 7.
+- UI built with Tailwind CSS 4 and Radix/Shadcn primitives.
+- Routing via React Router 7; data fetching with TanStack Query.
+- Forms powered by React Hook Form and Zod validation.
 
-Currently, two official plugins are available:
+Quick Start
+1) Install dependencies
+   - npm: `npm install`
+   - pnpm: `pnpm install`
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+2) Configure environment
+   - Copy `.env.development` and update values as needed (see Environment section).
 
-## Expanding the ESLint configuration
+3) Run the dev server
+   - `npm run dev` (or `pnpm dev`)
+   - Open the printed local URL in your browser.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Scripts
+- `dev` – start Vite dev server with HMR.
+- `build` – type-check (`tsc -b`) and create a production build with Vite.
+- `preview` – preview the production build locally.
+- `lint` – run ESLint on the project.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Environment
+Runtime config is read from `import.meta.env` and defined in `src/config/environments.ts`.
+- `VITE_API_BASE_URL` (required): Base URL for API, e.g. `https://example.com/api/v1/`.
+- `VITE_GOOGLE_CLIENT_ID` (optional): Google OAuth Client ID.
+- `VITE_ENCRYPTION_KEY` (optional): Symmetric key for optional payload encryption.
+- `VITE_WEBSOCKET_URL` (optional): WebSocket endpoint, e.g. `wss://example.com/socket`.
+- `VITE_PRODUCTION` (optional): `true` or `false`.
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+Notes
+- The Vite base path is set to `'/test/'` in `vite.config.ts`. Change it for your deployment context if needed.
+- Example env files: `.env.development`, `.env.production`.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Project Structure
+```
+src/
+  components/
+    form/                # Form wrappers (floating inputs, selects, date pickers)
+    ui/                  # Shadcn/Radix primitives (buttons, inputs, dialogs, etc.)
+  config/                # Environment and route config
+  contexts/              # App contexts (Auth, Permission, Theme, FormSheet)
+  features/
+    doctors/             # Domain feature (components, hooks, pages, schemas, services, types)
+    patients/
+    users/
+    groups/
+  hooks/                 # Reusable hooks
+  lib/                   # Axios client, utilities, toast helpers
+  pages/                 # Top-level pages (Login, Dashboard)
+  routes/                # App router and utilities
+  styles/                # Global styles (e.g., toast.css)
+  utils/                 # Common helpers (routes, crypto, timezone, etc.)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Development Workflow
+- Routing: Define route entries in `src/config/routes.ts`. `src/routes/Routes.tsx` lazy-loads components and applies role-based filtering.
+- Data fetching: Use TanStack Query hooks under each feature (e.g., `src/features/doctors/hooks/useDoctors.ts`). Keep stable `queryKey`s and prefetch adjacent pages when appropriate.
+- Services: Implement domain services under `src/features/<domain>/services/*` and use the shared axios instance from `src/lib/api.ts`.
+- Forms: Use `src/components/ui/form.tsx` primitives (`Form`, `FormField`, `FormControl`, etc.) and the higher-level wrappers in `src/components/form/*`. Prefer Zod schemas in `schemas/` and `@hookform/resolvers/zod` for validation.
+- UI: Compose using `src/components/ui/*` primitives and Tailwind utilities. Avoid modifying primitive component APIs unless necessary.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Conventions
+- Components: PascalCase file names (e.g., `UserForm.tsx`).
+- Hooks: `use*.ts(x)` (e.g., `useUsers.ts`).
+- Schemas: `*.schema.ts`; Types: `*.types.ts`.
+- Imports: Use `@/` alias for `src/` (configured in `tsconfig*`).
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Deployment
+- Adjust `base` in `vite.config.ts` to match your hosting path (current: `'/test/'`).
+- Build with `npm run build` and serve the `dist/` directory.
+
+Troubleshooting
+- API calls: Confirm `VITE_API_BASE_URL` is reachable and CORS-enabled.
+- Auth headers: `src/lib/api.ts` attaches `Authorization: Bearer <token>` from `sessionStorage` (`access_token`). Some legacy code uses `src/service/api.ts` with `localStorage`; prefer `src/lib/api.ts` for new work.
+- Styles: Tailwind v4 is integrated via the Vite plugin; no separate config file is required.
+
+For Contributors
+- See `AGENTS.md` for detailed conventions and guardrails for changes.
