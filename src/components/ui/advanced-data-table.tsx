@@ -1,17 +1,35 @@
-'use client';
-import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+"use client";
+import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PageSkeleton } from '@/layouts/PageSkeleton';
-import { Button } from './button';
-import { Input } from './input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { PageSkeleton } from "@/layouts/PageSkeleton";
+import { Button } from "./button";
+import { Input } from "./input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 interface AdvancedDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -46,31 +64,55 @@ export function AdvancedDataTable<TData, TValue>({
     pageCount: Math.ceil(total / limit),
   });
 
+  const totalPages = Math.ceil(total / limit);
+  const startRecord = total === 0 ? 0 : (page - 1) * limit + 1;
+  const endRecord = Math.min(page * limit, total);
+
   if (isLoading) {
     return <PageSkeleton />;
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between py-4">
-        {onSearch && (
-          <Input
-            placeholder="Search..."
-            onChange={(event) => onSearch(event.target.value)}
-            className="max-w-sm"
-          />
+    <div className="space-y-4">
+      {/* Header Section */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4 flex-1">
+          {onSearch && (
+            <Input
+              placeholder="Search..."
+              onChange={(event) => onSearch(event.target.value)}
+              className="max-w-sm h-10 bg-background"
+            />
+          )}
+        </div>
+        {onAdd && (
+          <Button onClick={onAdd} className="ml-auto">
+            Add New
+          </Button>
         )}
-        {onAdd && <Button onClick={onAdd}>Add</Button>}
       </div>
-      <div className="rounded-md border">
+
+      {/* Table Section */}
+      <div className="rounded-lg border border-border bg-card shadow-sm">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow
+                key={headerGroup.id}
+                className="hover:bg-transparent border-b border-border"
+              >
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    <TableHead
+                      key={header.id}
+                      className="h-12 px-6 text-sm font-semibold text-foreground bg-muted/15"
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
                   );
                 })}
@@ -80,60 +122,107 @@ export function AdvancedDataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className="border-b border-border hover:bg-muted/30 transition-colors"
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    <TableCell key={cell.id} className="px-6 py-4 text-xs">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-32 text-center text-muted-foreground"
+                >
+                  No results found.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex items-center space-x-2">
-        <p className="text-sm font-medium">Rows per page</p>
-        <Select
+
+      {/* Pagination Section */}
+      <div className="flex items-center justify-between px-2">
+        {/* Left: Rows per page */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground">
+            Rows per page:
+          </span>
+          <Select
             value={`${limit}`}
             onValueChange={(value) => {
               onLimitChange?.(Number(value));
             }}
           >
-            <SelectTrigger className="h-8 w-[70px]">
+            <SelectTrigger className="h-9 w-[75px] bg-card">
               <SelectValue placeholder={limit} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[10, 20, 30, 40, 50].map((pageSize) => (
+              {[10, 20, 30].map((pageSize) => (
                 <SelectItem key={pageSize} value={`${pageSize}`}>
                   {pageSize}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <span className="text-sm text-muted-foreground ml-4">
+            Showing {startRecord} to {endRecord} of {total} entries
+          </span>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange?.(page - 1)}
-            disabled={page <= 1}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange?.(page + 1)}
-            disabled={page * limit >= total}
-          >
-            Next
-          </Button>
+
+        {/* Right: Page navigation */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground mr-2">
+            Page {page} of {totalPages || 1}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 bg-card"
+              onClick={() => onPageChange?.(1)}
+              disabled={page <= 1}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 bg-card"
+              onClick={() => onPageChange?.(page - 1)}
+              disabled={page <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 bg-card"
+              onClick={() => onPageChange?.(page + 1)}
+              disabled={page >= totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 bg-card"
+              onClick={() => onPageChange?.(totalPages)}
+              disabled={page >= totalPages}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

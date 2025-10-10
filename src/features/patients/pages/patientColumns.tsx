@@ -1,35 +1,19 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Patient } from "../types/patient.types";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { Patient } from "../types/patient.types";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge";
+import { Pencil, Trash2 } from "lucide-react";
 
-export const patientColumns = (onEdit: (patient: Patient) => void, onDelete: (patient: Patient) => void): ColumnDef<Patient>[] => [
+export const patientColumns = (
+  onEdit: (patient: Patient) => void,
+  onDelete: (patient: Patient) => void
+): ColumnDef<Patient>[] => [
   {
     accessorKey: "mrn",
     header: "MRN",
   },
   {
     accessorKey: "firstName",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          First Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: "First Name",
   },
   {
     accessorKey: "lastName",
@@ -53,29 +37,30 @@ export const patientColumns = (onEdit: (patient: Patient) => void, onDelete: (pa
   },
   {
     id: "actions",
+    header: "Actions",
     cell: ({ row }) => {
-      const patient = row.original
- 
+      const patient = row.original;
+
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => onEdit(patient)}
-            >
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onDelete(patient)}>Delete</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 hover:bg-muted/50 text-primary hover:text-primary"
+            onClick={() => onEdit(patient)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 hover:bg-muted/50 hover:text-destructive"
+            onClick={() => onDelete(patient)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      );
     },
   },
 ];
