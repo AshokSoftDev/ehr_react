@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import {
   type ColumnDef,
   flexRender,
@@ -90,17 +92,48 @@ export function AdvancedDataTable<TData, TValue>({
   limit = 10,
   total = 0,
 }: AdvancedDataTableProps<TData, TValue>) {
+  const resolvedLimit = limit > 0 ? limit : 10;
+  const totalPages = resolvedLimit > 0 ? Math.ceil(total / resolvedLimit) : 0;
+  const clampedPage = totalPages > 0 ? Math.min(Math.max(page, 1), totalPages) : 1;
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
-    pageCount: Math.ceil(total / limit),
+    pageCount: Math.max(totalPages, 1),
+    state: {
+      pagination: {
+        pageIndex: clampedPage - 1,
+        pageSize: resolvedLimit,
+      },
+    },
   });
 
-  const totalPages = Math.ceil(total / limit);
-  const startRecord = total === 0 ? 0 : (page - 1) * limit + 1;
-  const endRecord = Math.min(page * limit, total);
+  const pageSizeOptions = useMemo(() => {
+    const defaultOptions = [10, 20, 30];
+
+    if (!defaultOptions.includes(resolvedLimit)) {
+      defaultOptions.push(resolvedLimit);
+    }
+
+    return defaultOptions.sort((a, b) => a - b);
+  }, [resolvedLimit]);
+
+  const effectiveTotalPages = Math.max(totalPages, 1);
+  const startRecord = total === 0 ? 0 : (clampedPage - 1) * resolvedLimit + 1;
+  const endRecord = total === 0 ? 0 : Math.min(clampedPage * resolvedLimit, total);
+  const canGoPrevious = clampedPage > 1;
+  const canGoNext = totalPages > 0 && clampedPage < totalPages;
+
+  const handlePageChange = (targetPage: number) => {
+    if (!onPageChange) {
+      return;
+    }
+
+    const safeTarget = Math.min(Math.max(targetPage, 1), effectiveTotalPages);
+    onPageChange(safeTarget);
+  };
 
   if (isLoading) {
     return <PageSkeleton />;
@@ -230,16 +263,16 @@ export function AdvancedDataTable<TData, TValue>({
             Rows per page:
           </span>
           <Select
-            value={`${limit}`}
+            value={`${resolvedLimit}`}
             onValueChange={(value) => {
               onLimitChange?.(Number(value));
             }}
           >
             <SelectTrigger className="h-9 w-[75px] bg-card">
-              <SelectValue placeholder={limit} />
+              <SelectValue placeholder={resolvedLimit} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[10, 20, 30].map((pageSize) => (
+              {pageSizeOptions.map((pageSize) => (
                 <SelectItem key={pageSize} value={`${pageSize}`}>
                   {pageSize}
                 </SelectItem>
@@ -254,15 +287,15 @@ export function AdvancedDataTable<TData, TValue>({
         {/* Right: Page navigation */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-muted-foreground mr-2">
-            Page {page} of {totalPages || 1}
+            Page {clampedPage} of {effectiveTotalPages}
           </span>
           <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon"
               className="h-9 w-9 bg-card"
-              onClick={() => onPageChange?.(1)}
-              disabled={page <= 1}
+              onClick={() => handlePageChange(1)}
+              disabled={!canGoPrevious}
             >
               <ChevronsLeft className="h-4 w-4" />
             </Button>
@@ -270,8 +303,8 @@ export function AdvancedDataTable<TData, TValue>({
               variant="outline"
               size="icon"
               className="h-9 w-9 bg-card"
-              onClick={() => onPageChange?.(page - 1)}
-              disabled={page <= 1}
+              onClick={() => handlePageChange(clampedPage - 1)}
+              disabled={!canGoPrevious}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -279,8 +312,8 @@ export function AdvancedDataTable<TData, TValue>({
               variant="outline"
               size="icon"
               className="h-9 w-9 bg-card"
-              onClick={() => onPageChange?.(page + 1)}
-              disabled={page >= totalPages}
+              onClick={() => handlePageChange(clampedPage + 1)}
+              disabled={!canGoNext}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -288,8 +321,8 @@ export function AdvancedDataTable<TData, TValue>({
               variant="outline"
               size="icon"
               className="h-9 w-9 bg-card"
-              onClick={() => onPageChange?.(totalPages)}
-              disabled={page >= totalPages}
+              onClick={() => handlePageChange(totalPages)}
+              disabled={!canGoNext}
             >
               <ChevronsRight className="h-4 w-4" />
             </Button>
