@@ -81,3 +81,8 @@ Troubleshooting
 
 For Contributors
 - See `AGENTS.md` for detailed conventions and guardrails for changes.
+- Primary development happens on the `dev` branch. Create feature branches from `dev`
+  and open pull requests back into it before merging changes to production branches.
+- Configure the `origin` remote before pushing changes:
+  1. `git remote add origin https://github.com/user/ehr_react.git`
+  2. `git push -u origin dev`
