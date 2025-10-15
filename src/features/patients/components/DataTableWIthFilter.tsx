@@ -18,6 +18,7 @@ type Props = {
   onAdd?: () => void;
   onEdit: (patient: Patient) => void;
   onDelete: (patient: Patient) => void;
+  onRowClick?: (row: Patient) => void;
 };
 
 export function DataTableWIthFilter(props: Props) {
@@ -33,6 +34,7 @@ export function DataTableWIthFilter(props: Props) {
     onAdd,
     onEdit,
     onDelete,
+    onRowClick,
   } = props;
 
   const columns: ColumnDef<Patient, unknown>[] = React.useMemo(
@@ -52,9 +54,9 @@ export function DataTableWIthFilter(props: Props) {
       onLimitChange={onLimitChange}
       onSearch={onSearch}
       onAdd={onAdd}
+      onRowClick={onRowClick}
     />
   );
 }
 
 export default DataTableWIthFilter;
-

@@ -1,4 +1,5 @@
 import { DataTableWIthFilter } from "../components/DataTableWIthFilter";
+import { useNavigate } from "react-router-dom";
 import { usePatients } from "../hooks/usePatients";
 import { useEffect, useState } from "react";
 import { PatientFormSheet } from "../components/PatientFormSheet";
@@ -7,6 +8,7 @@ import type { Patient } from "../types/patient.types";
 import type { PatientFormData } from "../schemas/patient.schema";
 
 export function PatientsPage() {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
@@ -60,6 +62,10 @@ export function PatientsPage() {
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        // Navigate to patient details on row click
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        // @ts-expect-error generic passthrough to underlying table
+        onRowClick={(row: Patient) => navigate(`/main/patients/${row.patient_id}`)}
       />
       <PatientFormSheet
         open={sheetOpen}

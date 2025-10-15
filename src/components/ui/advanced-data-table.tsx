@@ -39,6 +39,7 @@ interface AdvancedDataTableProps<TData, TValue> {
   onSearch?: (value: string) => void;
   onPageChange?: (page: number) => void;
   onLimitChange?: (limit: number) => void;
+  onRowClick?: (row: TData) => void;
   page?: number;
   limit?: number;
   total?: number;
@@ -52,6 +53,7 @@ export function AdvancedDataTable<TData, TValue>({
   onSearch,
   onPageChange,
   onLimitChange,
+  onRowClick,
   page = 1,
   limit = 10,
   total = 0,
@@ -125,7 +127,14 @@ export function AdvancedDataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="border-b border-border hover:bg-muted/30 transition-colors"
+                  className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
+                  onClick={() => {
+                    if (onRowClick) {
+                      // row.original is the typed row model value
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                      onRowClick(row.original as TData);
+                    }
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="px-6 py-4 text-xs">
