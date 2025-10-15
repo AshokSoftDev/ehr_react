@@ -1,6 +1,5 @@
-import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
+import { DataTableWIthFilter } from "../components/DataTableWIthFilter";
 import { usePatients } from "../hooks/usePatients";
-import { patientColumns } from "./patientColumns";
 import { useEffect, useState } from "react";
 import { PatientFormSheet } from "../components/PatientFormSheet";
 import { usePatientManagement } from "../hooks/usePatientManagement";
@@ -49,8 +48,7 @@ export function PatientsPage() {
   return (
     <div className="h-full w-full p-4 md:p-8">
       <h2 className="text-2xl font-bold mb-4">Patients</h2>
-      <AdvancedDataTable
-        columns={patientColumns(handleEdit, handleDelete)}
+      <DataTableWIthFilter
         data={data?.patients ?? []}
         isLoading={isLoading}
         page={page}
@@ -60,6 +58,8 @@ export function PatientsPage() {
         onLimitChange={setLimit}
         onSearch={setSearch}
         onAdd={handleAdd}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
       <PatientFormSheet
         open={sheetOpen}
