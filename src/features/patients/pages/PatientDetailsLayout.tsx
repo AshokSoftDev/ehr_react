@@ -46,7 +46,7 @@ export function PatientDetailsLayout() {
   return (
     <div className="h-full w-full p-4 md:p-8">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-        <aside className="rounded-lg border border-border bg-card p-4 shadow-sm md:col-span-4 lg:col-span-3">
+        <aside className="rounded-lg border border-border bg-card p-4 shadow-sm md:col-span-3 lg:col-span-2">
           {/* Back button inside sidebar */}
           <div className="mb-3">
             <button
@@ -58,8 +58,8 @@ export function PatientDetailsLayout() {
             </button>
           </div>
           <div className="flex flex-col items-center text-center">
-            <Avatar className="h-24 w-full !rounded-md">
-              <AvatarFallback className="bg-primary text-primary-foreground !rounded-md">{initials}</AvatarFallback>
+            <Avatar className="h-24 w-[140px] sm:w-[160px] rounded-md mx-auto">
+              <AvatarFallback className="bg-primary text-primary-foreground rounded-md">{initials}</AvatarFallback>
             </Avatar>
             <div className="mt-3">
               <h3 className="text-lg font-semibold text-foreground">
@@ -91,7 +91,7 @@ export function PatientDetailsLayout() {
           </nav>
         </aside>
 
-        <main className="md:col-span-8 lg:col-span-9">
+        <main className="md:col-span-9 lg:col-span-10">
           <Outlet />
         </main>
       </div>
@@ -100,4 +100,3 @@ export function PatientDetailsLayout() {
 }
 
 export default PatientDetailsLayout;
-
