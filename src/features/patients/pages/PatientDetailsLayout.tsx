@@ -45,27 +45,29 @@ export function PatientDetailsLayout() {
 
   return (
     <div className="h-full w-full p-4 md:p-8">
-      <div className="mb-4 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[280px,1fr]">
-        <aside className="rounded-lg border border-border bg-card p-4 shadow-sm">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+        <aside className="rounded-lg border border-border bg-card p-4 shadow-sm md:col-span-4 lg:col-span-3">
+          {/* Back button inside sidebar */}
+          <div className="mb-3">
+            <button
+              type="button"
+              onClick={() => navigate('/main/patients')}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Patients
+            </button>
+          </div>
           <div className="flex flex-col items-center text-center">
-            <Avatar className="h-20 w-20">
-              <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
+            <Avatar className="h-24 w-full !rounded-md">
+              <AvatarFallback className="bg-primary text-primary-foreground !rounded-md">{initials}</AvatarFallback>
             </Avatar>
             <div className="mt-3">
               <h3 className="text-lg font-semibold text-foreground">
                 {patient ? `${patient.firstName} ${patient.lastName}` : "Patient"}
               </h3>
-              <p className="text-xs text-muted-foreground">MRN: {patient?.mrn ?? "—"}</p>
+              {patient?.mrn && (
+                <p className="text-xs text-muted-foreground">{patient.mrn}</p>
+              )}
             </div>
           </div>
 
@@ -89,7 +91,7 @@ export function PatientDetailsLayout() {
           </nav>
         </aside>
 
-        <main>
+        <main className="md:col-span-8 lg:col-span-9">
           <Outlet />
         </main>
       </div>

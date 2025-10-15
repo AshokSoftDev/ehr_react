@@ -29,13 +29,13 @@ export function PatientDashboard() {
 
       <Tabs defaultValue="info" className="w-full">
         <TabsList className="bg-muted/30">
-          <TabsTrigger value="info">Patient Info</TabsTrigger>
-          <TabsTrigger value="emergency">Emergency</TabsTrigger>
-          <TabsTrigger value="appointment">Appointment</TabsTrigger>
-          <TabsTrigger value="visit">Visit</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-          <TabsTrigger value="insurances">Insurances</TabsTrigger>
-          <TabsTrigger value="occupation">Occupation</TabsTrigger>
+          <TabsTrigger value="info" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Patient Info</TabsTrigger>
+          <TabsTrigger value="emergency" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Emergency</TabsTrigger>
+          <TabsTrigger value="appointment" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Appointment</TabsTrigger>
+          <TabsTrigger value="visit" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Visit</TabsTrigger>
+          <TabsTrigger value="billing" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Billing</TabsTrigger>
+          <TabsTrigger value="insurances" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Insurances</TabsTrigger>
+          <TabsTrigger value="occupation" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Occupation</TabsTrigger>
         </TabsList>
 
         {[
@@ -64,4 +64,3 @@ export function PatientDashboard() {
 }
 
 export default PatientDashboard;
-
