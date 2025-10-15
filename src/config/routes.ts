@@ -8,22 +8,29 @@ import {
 import { type RouteConfig } from '../interface/routes.interface';
 
 const Dashboard = lazy(() => import('../pages/Dashboard'));
-const UserManagement = lazy(() => 
-  import('../features/users/pages/UsersPage').then(module => ({ 
-    default: module.UsersPage 
+const UserManagement = lazy(() =>
+  import('../features/users/pages/UsersPage').then(module => ({
+    default: module.UsersPage
   }))
 );
 
-const GroupManagement = lazy(() => 
-  import('../features/groups/pages/GroupsPage').then(module => ({ 
-    default: module.GroupsPage 
+const GroupManagement = lazy(() =>
+  import('../features/groups/pages/GroupsPage').then(module => ({
+    default: module.GroupsPage
   }))
 );
 
-const Doctors = lazy(()=> import('../features/doctors/pages/DoctorsPage').then(module => ({default: module.DoctorsPage})))
-const DoctorsDetails = lazy(()=> import('../features/doctors/pages/DoctorDetailsPage').then(module => ({default: module.DoctorDetailsPage})))
-const PatientsPage = lazy(()=> import('../features/patients/pages/PatientsPage').then(module => ({default: module.PatientsPage})))
-const PatientDetailsPage = lazy(()=> import('../features/patients/pages/PatientDetailsPage').then(module => ({default: module.PatientDetailsPage})))
+const Doctors = lazy(() => import('../features/doctors/pages/DoctorsPage').then(module => ({ default: module.DoctorsPage })))
+const DoctorsDetails = lazy(() => import('../features/doctors/pages/DoctorDetailsPage').then(module => ({ default: module.DoctorDetailsPage })))
+const PatientsPage = lazy(() => import('../features/patients/pages/PatientsPage').then(module => ({ default: module.PatientsPage })))
+const PatientDetailsLayout = lazy(() => import('../features/patients/pages/PatientDetailsLayout').then(module => ({ default: module.PatientDetailsLayout })))
+const PatientDashboard = lazy(() => import('../features/patients/pages/dashboard/PatientDashboard').then(module => ({ default: module.PatientDashboard })))
+const PatientHistoryPage = lazy(() => import('../features/patients/pages/history/PatientHistoryPage').then(module => ({ default: module.PatientHistoryPage })))
+const PatientVitalsPage = lazy(() => import('../features/patients/pages/vitals/PatientVitalsPage').then(module => ({ default: module.PatientVitalsPage })))
+const PatientDocumentsPage = lazy(() => import('../features/patients/pages/document/PatientDocumentsPage').then(module => ({ default: module.PatientDocumentsPage })))
+const PatientPrescriptionsPage = lazy(() => import('../features/patients/pages/prescription/PatientPrescriptionsPage').then(module => ({ default: module.PatientPrescriptionsPage })))
+const PatientClinicalNotesPage = lazy(() => import('../features/patients/pages/notes/PatientClinicalNotesPage').then(module => ({ default: module.PatientClinicalNotesPage })))
+const PatientConsentPage = lazy(() => import('../features/patients/pages/consent/PatientConsentPage').then(module => ({ default: module.PatientConsentPage })))
 
 export const routes: RouteConfig[] = [
   {
@@ -53,7 +60,7 @@ export const routes: RouteConfig[] = [
     icon: ThermometerIcon,
     component: Doctors,
     roles: [1],
-    showInav: true,
+    showInNav: true,
     module: 'Doctor Management',
   },
   {
@@ -81,10 +88,19 @@ export const routes: RouteConfig[] = [
     path: '/main/patients/:id',
     name: 'Patient Details',
     icon: Users,
-    component: PatientDetailsPage,
+    component: PatientDetailsLayout,
     roles: [1],
     showInNav: false,
     module: 'Patient Management',
+    children: [
+      { id: 'patient-dashboard', path: '/main/patients/:id/dashboard', name: 'Dashboard', icon: Users, component: PatientDashboard, roles: [1], showInNav: false, module: 'Patient Management' },
+      { id: 'patient-history', path: '/main/patients/:id/history', name: 'History', icon: Users, component: PatientHistoryPage, roles: [1], showInNav: false, module: 'Patient Management' },
+      { id: 'patient-vitals', path: '/main/patients/:id/vitals', name: 'Vitals', icon: Users, component: PatientVitalsPage, roles: [1], showInNav: false, module: 'Patient Management' },
+      { id: 'patient-document', path: '/main/patients/:id/document', name: 'Document', icon: Users, component: PatientDocumentsPage, roles: [1], showInNav: false, module: 'Patient Management' },
+      { id: 'patient-prescription', path: '/main/patients/:id/prescription', name: 'Prescription', icon: Users, component: PatientPrescriptionsPage, roles: [1], showInNav: false, module: 'Patient Management' },
+      { id: 'patient-notes', path: '/main/patients/:id/notes', name: 'Clinical Notes', icon: Users, component: PatientClinicalNotesPage, roles: [1], showInNav: false, module: 'Patient Management' },
+      { id: 'patient-consent', path: '/main/patients/:id/consent', name: 'Consent', icon: Users, component: PatientConsentPage, roles: [1], showInNav: false, module: 'Patient Management' },
+    ],
   },
   {
     id: 'settings',

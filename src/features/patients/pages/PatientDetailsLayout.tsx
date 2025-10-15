@@ -1,0 +1,101 @@
+import { useEffect, useMemo } from "react";
+import { Outlet, useLocation, useNavigate, useParams, NavLink } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { patientService } from "../services/patient.service";
+import type { Patient } from "../types/patient.types";
+import { ArrowLeft, FileText, HeartPulse, History, LayoutDashboard, NotebookPen, ShieldCheck, Stethoscope } from "lucide-react";
+
+export function PatientDetailsLayout() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const patientId = Number(id);
+
+  const { data: patient } = useQuery<Patient>({
+    queryKey: ["patient", patientId],
+    queryFn: () => patientService.getPatient(patientId),
+    enabled: Number.isFinite(patientId) && patientId > 0,
+  });
+
+  const initials = useMemo(() => {
+    const f = patient?.firstName?.[0] ?? "P";
+    const l = patient?.lastName?.[0] ?? "";
+    return `${f}${l}`.toUpperCase();
+  }, [patient]);
+
+  // Redirect base path to dashboard, but keep other sections intact.
+  useEffect(() => {
+    const base = `/main/patients/${patientId}`;
+    if (location.pathname === base) {
+      navigate(`${base}/dashboard`, { replace: true });
+    }
+  }, [location.pathname, navigate, patientId]);
+
+  const items = [
+    { to: `/main/patients/${patientId}/dashboard`, label: "Dashboard", icon: LayoutDashboard },
+    { to: `/main/patients/${patientId}/history`, label: "History", icon: History },
+    { to: `/main/patients/${patientId}/vitals`, label: "Vitals", icon: HeartPulse },
+    { to: `/main/patients/${patientId}/document`, label: "Document", icon: FileText },
+    { to: `/main/patients/${patientId}/prescription`, label: "Prescription", icon: Stethoscope },
+    { to: `/main/patients/${patientId}/notes`, label: "Clinical Notes", icon: NotebookPen },
+    { to: `/main/patients/${patientId}/consent`, label: "Consent", icon: ShieldCheck },
+  ] as const;
+
+  return (
+    <div className="h-full w-full p-4 md:p-8">
+      <div className="mb-4 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[280px,1fr]">
+        <aside className="rounded-lg border border-border bg-card p-4 shadow-sm">
+          <div className="flex flex-col items-center text-center">
+            <Avatar className="h-20 w-20">
+              <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="mt-3">
+              <h3 className="text-lg font-semibold text-foreground">
+                {patient ? `${patient.firstName} ${patient.lastName}` : "Patient"}
+              </h3>
+              <p className="text-xs text-muted-foreground">MRN: {patient?.mrn ?? "—"}</p>
+            </div>
+          </div>
+
+          <Separator className="my-4" />
+
+          <nav className="space-y-1">
+            {items.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  `flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                    isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted/50"
+                  }`
+                }
+              >
+                <Icon className="h-4 w-4" />
+                <span>{label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </aside>
+
+        <main>
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export default PatientDetailsLayout;
+

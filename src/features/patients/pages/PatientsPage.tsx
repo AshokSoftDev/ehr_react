@@ -65,7 +65,7 @@ export function PatientsPage() {
         // Navigate to patient details on row click
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         // @ts-expect-error generic passthrough to underlying table
-        onRowClick={(row: Patient) => navigate(`/main/patients/${row.patient_id}`)}
+        onRowClick={(row: Patient) => navigate(`/main/patients/${row.patient_id}/dashboard`)}
       />
       <PatientFormSheet
         open={sheetOpen}
