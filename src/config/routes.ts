@@ -31,6 +31,7 @@ const PatientDocumentsPage = lazy(() => import('../features/patients/pages/docum
 const PatientPrescriptionsPage = lazy(() => import('../features/patients/pages/prescription/PatientPrescriptionsPage').then(module => ({ default: module.PatientPrescriptionsPage })))
 const PatientClinicalNotesPage = lazy(() => import('../features/patients/pages/notes/PatientClinicalNotesPage').then(module => ({ default: module.PatientClinicalNotesPage })))
 const PatientConsentPage = lazy(() => import('../features/patients/pages/consent/PatientConsentPage').then(module => ({ default: module.PatientConsentPage })))
+const AppointmentsPage = lazy(() => import('../features/appointments/pages/AppointmentsPage').then(module => ({ default: module.AppointmentsPage })))
 
 export const routes: RouteConfig[] = [
   {
@@ -101,6 +102,16 @@ export const routes: RouteConfig[] = [
       { id: 'patient-notes', path: '/main/patients/:id/notes', name: 'Clinical Notes', icon: Users, component: PatientClinicalNotesPage, roles: [1], showInNav: false, module: 'Patient Management' },
       { id: 'patient-consent', path: '/main/patients/:id/consent', name: 'Consent', icon: Users, component: PatientConsentPage, roles: [1], showInNav: false, module: 'Patient Management' },
     ],
+  },
+  {
+    id: 'appointments',
+    path: '/main/appointments',
+    name: 'Appointments',
+    icon: Users,
+    component: AppointmentsPage,
+    roles: [1],
+    showInNav: true,
+    module: 'Appointments',
   },
   {
     id: 'settings',

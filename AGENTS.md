@@ -39,8 +39,8 @@ Source Layout (high‑level)
 - `src/routes/Routes.tsx` – app routing, lazy loading, and auth redirects.
 - `src/pages/` – top-level pages (Login, Dashboard, etc.).
 
-Coding Conventions
-- TypeScript: strict mode; avoid `any`. Use feature-level `types/` and shared types in `src/shared/types/`.
+ Coding Conventions
+- TypeScript: strict mode; never use `any`. Prefer precise types or `unknown` with proper narrowing. Use feature-level `types/` and shared types in `src/shared/types/`.
 - File naming:
   - Components: PascalCase file names (e.g., `MyWidget.tsx`).
   - Hooks: `use*.ts(x)` (e.g., `useThing.ts`).
@@ -50,6 +50,7 @@ Coding Conventions
 - UI:
   - Compose with `src/components/ui/*` primitives; do not fork their internal API unless necessary.
   - Use Tailwind utility classes; favor composition over deep overrides.
+  - Inputs: for all user-facing inputs, use floating form wrappers from `src/components/form/*` (`FormFloatingInput`, `FormFloatingSelect`, `FormFloatingDatePicker`, etc.). Avoid using `src/components/ui/input` directly in pages/features.
 - Forms:
   - Prefer `src/components/ui/form.tsx` utilities (`Form`, `FormField`, etc.).
   - Use wrapper components in `src/components/form/*` for common patterns (floating labels, selects, date pickers).
@@ -85,4 +86,3 @@ PR/Change Etiquette for Agents
 - Prefer `src/lib/api.ts` over `src/service/api.ts` for new code.
 - Do not remove or rewrite UI primitives under `src/components/ui/` unless explicitly requested.
 - Update docs when adding new environment variables, scripts, or top-level folders.
-

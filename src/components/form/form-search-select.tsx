@@ -35,7 +35,7 @@ type FormSearchSelectProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 > = {
-  control: Control<TFieldValues>;
+  control: Control<TFieldValues, unknown, TFieldValues>;
   name: TName;
   label: string;
   options: SearchOption[];
