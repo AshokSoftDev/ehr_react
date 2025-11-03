@@ -119,7 +119,7 @@ export const GroupGrid: React.FC<GroupGridProps> = ({
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-3.5 w-3.5" />
-                          {format(new Date(group.createdAt), 'MMM d, yyyy')}
+                          {format(new Date(group.createdAt), 'dd/MM/yyyy')}
                         </div>
                       </div>
                     </div>
@@ -255,7 +255,7 @@ export const GroupGrid: React.FC<GroupGridProps> = ({
                     <Calendar className="h-3.5 w-3.5" />
                     <span>Created</span>
                   </div>
-                  <span>{format(new Date(group.createdAt), 'MMM d, yyyy')}</span>
+                  <span>{format(new Date(group.createdAt), 'dd/MM/yyyy')}</span>
                 </div>
                 
                 {hasUsers && (

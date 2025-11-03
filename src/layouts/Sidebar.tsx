@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -25,12 +25,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const { hasModuleAccess } = usePermissions();
   
-  // Filter routes based on permissions
-  const accessibleRoutes = routes.filter(route => 
-    // !route.module || hasModuleAccess(route.module)
-    route.showInNav
-  );
-  console.log(accessibleRoutes);
+  // Filter routes based on permissions (memoized to avoid re-computation on re-render)
+  const accessibleRoutes = useMemo(() => (
+    routes.filter(route =>
+      // !route.module || hasModuleAccess(route.module)
+      route.showInNav
+    )
+  ), [hasModuleAccess]);
   
 
 

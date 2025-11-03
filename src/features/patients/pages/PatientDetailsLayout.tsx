@@ -2,10 +2,11 @@ import { useEffect, useMemo } from "react";
 import { Outlet, useLocation, useNavigate, useParams, NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { patientService } from "../services/patient.service";
 import type { Patient } from "../types/patient.types";
-import { ArrowLeft, FileText, HeartPulse, History, LayoutDashboard, NotebookPen, ShieldCheck, Stethoscope } from "lucide-react";
+import { ArrowLeft, FileText, HeartPulse, History, LayoutDashboard, NotebookPen, ShieldCheck, Stethoscope, CalendarDays } from "lucide-react";
 
 export function PatientDetailsLayout() {
   const { id } = useParams();
@@ -35,6 +36,7 @@ export function PatientDetailsLayout() {
 
   const items = [
     { to: `/main/patients/${patientId}/dashboard`, label: "Dashboard", icon: LayoutDashboard },
+    { to: `/main/patients/${patientId}/visit`, label: "Visit", icon: CalendarDays },
     { to: `/main/patients/${patientId}/history`, label: "History", icon: History },
     { to: `/main/patients/${patientId}/vitals`, label: "Vitals", icon: HeartPulse },
     { to: `/main/patients/${patientId}/document`, label: "Document", icon: FileText },
@@ -91,7 +93,27 @@ export function PatientDetailsLayout() {
           </nav>
         </aside>
 
-        <main className="md:col-span-9 lg:col-span-10">
+        <main className="md:col-span-9 lg:col-span-10 space-y-4">
+          {/* Fixed snapshot cards across all patient subpages */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Card className="bg-card">
+              <CardHeader>
+                <CardTitle className="text-sm text-muted-foreground">Drug Allergy</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-foreground text-xl font-semibold">None Reported</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-card">
+              <CardHeader>
+                <CardTitle className="text-sm text-muted-foreground">Balance Due</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-foreground text-xl font-semibold">$0.00</p>
+              </CardContent>
+            </Card>
+          </div>
+
           <Outlet />
         </main>
       </div>

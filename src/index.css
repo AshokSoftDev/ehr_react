@@ -298,6 +298,22 @@ canvas {
   user-select: none;
 }
 
+/* Scoped styles for the clinical notes editor so list markers show while typing
+   Tailwind preflight removes default list styles; re-enable within editor area. */
+.editor-content ul {
+  list-style: disc;
+  margin-left: 1.25rem;
+  padding-left: 0.75rem;
+}
+.editor-content ol {
+  list-style: decimal;
+  margin-left: 1.25rem;
+  padding-left: 0.75rem;
+}
+.editor-content li {
+  margin-block: 0.25rem;
+}
+
 
 /* .border {
   border-color: var(--border);

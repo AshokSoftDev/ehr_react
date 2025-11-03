@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -11,11 +12,12 @@ import { FormFloatingInput } from '@/components/form/form-floating-input';
 import { FormFloatingDatePicker } from '@/components/form/FormFloatingDatePicker';
 import { appointmentService } from '../services/appointment.service';
 import type { AppointmentItem, AppointmentFilters } from '../types/appointment.types';
-import AppointmentFormSheet, { AppointmentFormValues } from '../components/AppointmentFormSheet';
+import AppointmentFormSheet, { type AppointmentFormValues } from '../components/AppointmentFormSheet';
 import AppointmentsCalendar from '../components/AppointmentsCalendar';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CalendarDays, LayoutGrid, Pencil, Trash2 } from 'lucide-react';
+import { createAppointmentColumns } from '../components/AppointmentTableColumns';
+import { AppointmentFilters as AppointmentFiltersComponent } from '../components/AppointmentFilters';
+import { AdvancedDataTable } from '@/components/ui/advanced-data-table';
+import { CalendarDays, Table } from 'lucide-react';
 
 const filterSchema = z.object({
   search: z.string().optional(),
@@ -26,7 +28,8 @@ type FilterValues = z.infer<typeof filterSchema>;
 
 export function AppointmentsPage() {
   const queryClient = useQueryClient();
-  const [view, setView] = useState<'cards' | 'calendar'>('cards');
+  const navigate = useNavigate();
+  const [view, setView] = useState<'table' | 'calendar'>('table');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -115,24 +118,55 @@ export function AppointmentsPage() {
       .then(() => queryClient.invalidateQueries({ queryKey: ['appointments'] }));
   };
 
+  const clearFilter = (key: string) => {
+    filterForm.setValue(key as keyof FilterValues, key === 'dateFrom' || key === 'dateTo' ? undefined : '');
+  };
+
+  const clearAllFilters = () => {
+    filterForm.reset();
+  };
+
+  const statusUpdateMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) => 
+      appointmentService.update(id, { appointment_status: status }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['appointments'] }),
+  });
+
+  const tableColumns = useMemo(
+    () => createAppointmentColumns({
+      onEdit: (appointment) => {
+        setEditItem(appointment);
+        setOpenForm(true);
+      },
+      onDelete: (id) => deleteMutation.mutate(id),
+      onStatusChange: (id, status) => statusUpdateMutation.mutate({ id, status }),
+      navigate,
+    }),
+    [deleteMutation, statusUpdateMutation, navigate]
+  );
+
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <div className="text-lg font-semibold">Appointments</div>
         <div className="flex items-center gap-2">
-          <Button variant={view === 'cards' ? 'default' : 'ghost'} size="icon" onClick={() => setView('cards')} title="Card view">
-            <LayoutGrid className="h-4 w-4" />
+          <Button variant={view === 'table' ? 'default' : 'ghost'} size="sm" onClick={() => setView('table')} className="gap-2">
+            <Table className="h-4 w-4" />
+            Table
           </Button>
-          <Button variant={view === 'calendar' ? 'default' : 'ghost'} size="icon" onClick={() => setView('calendar')} title="Calendar view">
+          <Button variant={view === 'calendar' ? 'default' : 'ghost'} size="sm" onClick={() => setView('calendar')} className="gap-2">
             <CalendarDays className="h-4 w-4" />
+            Calendar
           </Button>
-          <Button onClick={() => { setEditItem(null); setOpenForm(true); }}>Add</Button>
+          <Button onClick={() => { setEditItem(null); setOpenForm(true); }} className="ml-2">
+            Add Appointment
+          </Button>
         </div>
       </div>
 
       <Form {...filterForm}>
         <form className="grid gap-3 md:grid-cols-5">
-          <FormFloatingInput control={filterForm.control} name="search" label="Search (MRN, patient, doctor)" onChange={(e) => { filterForm.setValue('search', e.target.value); setPage(1); }} />
+          <FormFloatingInput control={filterForm.control} name="search" label="Search (MRN, patient, doctor)" />
           <FormFloatingDatePicker control={filterForm.control} name="dateFrom" label="From" />
           <FormFloatingDatePicker control={filterForm.control} name="dateTo" label="To" />
         </form>
@@ -140,46 +174,31 @@ export function AppointmentsPage() {
 
       <Separator />
 
-      {view === 'cards' ? (
+      <AppointmentFiltersComponent 
+        filters={filterForm.getValues()}
+        onClearFilter={clearFilter}
+        onClearAll={clearAllFilters}
+      />
+
+      {view === 'table' ? (
         <>
-          {listQuery.isLoading ? (
-            <div className="text-sm text-muted-foreground">Loading...</div>
-          ) : (listQuery.data?.appointments ?? []).length === 0 ? (
-            <div className="rounded-md border p-4 text-sm text-muted-foreground">No appointments found.</div>
-          ) : null}
-          {(listQuery.data?.appointments ?? []).length > 0 && (
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {(listQuery.data?.appointments ?? []).map((it) => (
-              <Card key={it.appointment_id} className="bg-card cursor-pointer" onClick={() => { setEditItem(it); setOpenForm(true); }}>
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-muted-foreground">MRN</div>
-                    <Badge variant="secondary">{it.patient_mrn}</Badge>
-                  </div>
-                  <div className="text-sm font-medium">{it.patient_firstName} {it.patient_lastName}</div>
-                  <div className="text-xs text-muted-foreground">{it.doctor_firstName} {it.doctor_lastName} ({it.doctor_specialty})</div>
-                  <div className="text-xs">{format(new Date(it.appointment_date), 'PP')} • {format(new Date(it.start_time), 'HH:mm')} - {format(new Date(it.end_time), 'HH:mm')}</div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs">{it.appointment_type}</div>
-                    <Badge>{it.appointment_status}</Badge>
-                  </div>
-                  <div className="flex items-center justify-end gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
-                    <Button variant="outline" size="icon" onClick={() => { setEditItem(it); setOpenForm(true); }} title="Edit"><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="outline" size="icon" onClick={() => deleteMutation.mutate(it.appointment_id)} title="Delete"><Trash2 className="h-4 w-4" /></Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          )}
-          <div className="mt-4 flex items-center justify-between">
-            <Button variant="outline" onClick={() => setPage(Math.max(1, page - 1))} disabled={(listQuery.data?.page ?? page) <= 1}>Prev Page</Button>
-            <div className="text-xs text-muted-foreground">Page {(listQuery.data?.page ?? page)} of {listQuery.data?.totalPages ?? Math.max(1, Math.ceil((listQuery.data?.total ?? 0) / limit))}</div>
-            <Button variant="outline" onClick={() => setPage((listQuery.data?.page ?? page) + 1)} disabled={(listQuery.data?.page ?? page) >= (listQuery.data?.totalPages ?? 1)}>Next Page</Button>
-          </div>
+          <AdvancedDataTable
+            columns={tableColumns}
+            data={listQuery.data?.appointments ?? []}
+            isLoading={listQuery.isLoading}
+            page={page}
+            limit={limit}
+            total={listQuery.data?.total ?? 0}
+            onPageChange={setPage}
+            onLimitChange={setLimit}
+          />
         </>
       ) : (
-        <AppointmentsCalendar items={listQuery.data?.appointments ?? []} onReschedule={onReschedule} />
+        <AppointmentsCalendar 
+          items={listQuery.data?.appointments ?? []} 
+          onReschedule={onReschedule} 
+          onStatusChange={(id, status) => statusUpdateMutation.mutate({ id, status })}
+        />
       )}
 
       <AppointmentFormSheet

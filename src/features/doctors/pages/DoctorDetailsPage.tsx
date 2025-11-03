@@ -191,7 +191,7 @@ export const DoctorDetailsPage: React.FC = () => {
               <p className="text-sm text-muted-foreground">Date of Birth</p>
               <p className="font-medium flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                {format(new Date(doctor.dob), 'dd MMM yyyy')}
+                {format(new Date(doctor.dob), 'dd/MM/yyyy')}
               </p>
             </div>
             <div>
@@ -282,13 +282,13 @@ export const DoctorDetailsPage: React.FC = () => {
             <div>
               <p className="text-sm text-muted-foreground">Created At</p>
               <p className="font-medium">
-                {format(new Date(doctor.createdAt), 'dd MMM yyyy, HH:mm')}
+                {format(new Date(doctor.createdAt), 'dd/MM/yyyy, HH:mm')}
               </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Last Updated</p>
               <p className="font-medium">
-                {format(new Date(doctor.updatedAt), 'dd MMM yyyy, HH:mm')}
+                {format(new Date(doctor.updatedAt), 'dd/MM/yyyy, HH:mm')}
               </p>
             </div>
             {doctor.deletedAt && (
@@ -296,7 +296,7 @@ export const DoctorDetailsPage: React.FC = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Deleted At</p>
                   <p className="font-medium text-destructive">
-                    {format(new Date(doctor.deletedAt), 'dd MMM yyyy, HH:mm')}
+                    {format(new Date(doctor.deletedAt), 'dd/MM/yyyy, HH:mm')}
                   </p>
                 </div>
                 <div>

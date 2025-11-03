@@ -249,7 +249,7 @@ export const UserGrid: React.FC<UserGridProps> = ({
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  <span>{format(new Date(user.createdAt), 'MMM d, yyyy')}</span>
+                  <span>{format(new Date(user.createdAt), 'dd/MM/yyyy')}</span>
                 </div>
                 
                 <Badge

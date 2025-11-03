@@ -4,6 +4,7 @@ import {
   Users,
   Settings,
   ThermometerIcon,
+  CalendarDays,
 } from 'lucide-react';
 import { type RouteConfig } from '../interface/routes.interface';
 
@@ -25,6 +26,7 @@ const DoctorsDetails = lazy(() => import('../features/doctors/pages/DoctorDetail
 const PatientsPage = lazy(() => import('../features/patients/pages/PatientsPage').then(module => ({ default: module.PatientsPage })))
 const PatientDetailsLayout = lazy(() => import('../features/patients/pages/PatientDetailsLayout').then(module => ({ default: module.PatientDetailsLayout })))
 const PatientDashboard = lazy(() => import('../features/patients/pages/dashboard/PatientDashboard').then(module => ({ default: module.PatientDashboard })))
+const PatientVisitPage = lazy(() => import('../features/patients/pages/visit/PatientVisitPage').then(module => ({ default: module.PatientVisitPage })))
 const PatientHistoryPage = lazy(() => import('../features/patients/pages/history/PatientHistoryPage').then(module => ({ default: module.PatientHistoryPage })))
 const PatientVitalsPage = lazy(() => import('../features/patients/pages/vitals/PatientVitalsPage').then(module => ({ default: module.PatientVitalsPage })))
 const PatientDocumentsPage = lazy(() => import('../features/patients/pages/document/PatientDocumentsPage').then(module => ({ default: module.PatientDocumentsPage })))
@@ -32,6 +34,7 @@ const PatientPrescriptionsPage = lazy(() => import('../features/patients/pages/p
 const PatientClinicalNotesPage = lazy(() => import('../features/patients/pages/notes/PatientClinicalNotesPage').then(module => ({ default: module.PatientClinicalNotesPage })))
 const PatientConsentPage = lazy(() => import('../features/patients/pages/consent/PatientConsentPage').then(module => ({ default: module.PatientConsentPage })))
 const AppointmentsPage = lazy(() => import('../features/appointments/pages/AppointmentsPage').then(module => ({ default: module.AppointmentsPage })))
+const VisitsPage = lazy(() => import('../features/visits/pages/VisitsPage').then(module => ({ default: module.VisitsPage })))
 
 export const routes: RouteConfig[] = [
   {
@@ -95,6 +98,7 @@ export const routes: RouteConfig[] = [
     module: 'Patient Management',
     children: [
       { id: 'patient-dashboard', path: '/main/patients/:id/dashboard', name: 'Dashboard', icon: Users, component: PatientDashboard, roles: [1], showInNav: false, module: 'Patient Management' },
+      { id: 'patient-visit', path: '/main/patients/:id/visit', name: 'Visit', icon: Users, component: PatientVisitPage, roles: [1], showInNav: false, module: 'Patient Management' },
       { id: 'patient-history', path: '/main/patients/:id/history', name: 'History', icon: Users, component: PatientHistoryPage, roles: [1], showInNav: false, module: 'Patient Management' },
       { id: 'patient-vitals', path: '/main/patients/:id/vitals', name: 'Vitals', icon: Users, component: PatientVitalsPage, roles: [1], showInNav: false, module: 'Patient Management' },
       { id: 'patient-document', path: '/main/patients/:id/document', name: 'Document', icon: Users, component: PatientDocumentsPage, roles: [1], showInNav: false, module: 'Patient Management' },
@@ -112,6 +116,16 @@ export const routes: RouteConfig[] = [
     roles: [1],
     showInNav: true,
     module: 'Appointments',
+  },
+  {
+    id: 'visits',
+    path: '/main/visits',
+    name: 'Visits',
+    icon: CalendarDays,
+    component: VisitsPage,
+    roles: [1],
+    showInNav: true,
+    module: 'Visits',
   },
   {
     id: 'settings',
