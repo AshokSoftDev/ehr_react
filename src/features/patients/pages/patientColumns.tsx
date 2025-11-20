@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Patient } from "../types/patient.types";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, User } from "lucide-react";
+import { Edit, Trash, User } from "lucide-react";
 import { format } from "date-fns";
 
 export const patientColumns = (
@@ -114,21 +114,27 @@ export const patientColumns = (
             variant="ghost"
             size="icon"
             className="h-8 w-8 hover:bg-muted/50 text-primary hover:text-primary"
-            onClick={() => onEdit(patient)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(patient);
+            }}
             aria-label="Edit patient"
             title="Edit patient"
           >
-            <Pencil className="h-4 w-4" />
+            <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 hover:bg-muted/50 hover:text-destructive"
-            onClick={() => onDelete(patient)}
+            className="h-8 w-8 text-destructive hover:bg-muted/50 hover:text-destructive"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(patient);
+            }}
             aria-label="Delete patient"
             title="Delete patient"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash className="h-4 w-4" />
           </Button>
         </div>
       );

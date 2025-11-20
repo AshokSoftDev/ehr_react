@@ -1,30 +1,15 @@
-import React from 'react';
-import { Plus, Download, Users } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
+import React from "react";
+import { Plus, Download } from "lucide-react";
+import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
+import { Button } from "@/components/ui/button";
+import { useDoctorManagement } from "../hooks";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../../../components/ui/card';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '../../../components/ui/pagination';
-import { Skeleton } from '../../../components/ui/skeleton';
-import { useDoctorManagement } from '../hooks';
-import { 
-  DoctorFormSheet, 
-  DoctorList, 
-  DoctorFilters, 
-  DoctorDeleteDialog 
-} from '../components';
+  DoctorFormSheet,
+  DoctorFilters,
+  DoctorDeleteDialog,
+} from "../components";
+import { doctorColumns } from "./doctorColumns";
+import type { Doctor } from "../types/doctor.types";
 
 export const DoctorsPage: React.FC = () => {
   const {
@@ -36,6 +21,7 @@ export const DoctorsPage: React.FC = () => {
     
     // State
     filters,
+    pagination,
     isFormOpen,
     isDeleteDialogOpen,
     selectedDoctor,
@@ -49,6 +35,7 @@ export const DoctorsPage: React.FC = () => {
     
     // Actions
     updateFilters,
+    updatePagination,
     goToPage,
     openCreateForm,
     openEditForm,
@@ -59,31 +46,14 @@ export const DoctorsPage: React.FC = () => {
     handleUpdate,
     handleDelete,
     viewDoctor,
-    hasNextPage,
-    hasPreviousPage,
   } = useDoctorManagement({
     initialPagination: { page: 1, limit: 10 },
   });
 
-  // Generate pagination items
-  const getPaginationItems = () => {
-    const items = [];
-    const maxVisible = 5;
-    const halfVisible = Math.floor(maxVisible / 2);
-    
-    let start = Math.max(1, page - halfVisible);
-    let end = Math.min(totalPages, start + maxVisible - 1);
-    
-    if (end - start < maxVisible - 1) {
-      start = Math.max(1, end - maxVisible + 1);
-    }
-    
-    for (let i = start; i <= end; i++) {
-      items.push(i);
-    }
-    
-    return items;
-  };
+  const columns = React.useMemo(
+    () => doctorColumns(openEditForm, openDeleteDialog),
+    [openEditForm, openDeleteDialog]
+  );
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-6">
@@ -100,7 +70,7 @@ export const DoctorsPage: React.FC = () => {
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Button onClick={openCreateForm}>
+          <Button size="sm" onClick={openCreateForm}>
             <Plus className="mr-2 h-4 w-4" />
             Add Doctor
           </Button>
@@ -111,104 +81,23 @@ export const DoctorsPage: React.FC = () => {
       <DoctorFilters filters={filters} onFiltersChange={updateFilters} />
 
       {/* Table */}
-      {isLoading ? (
-        <Card>
-          <CardContent className="p-0">
-            <div className="space-y-3 p-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-1/4" />
-                    <Skeleton className="h-3 w-1/3" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <Card>
-            <CardContent className="p-0">
-              <DoctorList
-                doctors={doctors}
-                onEdit={openEditForm}
-                onDelete={openDeleteDialog}
-                onView={viewDoctor}
-              />
-            </CardContent>
-          </Card>
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-            <div className="flex justify-center">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => goToPage(page - 1)}
-                      className={!hasPreviousPage ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                    />
-                  </PaginationItem>
-                  
-                  {page > 3 && (
-                    <>
-                      <PaginationItem>
-                        <PaginationLink onClick={() => goToPage(1)} className="cursor-pointer">
-                          1
-                        </PaginationLink>
-                      </PaginationItem>
-                      {page > 4 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-                    </>
-                  )}
-                  
-                  {getPaginationItems().map((pageNum) => (
-                    <PaginationItem key={pageNum}>
-                      <PaginationLink
-                        onClick={() => goToPage(pageNum)}
-                        isActive={pageNum === page}
-                        className="cursor-pointer"
-                      >
-                        {pageNum}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-                  
-                  {page < totalPages - 2 && (
-                    <>
-                      {page < totalPages - 3 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-                      <PaginationItem>
-                        <PaginationLink 
-                          onClick={() => goToPage(totalPages)} 
-                          className="cursor-pointer"
-                        >
-                          {totalPages}
-                        </PaginationLink>
-                      </PaginationItem>
-                    </>
-                  )}
-                  
-                  <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => goToPage(page + 1)}
-                      className={!hasNextPage ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
-        </>
-      )}
+      <AdvancedDataTable<Doctor, unknown>
+        columns={columns}
+        data={doctors}
+        isLoading={isLoading}
+        page={page}
+        limit={pagination.limit ?? 10}
+        total={total}
+        onPageChange={goToPage}
+        onLimitChange={(limit) =>
+          updatePagination({
+            ...pagination,
+            page: 1,
+            limit,
+          })
+        }
+        onRowClick={viewDoctor as (row: Doctor) => void}
+      />
 
       {/* Form Sheet */}
       <DoctorFormSheet

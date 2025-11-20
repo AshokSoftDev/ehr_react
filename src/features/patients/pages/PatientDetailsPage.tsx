@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, FileText, HeartPulse, History, LayoutDashboard, NotebookPen, ShieldCheck, Stethoscope } from "lucide-react";
 import { patientService } from "../services/patient.service";
 import type { Patient } from "../types/patient.types";
+import { PatientPrescriptionsPage } from "./prescription/PatientPrescriptionsPage";
+import { PatientClinicalNotesPage } from "./notes/PatientClinicalNotesPage";
 
 type Section = "dashboard" | "history" | "vitals" | "document" | "prescription" | "notes" | "consent";
 
@@ -124,6 +126,8 @@ export function PatientDetailsPage() {
                   <TabsTrigger value="emergency">Emergency</TabsTrigger>
                   <TabsTrigger value="appointment">Appointment</TabsTrigger>
                   <TabsTrigger value="visit">Visit</TabsTrigger>
+                  <TabsTrigger value="prescription">Prescription</TabsTrigger>
+                  <TabsTrigger value="notes">Clinical Notes</TabsTrigger>
                   <TabsTrigger value="billing">Billing</TabsTrigger>
                   <TabsTrigger value="insurances">Insurances</TabsTrigger>
                   <TabsTrigger value="occupation">Occupation</TabsTrigger>
@@ -155,6 +159,12 @@ export function PatientDetailsPage() {
                 </TabsContent>
                 <TabsContent value="visit">
                   <Placeholder title="Visits" />
+                </TabsContent>
+                <TabsContent value="prescription">
+                  <PatientPrescriptionsPage />
+                </TabsContent>
+                <TabsContent value="notes">
+                  <PatientClinicalNotesPage />
                 </TabsContent>
                 <TabsContent value="billing">
                   <Placeholder title="Billing" />
@@ -208,4 +218,3 @@ function Placeholder({ title }: { title: string }) {
 }
 
 export default PatientDetailsPage;
-

@@ -46,7 +46,7 @@ export function FormFloatingSelect<
     name,
     label,
     options,
-    placeholder = "Select an option",
+    // placeholder = "Select an option",
     className,
     triggerClassName,
     disabled,
@@ -57,7 +57,7 @@ export function FormFloatingSelect<
   // If external value/onChange provided, use them instead of form control
   if (value !== undefined && onValueChange) {
     const hasValue = value.length > 0;
-    
+
     return (
       <FormItem className={cn("relative group", className)}>
         <label
@@ -74,11 +74,7 @@ export function FormFloatingSelect<
           {label}
         </label>
 
-        <Select
-          disabled={disabled}
-          onValueChange={onValueChange}
-          value={value}
-        >
+        <Select disabled={disabled} onValueChange={onValueChange} value={value}>
           <SelectTrigger
             className={cn(
               "h-12 min-h-[48px] pt-3 pb-2 px-3 w-full",
@@ -95,7 +91,7 @@ export function FormFloatingSelect<
             {options.map((opt) => (
               <SelectItem
                 key={opt.value}
-                value={opt.value || 'none'}
+                value={opt.value || "none"}
                 disabled={opt.disabled}
               >
                 {opt.label}
@@ -155,7 +151,7 @@ export function FormFloatingSelect<
                   {options.map((opt) => (
                     <SelectItem
                       key={opt.value}
-                      value={opt.value || 'none'}
+                      value={opt.value || "none"}
                       disabled={opt.disabled}
                     >
                       {opt.label}

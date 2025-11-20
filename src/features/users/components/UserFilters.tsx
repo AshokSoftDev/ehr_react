@@ -1,8 +1,7 @@
 import React from 'react';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
-import { Search, X, Grid, List } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import { Search, X } from 'lucide-react';
 import { FormFloatingSelect } from '../../../components/form/FormFloatingSelect';
 import { useForm } from 'react-hook-form';
 
@@ -23,8 +22,6 @@ interface UserFiltersProps {
   groups: Group[];
   onReset: () => void;
   hasActiveFilters: boolean;
-  viewMode: 'grid' | 'list';
-  onViewModeChange: (mode: 'grid' | 'list') => void;
 }
 
 export const UserFilters: React.FC<UserFiltersProps> = ({
@@ -39,8 +36,6 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
   groups,
   onReset,
   hasActiveFilters,
-  viewMode,
-  onViewModeChange,
 }) => {
   const form = useForm({
     defaultValues: {
@@ -122,28 +117,15 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
           </div>
 
           {hasActiveFilters && (
-            <Button 
-              variant="ghost" 
-              onClick={onReset} 
+            <Button
+              variant="ghost"
+              onClick={onReset}
               className="gap-2 h-12"
             >
               <X className="h-4 w-4" />
               Clear
             </Button>
           )}
-
-          <div className="h-12">
-            <Tabs value={viewMode} onValueChange={(v) => onViewModeChange(v as 'grid' | 'list')}>
-              <TabsList className="h-12">
-                <TabsTrigger value="grid" className="px-3 h-10">
-                  <Grid className="h-4 w-4" />
-                </TabsTrigger>
-                <TabsTrigger value="list" className="px-3 h-10">
-                  <List className="h-4 w-4" />
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
         </div>
       </div>
     </div>

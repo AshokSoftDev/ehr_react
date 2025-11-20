@@ -29,6 +29,10 @@ TypeScript Policy
   - `services/`: Axios-based API access
   - `schemas/`: Zod validation schemas
   - `types/`: TypeScript types
+  - Example domains:
+    - `features/appointments`: appointment calendar + table views
+    - `features/groups`: group + permissions management
+    - `features/locations`: Location master CRUD (backed by `/master/location` API)
 - `react/src/config/`: Runtime configuration (`environments.ts`) and routes (`routes.ts`).
 - `react/src/contexts/`: Cross-cutting React Contexts (Auth, Permissions, Theme, FormSheet).
 - `react/src/lib/`: Shared libs (Axios instance, utilities, toast).

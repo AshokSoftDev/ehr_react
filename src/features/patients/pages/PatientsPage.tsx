@@ -16,8 +16,14 @@ export function PatientsPage() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | undefined>();
 
   const { data, isLoading } = usePatients(page, limit, search);
-  
-  const { createPatient, updatePatient, deletePatient, isCreating, isUpdating } = usePatientManagement();
+
+  const {
+    createPatient,
+    updatePatient,
+    deletePatient,
+    isCreating,
+    isUpdating,
+  } = usePatientManagement();
 
   const handleAdd = () => {
     setSelectedPatient(undefined);
@@ -42,13 +48,12 @@ export function PatientsPage() {
     setSheetOpen(false);
   };
 
-  useEffect(()=>{
-  console.log(data);
-
-  }, [data])
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
 
   return (
-    <div className="h-full w-full p-4 md:p-8">
+    <div className="h-full w-full">
       <h2 className="text-2xl font-bold mb-4">Patients</h2>
       <DataTableWIthFilter
         data={data?.patients ?? []}
@@ -65,7 +70,9 @@ export function PatientsPage() {
         // Navigate to patient details on row click
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         // @ts-expect-error generic passthrough to underlying table
-        onRowClick={(row: Patient) => navigate(`/main/patients/${row.patient_id}/dashboard`)}
+        onRowClick={(row: Patient) =>
+          navigate(`/main/patients/${row.patient_id}/dashboard`)
+        }
       />
       <PatientFormSheet
         open={sheetOpen}

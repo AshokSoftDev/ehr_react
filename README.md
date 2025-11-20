@@ -49,6 +49,9 @@ src/
     patients/
     users/
     groups/
+    appointments/
+    visits/
+    locations/           # Location master (CRUD UI, filters; uses /master/location API)
   hooks/                 # Reusable hooks
   lib/                   # Axios client, utilities, toast helpers
   pages/                 # Top-level pages (Login, Dashboard)
@@ -61,6 +64,7 @@ Development Workflow
 - Routing: Define route entries in `src/config/routes.ts`. `src/routes/Routes.tsx` lazy-loads components and applies role-based filtering.
 - Data fetching: Use TanStack Query hooks under each feature (e.g., `src/features/doctors/hooks/useDoctors.ts`). Keep stable `queryKey`s and prefetch adjacent pages when appropriate.
 - Services: Implement domain services under `src/features/<domain>/services/*` and use the shared axios instance from `src/lib/api.ts`.
+  - Example: `src/features/locations/services/location.service.ts` wraps the `/master/location` CRUD API.
 - Forms: Use `src/components/ui/form.tsx` primitives (`Form`, `FormField`, `FormControl`, etc.) and the higher-level wrappers in `src/components/form/*`. Prefer Zod schemas in `schemas/` and `@hookform/resolvers/zod` for validation.
 - UI: Compose using `src/components/ui/*` primitives and Tailwind utilities. Avoid modifying primitive component APIs unless necessary.
 

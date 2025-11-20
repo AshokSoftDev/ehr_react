@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Pencil, Trash2, User, Calendar } from 'lucide-react';
+import { Edit, Trash, User, Calendar } from 'lucide-react';
 import type { AppointmentItem } from '../types/appointment.types';
 
 interface AppointmentTableColumnsProps {
@@ -172,23 +172,29 @@ export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, nav
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            size="sm"
-            onClick={() => onEdit(appointment)}
-            className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950"
+            size="icon"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(appointment);
+            }}
+            className="h-8 w-8 hover:bg-muted/50 text-primary hover:text-primary"
+            aria-label="Edit appointment"
             title="Edit appointment"
           >
-            <Pencil className="h-3 w-3 mr-1" />
-            Edit
+            <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
-            size="sm"
-            onClick={() => onDelete(appointment.appointment_id)}
-            className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+            size="icon"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(appointment.appointment_id);
+            }}
+            className="h-8 w-8 text-destructive hover:bg-muted/50 hover:text-destructive"
+            aria-label="Delete appointment"
             title="Delete appointment"
           >
-            <Trash2 className="h-3 w-3 mr-1" />
-            Delete
+            <Trash className="h-4 w-4" />
           </Button>
         </div>
       );

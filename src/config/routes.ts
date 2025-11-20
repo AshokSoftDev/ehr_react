@@ -1,11 +1,5 @@
 import { lazy } from 'react';
-import {
-  LayoutDashboardIcon,
-  Users,
-  Settings,
-  ThermometerIcon,
-  CalendarDays,
-} from 'lucide-react';
+import { LayoutDashboardIcon, Users, Settings, ThermometerIcon, CalendarDays } from 'lucide-react';
 import { type RouteConfig } from '../interface/routes.interface';
 
 const Dashboard = lazy(() => import('../pages/Dashboard'));
@@ -35,6 +29,7 @@ const PatientClinicalNotesPage = lazy(() => import('../features/patients/pages/n
 const PatientConsentPage = lazy(() => import('../features/patients/pages/consent/PatientConsentPage').then(module => ({ default: module.PatientConsentPage })))
 const AppointmentsPage = lazy(() => import('../features/appointments/pages/AppointmentsPage').then(module => ({ default: module.AppointmentsPage })))
 const VisitsPage = lazy(() => import('../features/visits/pages/VisitsPage').then(module => ({ default: module.VisitsPage })))
+const LocationsPage = lazy(() => import('../features/locations/pages/LocationsPage').then(module => ({ default: module.LocationsPage })))
 
 export const routes: RouteConfig[] = [
   {
@@ -145,6 +140,16 @@ export const routes: RouteConfig[] = [
         roles: [1],
         showInNav: true,
         module: 'Settings', // Add module name
+      },
+      {
+        id: 'location-master',
+        path: '/main/settings/locations',
+        name: 'Location Master',
+        icon: Users,
+        component: LocationsPage,
+        roles: [1],
+        showInNav: true,
+        module: 'Settings',
       },
     ],
   },
