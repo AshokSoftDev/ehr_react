@@ -44,13 +44,11 @@ export const createVisitColumns = (
     },
   },
   {
-    accessorKey: 'appointment_date',
-    header: 'Date & Time',
+    accessorKey: 'visit_date',
+    header: 'Visit Date',
     cell: ({ row }) => {
       const a = row.original;
-      const date = new Date(a.appointment_date);
-      const startTime = new Date(a.start_time);
-      const endTime = new Date(a.end_time);
+      const date = new Date(a.visit_date);
       const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
       const isPast = date < new Date();
       return (
@@ -59,9 +57,6 @@ export const createVisitColumns = (
             <Calendar className="h-3 w-3" />
             {format(date, 'dd/MM/yyyy')}
             {isToday && <Badge variant="default" className="text-xs px-1 py-0">Today</Badge>}
-          </div>
-          <div className="text-xs text-gray-600 dark:text-gray-400 font-mono">
-            {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
           </div>
         </div>
       );
@@ -83,21 +78,16 @@ export const createVisitColumns = (
   },
   {
     header: 'Status',
-    accessorKey: 'appointment_status',
+    accessorKey: 'status',
     cell: ({ row }) => {
-      const status = row.original.appointment_status;
-      const statusColors: Record<string, string> = {
-        Scheduled: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-        Confirmed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-        Completed: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
-        Cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-        'No-show': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-        Rescheduled: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-      };
-      const cls = statusColors[status] || 'bg-gray-100 text-gray-800';
+      const status = row.original.status;
+      const isActive = status === 1;
+      const cls = isActive
+        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
       return (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${cls}`}>
-          {status}
+          {isActive ? 'Active' : 'Inactive'}
         </span>
       );
     },

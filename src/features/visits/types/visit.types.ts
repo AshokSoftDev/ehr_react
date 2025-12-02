@@ -16,19 +16,21 @@ export interface VisitPatientLite {
 }
 
 export interface VisitItem {
-  appointment_id: number;
+  visit_id: number;
+  appointment_id?: number | null;
   patient_id: number;
   doctor_id: string;
-  appointment_date: string; // ISO
-  start_time: string; // ISO
-  end_time: string; // ISO
-  duration?: number;
-  appointment_type: string;
-  reason_for_visit?: string;
-  appointment_status: string;
-  notes?: string;
+  location_id?: number | null;
+  visit_date: string; // ISO
+  visit_type: string;
+  reason_for_visit?: string | null;
+  status: number;
   patient?: VisitPatientLite;
   doctor?: VisitDoctorLite;
+  appointment?: {
+    appointment_id: number;
+    appointment_type: string;
+  } | null;
 }
 
 export interface VisitFilters {
@@ -37,7 +39,7 @@ export interface VisitFilters {
   doctor?: string;
   patient?: string; // name or MRN
   reason?: string;
-  status?: string;
+  status?: string; // '1' or '0' (active/inactive)
   page?: number;
   limit?: number;
 }
@@ -48,4 +50,3 @@ export interface PaginatedVisits {
   page: number;
   totalPages: number;
 }
-

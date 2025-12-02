@@ -1,5 +1,11 @@
-import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api } from '../../lib/api';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { api } from "../../lib/api";
 
 interface Permission {
   moduleId: string;
@@ -15,12 +21,14 @@ interface Permission {
 interface PermissionContextType {
   permissions: Permission[];
   loading: boolean;
-  hasModuleAccess: (moduleId: string) => boolean;
-  hasSubModuleAccess: (moduleId: string, subModuleId: string) => boolean;
+  hasModuleAccess: (moduleKey: string) => boolean;
+  hasSubModuleAccess: (moduleKey: string, subModuleId: string) => boolean;
   refreshPermissions: () => Promise<void>;
 }
 
-const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
+const PermissionContext = createContext<PermissionContextType | undefined>(
+  undefined
+);
 
 export function PermissionProvider({ children }: { children: ReactNode }) {
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -29,16 +37,17 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
   const fetchUserPermissions = async () => {
     try {
       setLoading(true);
-      
+
       // Get user data from localStorage/sessionStorage (wherever JWT payload is stored)
-      const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+      const userStr =
+        localStorage.getItem("user") || sessionStorage.getItem("user");
       if (!userStr) {
         setPermissions([]);
         return;
       }
 
       const user = JSON.parse(userStr);
-      
+
       // If user doesn't have a groupId, they have no permissions
       if (!user.groupId) {
         setPermissions([]);
@@ -49,49 +58,52 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
       const response = await api.get(`/groups/${user.groupId}`);
       const groupData = response.data.data;
       console.log("groupData: ", groupData);
-      
-      
+
       // If the group has permissions in the response, use them
       if (groupData.permissions) {
-        const transformedPermissions: Permission[] = groupData.permissions.map((perm: any) => ({
-          moduleId: perm.moduleId,
-          moduleName: perm.module.name,
-          hasAccess: perm.hasAccess,
-          subModules: perm.subModulePermissions?.map((sub: any) => ({
-            subModuleId: sub.subModule.id,
-            subModuleName: sub.subModule.name,
-            allowed: sub.allowed,
-          })) || [],
-        }));
+        const transformedPermissions: Permission[] = groupData.permissions.map(
+          (perm: any) => ({
+            moduleId: perm.moduleId,
+            moduleName: perm.module.name,
+            hasAccess: perm.hasAccess,
+            subModules:
+              perm.subModulePermissions?.map((sub: any) => ({
+                subModuleId: sub.subModule.id,
+                subModuleName: sub.subModule.name,
+                allowed: sub.allowed,
+              })) || [],
+          })
+        );
         console.log("transformedPermissions: ", transformedPermissions);
-        
+
         setPermissions(transformedPermissions);
       } else {
         // For root/admin users without specific permissions, grant all access
-        if (user.accountType === 'parent' && !user.parentId) {
+        if (user.accountType === "parent" && !user.parentId) {
           // Fetch all modules and grant full access
-          const modulesResponse = await api.get('/groups/modules');
+          const modulesResponse = await api.get("/groups/modules");
           const modules = modulesResponse.data.data;
-          
+
           const fullPermissions: Permission[] = modules.map((module: any) => ({
             moduleId: module.id,
             moduleName: module.name,
             hasAccess: true,
-            subModules: module.subModules?.map((sub: any) => ({
-              subModuleId: sub.id,
-              subModuleName: sub.name,
-              allowed: true,
-            })) || [],
+            subModules:
+              module.subModules?.map((sub: any) => ({
+                subModuleId: sub.id,
+                subModuleName: sub.name,
+                allowed: true,
+              })) || [],
           }));
-          alert("j")
-          
+          alert("j");
+
           setPermissions(fullPermissions);
         } else {
           setPermissions([]);
         }
       }
     } catch (error) {
-      console.error('Failed to fetch permissions:', error);
+      console.error("Failed to fetch permissions:", error);
       // For development/testing, you might want to grant all permissions on error
       setPermissions([]);
     } finally {
@@ -103,33 +115,40 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
     fetchUserPermissions();
   }, []);
 
-  const hasModuleAccess = (moduleId: string): boolean => {
-    console.log(permissions);
-    
-    const permission = permissions.find(p => p.moduleId === moduleId);
-    console.log(permission);
-    
+  const hasModuleAccess = (moduleKey: string): boolean => {
+    const permission = permissions.find(
+      (p) =>
+        p.moduleId === moduleKey ||
+        p.moduleName.toLowerCase() === moduleKey.toLowerCase()
+    );
     return permission?.hasAccess || false;
   };
-  
-  const hasSubModuleAccess = (moduleId: string, subModuleId: string): boolean => {
-    console.log(permissions);
-    const permission = permissions.find(p => p.moduleId === moduleId);
+
+  const hasSubModuleAccess = (
+    moduleKey: string,
+    subModuleId: string
+  ): boolean => {
+    const permission = permissions.find(
+      (p) =>
+        p.moduleId === moduleKey ||
+        p.moduleName.toLowerCase() === moduleKey.toLowerCase()
+    );
     if (!permission?.hasAccess) return false;
-    
-    const subModule = permission.subModules.find(sub => sub.subModuleId === subModuleId);
-    console.log(permission, subModule);
+
+    const subModule = permission.subModules.find(
+      (sub) => sub.subModuleId === subModuleId
+    );
     return subModule?.allowed || false;
   };
-  
+
   return (
-    <PermissionContext.Provider 
-      value={{ 
-        permissions, 
-        loading, 
-        hasModuleAccess, 
-        hasSubModuleAccess, 
-        refreshPermissions: fetchUserPermissions 
+    <PermissionContext.Provider
+      value={{
+        permissions,
+        loading,
+        hasModuleAccess,
+        hasSubModuleAccess,
+        refreshPermissions: fetchUserPermissions,
       }}
     >
       {children}
@@ -140,7 +159,7 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
 export const usePermissions = () => {
   const context = useContext(PermissionContext);
   if (!context) {
-    throw new Error('usePermissions must be used within PermissionProvider');
+    throw new Error("usePermissions must be used within PermissionProvider");
   }
   return context;
 };

@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { Plus, Search, Loader2 } from 'lucide-react';
+import React, { useMemo, useState } from "react";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Plus, Search, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,16 +11,22 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../../../components/ui/alert-dialog';
-import { GroupForm } from '../components/GroupForm';
-import { useGroups, useCreateGroup, useUpdateGroup, useDeleteGroup, useModules } from '../hooks/useGroups';
-import { useDebounce } from '../../../hooks/use-debounce';
-import { ScrollArea } from '../../../components/ui/scroll-area';
-import { AdvancedDataTable } from '@/components/ui/advanced-data-table';
-import type { ColumnDef } from '@tanstack/react-table';
-import type { GroupData } from './GroupsPage.types';
-import { groupColumns } from './groupColumns';
-import type { GroupFormData } from '../../shared/types/form.types';
+} from "../../../components/ui/alert-dialog";
+import { GroupForm } from "../components/GroupForm";
+import {
+  useGroups,
+  useCreateGroup,
+  useUpdateGroup,
+  useDeleteGroup,
+  useModules,
+} from "../hooks/useGroups";
+import { useDebounce } from "../../../hooks/use-debounce";
+import { ScrollArea } from "../../../components/ui/scroll-area";
+import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { GroupData } from "./GroupsPage.types";
+import { groupColumns } from "./groupColumns";
+import type { GroupFormData } from "../../shared/types/form.types";
 
 interface ModuleData {
   id: string;
@@ -50,7 +56,7 @@ interface ModulesResponse {
 }
 
 export const GroupsPage: React.FC = () => {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [formOpen, setFormOpen] = useState(false);
@@ -60,12 +66,12 @@ export const GroupsPage: React.FC = () => {
 
   const debouncedSearch = useDebounce(search, 500);
 
-  const { data, isLoading } = useGroups({ 
-    page, 
-    limit, 
-    search: debouncedSearch 
+  const { data, isLoading } = useGroups({
+    page,
+    limit,
+    search: debouncedSearch,
   });
-  
+
   const { data: modulesData } = useModules();
   const createMutation = useCreateGroup();
   const updateMutation = useUpdateGroup();
@@ -92,13 +98,16 @@ export const GroupsPage: React.FC = () => {
   const handleFormSubmit = async (formData: GroupFormData): Promise<void> => {
     try {
       const submitData = JSON.parse(JSON.stringify(formData));
-      
+
       if (selectedGroup) {
-        await updateMutation.mutateAsync({ id: selectedGroup.id, data: submitData });
+        await updateMutation.mutateAsync({
+          id: selectedGroup.id,
+          data: submitData,
+        });
       } else {
         await createMutation.mutateAsync(submitData);
       }
-      
+
       setFormOpen(false);
       setSelectedGroup(null);
     } catch (error) {
@@ -111,6 +120,12 @@ export const GroupsPage: React.FC = () => {
   const pagination = responseData?.data.pagination;
   const modules = (modulesData as ModulesResponse)?.data || [];
 
+  // Hide system group (root-only) from UI list/edit/delete
+  const visibleGroups = useMemo(
+    () => groups.filter((g) => g.name !== "System Administrators"),
+    [groups]
+  );
+
   const columns: ColumnDef<GroupData, unknown>[] = useMemo(
     () => groupColumns(handleEdit, handleDelete),
     [handleEdit, handleDelete]
@@ -120,7 +135,7 @@ export const GroupsPage: React.FC = () => {
     <div className="h-full flex flex-col bg-background">
       {/* Header Section */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="mx-auto px-6 py-4">
+        <div className="mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
@@ -157,20 +172,19 @@ export const GroupsPage: React.FC = () => {
               />
             </div>
           </div>
-
         </div>
       </div>
 
       {/* Main Content Area */}
       <ScrollArea className="flex-1">
-        <div className="container mx-auto px-6 py-6">
+        <div className="container mx-auto">
           <AdvancedDataTable<GroupData, unknown>
             columns={columns}
-            data={groups}
+            data={visibleGroups}
             isLoading={isLoading}
             page={page}
             limit={limit}
-            total={pagination?.total ?? 0}
+            total={visibleGroups.length ?? 0}
             onPageChange={setPage}
             onLimitChange={(newLimit) => {
               setLimit(newLimit);
@@ -199,7 +213,8 @@ export const GroupsPage: React.FC = () => {
               Are you sure you want to delete "{groupToDelete?.name}"?
               {groupToDelete?._count?.users ? (
                 <span className="mt-2 block font-semibold text-destructive">
-                  Warning: This group has {groupToDelete._count.users} user(s) assigned.
+                  Warning: This group has {groupToDelete._count.users} user(s)
+                  assigned.
                 </span>
               ) : null}
               This action cannot be undone.
@@ -218,7 +233,7 @@ export const GroupsPage: React.FC = () => {
                   Deleting...
                 </>
               ) : (
-                'Delete'
+                "Delete"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

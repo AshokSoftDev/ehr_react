@@ -11,4 +11,3 @@ export class VisitService {
 }
 
 export const visitService = new VisitService();
-

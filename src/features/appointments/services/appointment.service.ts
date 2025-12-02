@@ -33,7 +33,13 @@ export class AppointmentService {
     const res = await api.delete<{ status: string; data: AppointmentItem }>(`${this.baseUrl}/${id}`);
     return res.data.data;
   }
+
+  async listCompleted(params: { patient_id?: number; dateFrom?: string; dateTo?: string; page?: number; limit?: number }) {
+    const res = await api.get<{ status: string; data: PaginatedAppointments }>(`${this.baseUrl}/completed`, {
+      params,
+    });
+    return res.data.data;
+  }
 }
 
 export const appointmentService = new AppointmentService();
-

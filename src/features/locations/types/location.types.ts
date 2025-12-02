@@ -5,6 +5,7 @@ export interface LocationItem {
   city: string;
   state: string;
   status: number;
+  active: boolean;
   createdAt: string;
   createdBy?: string | null;
   updatedAt: string;
@@ -18,13 +19,16 @@ export interface CreateLocationInput {
   address?: string;
   city: string;
   state: string;
+  active?: boolean;
+  status?: number;
 }
 
 export type UpdateLocationInput = Partial<CreateLocationInput> & {
+  location_id?: number;
   status?: number;
+  active?: boolean;
 };
 
 export interface LocationFilters {
   search?: string;
 }
-

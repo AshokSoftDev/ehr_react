@@ -242,6 +242,27 @@ select:focus {
   animation: accordion-up 0.2s ease-out;
 }
 
+/* Soft gradient drift + float used in clinical notes hero */
+@keyframes gradient-shift {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(6px, -6px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes float-slow {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-gradient-slow {
+  animation: gradient-shift 14s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 12s ease-in-out infinite;
+}
+
 /* Existing Tailwind CSS classes */
 .bg-background { background-color: var(--background); }
 .text-foreground { color: var(--foreground); }

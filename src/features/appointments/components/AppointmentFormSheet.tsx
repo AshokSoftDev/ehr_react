@@ -51,7 +51,7 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
       duration: initial?.duration ?? undefined,
       appointment_type: initial?.appointment_type ?? '',
       reason_for_visit: initial?.reason_for_visit ?? '',
-      appointment_status: initial?.appointment_status ?? 'Scheduled',
+      appointment_status: (initial?.appointment_status ?? 'SCHEDULED').toUpperCase(),
       notes: initial?.notes ?? '',
       patient_mrn: initial?.patient_mrn ?? '',
     },
@@ -84,7 +84,7 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
         duration: initial.duration ?? undefined,
         appointment_type: initial.appointment_type ?? '',
         reason_for_visit: initial.reason_for_visit ?? '',
-        appointment_status: initial.appointment_status ?? 'Scheduled',
+        appointment_status: (initial.appointment_status ?? 'SCHEDULED').toUpperCase(),
         notes: initial.notes ?? '',
         patient_mrn: initial.patient_mrn ?? '',
       });
@@ -141,13 +141,15 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
     'Checkup',
   ].map(t => ({ label: t, value: t }));
   const appointmentStatusOptions = [
-    'Scheduled',
-    'Confirmed',
-    'Completed',
-    'Cancelled',
-    'No-show',
-    'Rescheduled',
-  ].map(s => ({ label: s, value: s }));
+    { label: 'Scheduled', value: 'SCHEDULED' },
+    { label: 'Confirmed', value: 'CONFIRMED' },
+    { label: 'Checked-In', value: 'CHECKED-IN' },
+    { label: 'Checked-Out', value: 'CHECKED-OUT' },
+    { label: 'No-Show', value: 'NO-SHOW' },
+    { label: 'With Doctor', value: 'WITH DOCTOR' },
+    { label: 'Wait List', value: 'WAIT LIST' },
+    { label: 'Cancelled', value: 'CANCELLED' },
+  ];
 
   return (
     <SheetForm open={open} onOpenChange={onOpenChange} title={initial?.appointment_id ? 'Edit Appointment' : 'Add Appointment'}>

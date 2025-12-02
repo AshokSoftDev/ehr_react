@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import { FormFloatingInput } from '@/components/form/form-floating-input';
+import { FormSwitch } from '@/components/ui/form-switch';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SheetForm } from '@/components/ui/sheet-form';
@@ -14,6 +15,7 @@ const schema = z.object({
   address: z.string().optional(),
   city: z.string().min(1, 'City is required'),
   state: z.string().min(1, 'State is required'),
+  active: z.boolean().optional(),
 });
 
 type LocationFormInput = z.input<typeof schema>;
@@ -39,6 +41,7 @@ export function LocationFormSheet({
       address: initial?.address ?? '',
       city: initial?.city ?? '',
       state: initial?.state ?? '',
+      active: initial?.active ?? true,
     },
   });
 
@@ -49,6 +52,7 @@ export function LocationFormSheet({
         address: initial?.address ?? '',
         city: initial?.city ?? '',
         state: initial?.state ?? '',
+        active: initial?.active ?? true,
       });
     }
   }, [open, initial, form]);
@@ -74,6 +78,7 @@ export function LocationFormSheet({
             <FormFloatingInput control={form.control} name="city" label="City" />
             <FormFloatingInput control={form.control} name="state" label="State" />
           </div>
+          <FormSwitch control={form.control} name="active" label="Active" />
           <Separator />
           <div className="sticky bottom-0 flex items-center justify-end gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t p-3 -mx-2 -mb-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -88,4 +93,3 @@ export function LocationFormSheet({
 }
 
 export default LocationFormSheet;
-

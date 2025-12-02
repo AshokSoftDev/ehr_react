@@ -6,16 +6,14 @@ import { Button } from '../../../components/ui/button';
 import { Form } from '../../../components/ui/form';
 import { FormFloatingInput } from '../../../components/form/form-floating-input';
 import { FormFloatingSelect } from '../../../components/form/FormFloatingSelect';
+import { FormFloatingDatePicker } from '../../../components/form/FormFloatingDatePicker';
 import { FormSearchSelectWithCreate } from '../../../components/form/FormSearchSelectWithCreate';
 import { ScrollArea } from '../../../components/ui/scroll-area';
-import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover';
-import { Calendar } from '../../../components/ui/calendar';
-import { Loader2, CalendarIcon, User2, Mail, Phone, Shield, UserCheck } from 'lucide-react';
+import { Loader2, User2, Mail, Phone, Shield, UserCheck } from 'lucide-react';
 import { createUserSchema, updateUserSchema, type UpdateUserInput } from '../schemas/user.schema';
 import type { User } from '../types/user.types';
 import { useGroups } from '../../groups/hooks/useGroups';
 import { FormSheetContext } from '../../../contexts/FormSheetContext/index';
-import { format } from 'date-fns';
 import type { CreateUserFormData, UpdateUserFormData } from '../../shared/types/form.types';
 import { cn } from '../../../lib/utils';
 
@@ -33,7 +31,6 @@ export const UserForm: React.FC<UserFormProps> = ({
   onSubmit,
 }) => {
   const formSheetContext = useContext(FormSheetContext);
-  const [calendarOpen, setCalendarOpen] = useState(false);
   const { data: groupsData } = useGroups({
     page: 1,
     limit: 100,
@@ -57,7 +54,6 @@ export const UserForm: React.FC<UserFormProps> = ({
   // Watch firstName and lastName to auto-generate fullName
   const firstName = form.watch('firstName');
   const lastName = form.watch('lastName');
-  const dobValue = form.watch('dob');
 
   useEffect(() => {
     if (user) {
@@ -71,7 +67,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         phoneNumber: user.phoneNumber || '',
         groupId: user.groupId || '',
         userStatus: user.userStatus.toString(),
-        dob: user.dob ? format(new Date(user.dob), 'yyyy-MM-dd') : '',
+        dob: user.dob ? new Date(user.dob) : undefined,
       });
     } else {
       form.reset({
@@ -82,7 +78,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         password: '',
         phoneNumber: '',
         groupId: '',
-        dob: '',
+        dob: undefined,
       });
     }
   }, [user, form]);
@@ -102,13 +98,8 @@ export const UserForm: React.FC<UserFormProps> = ({
       };
 
       // Convert date to ISO format if it exists
-      if (submitData.dob) {
-        const dateValue = new Date(submitData.dob);
-        if (!isNaN(dateValue.getTime())) {
-          submitData.dob = dateValue.toISOString();
-        } else {
-          delete submitData.dob;
-        }
+      if (submitData.dob instanceof Date && !isNaN(submitData.dob.getTime())) {
+        submitData.dob = submitData.dob.toISOString();
       } else {
         delete submitData.dob;
       }
@@ -135,7 +126,6 @@ export const UserForm: React.FC<UserFormProps> = ({
 
   const handleClose = () => {
     form.reset();
-    setCalendarOpen(false);
     onClose();
   };
 
@@ -236,55 +226,11 @@ export const UserForm: React.FC<UserFormProps> = ({
                   </div>
 
                   {/* Date of Birth with Calendar */}
-                  <div className="relative group">
-                    <label className={cn(
-                      "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
-                      "transition-all duration-200",
-                      "bg-background top-0 -translate-y-1/2 text-xs"
-                    )}>
-                      Date of Birth (Optional)
-                    </label>
-                    <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full h-12 justify-start text-left font-normal pt-3 pb-2",
-                            "bg-background/50 hover:bg-background/80",
-                            !dobValue && "text-muted-foreground",
-                            form.formState.errors.dob && "border-destructive"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {dobValue ? format(new Date(dobValue), "dd/MM/yyyy") : "Select date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent 
-                        className="w-auto p-0 z-[9999]" 
-                        align="start"
-                        sideOffset={5}
-                        side="bottom"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={dobValue ? new Date(dobValue) : undefined}
-                          onSelect={(date) => {
-                            form.setValue('dob', date ? format(date, 'yyyy-MM-dd') : '');
-                            setCalendarOpen(false);
-                          }}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    {form.formState.errors.dob && (
-                      <p className="text-sm text-destructive mt-1">
-                        {form.formState.errors.dob.message}
-                      </p>
-                    )}
-                  </div>
+                  <FormFloatingDatePicker
+                    control={form.control}
+                    name="dob"
+                    label="Date of Birth (Optional)"
+                  />
                 </div>
 
                 {/* Contact Information Section */}

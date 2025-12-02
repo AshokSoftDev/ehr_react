@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useParams, useSearchParams } from "react-router-dom";
 import { HPIDentalChart } from "./hpi/HPIDentalChart";
 import { PatientPrescriptionsPage } from "../prescription/PatientPrescriptionsPage";
-import { PatientClinicalNotesPage } from "../notes/PatientClinicalNotesPage";
+import { PatientVisitClinicalNotesPage } from "./pages/PatientVisitClinicalNotesPage";
 
 export function PatientVisitPage() {
   const { id } = useParams();
@@ -113,7 +113,7 @@ export function PatientVisitPage() {
         </TabsContent>
 
         <TabsContent value="notes" className="mt-4">
-          <PatientClinicalNotesPage />
+          <PatientVisitClinicalNotesPage />
         </TabsContent>
       </Tabs>
     </div>

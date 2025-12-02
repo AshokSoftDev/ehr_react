@@ -106,20 +106,22 @@ export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, nav
     header: 'Status',
     cell: ({ row }) => {
       const appointment = row.original;
-      const status = appointment.appointment_status;
+      const status = (appointment.appointment_status || '').toUpperCase();
       
       const statusOptions = [
-        { value: 'Scheduled', label: 'Scheduled', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' },
-        { value: 'Confirmed', label: 'Confirmed', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
-        { value: 'Completed', label: 'Completed', color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' },
-        { value: 'Cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' },
-        { value: 'No-show', label: 'No-show', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300' },
-        { value: 'Rescheduled', label: 'Rescheduled', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' },
+        { value: 'SCHEDULED', label: 'Scheduled', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' },
+        { value: 'CONFIRMED', label: 'Confirmed', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
+        { value: 'CHECKED-IN', label: 'Checked-In', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300' },
+        { value: 'CHECKED-OUT', label: 'Checked-Out', color: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300' },
+        { value: 'NO-SHOW', label: 'No-Show', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300' },
+        { value: 'WITH DOCTOR', label: 'With Doctor', color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300' },
+        { value: 'WAIT LIST', label: 'Wait List', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' },
+        { value: 'CANCELLED', label: 'Cancelled', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' },
       ];
       
       const currentStatus = statusOptions.find(s => s.value === status);
       
-      const isCompleted = status === 'Completed';
+      const isCompleted = status === 'CHECKED-OUT';
       
       return (
         <Select 
