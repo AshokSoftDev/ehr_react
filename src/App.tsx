@@ -7,6 +7,7 @@ import { FormSheetProvider } from "./contexts/FormSheetContext/index";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
 import { PermissionProvider } from "./contexts/PermissionContext";
+import { SessionExpiredDialog } from "./components/SessionExpiredDialog";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ function App() {
           <FormSheetProvider>
             <AppRouter />
             {/* <GlobalFormSheets /> */}
+            <SessionExpiredDialog />
             <ToastContainer
               position="top-right"
               autoClose={3000}

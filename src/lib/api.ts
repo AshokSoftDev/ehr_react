@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance } from "axios"
 import { config } from "../config/environments"
 import { decryptData } from "../utils/crypto"
+import { sessionManager } from "./session"
 
 
 export const api: AxiosInstance = axios.create({ baseURL: config.API_BASE_URL, timeout: 30000, })
@@ -33,22 +34,13 @@ api.interceptors.response.use(
         return response
     },
     async (error) => {
-        // const originalRequest = error.config
+        const originalRequest = error.config
 
-        // if (error.response?.status === 401 && !originalRequest._retry) {
-        //     originalRequest._retry = true
-
-        //     try {
-        //         const token = localStorage.getItem('token')
-        //         originalRequest.headers.Authorization = `Bearer ${token}`
-        //         return api(originalRequest)
-        //     } catch (refreshError) {
-        //         return Promise.reject(refreshError)
-        //     }
-        // }
+        // Handle 401 Unauthorized - Session expired
+        if (error.response?.status === 401 && !originalRequest.url?.includes("/auth/login")) {
+            sessionManager.setExpired()
+        }
 
         return Promise.reject(error)
     },
 )
-
-

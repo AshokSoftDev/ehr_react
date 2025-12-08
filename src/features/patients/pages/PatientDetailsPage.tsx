@@ -9,7 +9,7 @@ import { ArrowLeft, FileText, HeartPulse, History, LayoutDashboard, NotebookPen,
 import { patientService } from "../services/patient.service";
 import type { Patient } from "../types/patient.types";
 import { PatientPrescriptionsPage } from "./prescription/PatientPrescriptionsPage";
-import { PatientVisitClinicalNotesPage } from "./visit/pages/PatientVisitClinicalNotesPage";
+import { PatientClinicalNotesPage } from "./notes/PatientClinicalNotesPage";
 
 type Section = "dashboard" | "history" | "vitals" | "document" | "prescription" | "notes" | "consent";
 
@@ -164,7 +164,7 @@ export function PatientDetailsPage() {
                   <PatientPrescriptionsPage />
                 </TabsContent>
                 <TabsContent value="notes">
-                  <PatientVisitClinicalNotesPage />
+                  <PatientClinicalNotesPage />
                 </TabsContent>
                 <TabsContent value="billing">
                   <Placeholder title="Billing" />

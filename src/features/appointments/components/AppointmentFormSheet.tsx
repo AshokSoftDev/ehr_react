@@ -10,18 +10,22 @@ import { FormFloatingDatePicker } from '@/components/form/FormFloatingDatePicker
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SheetForm } from '@/components/ui/sheet-form';
+import { Plus } from 'lucide-react';
 import type { AppointmentDoctorLite, AppointmentItem, AppointmentPatientLite } from '../types/appointment.types';
 import { appointmentService } from '../services/appointment.service';
+import { PatientFormSheet } from '@/features/patients/components/PatientFormSheet';
+import { patientService } from '@/features/patients/services/patient.service';
+import type { PatientFormData } from '@/features/patients/schemas/patient.schema';
 
 const schema = z.object({
-  patient_id: z.coerce.number().int().positive(),
-  doctor_id: z.string().min(1),
+  patient_id: z.coerce.number().int().min(1, "Please select a patient"),
+  doctor_id: z.string().min(1, "Please select a doctor"),
   appointment_date: z.union([z.string(), z.date()]),
   // Time pickers use HH:mm strings; we combine with date on submit
   start_time: z.string().min(1),
   end_time: z.string().min(1),
   duration: z.coerce.number().int().positive().optional(),
-  appointment_type: z.string().min(1),
+  appointment_type: z.string().min(1, "Please select appointment type"),
   reason_for_visit: z.string().optional(),
   appointment_status: z.string().min(1),
   notes: z.string().optional(),
@@ -37,9 +41,11 @@ interface AppointmentFormSheetProps {
   onSubmit: (values: AppointmentFormValues) => void;
   doctors: AppointmentDoctorLite[];
   initial?: Partial<AppointmentItem>;
+  defaultStatus?: string;
+  hideStatus?: boolean;
 }
 
-export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, initial }: AppointmentFormSheetProps) {
+export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, initial, defaultStatus, hideStatus }: AppointmentFormSheetProps) {
   const form = useForm<AppointmentFormInput, unknown, AppointmentFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -51,7 +57,7 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
       duration: initial?.duration ?? undefined,
       appointment_type: initial?.appointment_type ?? '',
       reason_for_visit: initial?.reason_for_visit ?? '',
-      appointment_status: (initial?.appointment_status ?? 'SCHEDULED').toUpperCase(),
+      appointment_status: (initial?.appointment_status ?? defaultStatus ?? 'SCHEDULED').toUpperCase(),
       notes: initial?.notes ?? '',
       patient_mrn: initial?.patient_mrn ?? '',
     },
@@ -59,37 +65,62 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
 
   const [searchText, setSearchText] = useState('');
   const [patients, setPatients] = useState<AppointmentPatientLite[]>([]);
+  const [showPatientSheet, setShowPatientSheet] = useState(false);
+  const [isCreatingPatient, setIsCreatingPatient] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   useEffect(() => {
     let active = true;
     const run = async () => {
-      if (!searchText || searchText.length < 2) { setPatients([]); return; }
+      if (!searchText || searchText.length < 2) { setPatients([]); setHasSearched(false); return; }
       const list = await appointmentService.searchMrn(searchText);
-      if (active) setPatients(list);
+      if (active) {
+        setPatients(list);
+        setHasSearched(true);
+      }
     };
     const t = setTimeout(run, 300);
     return () => { active = false; clearTimeout(t); };
   }, [searchText]);
 
+  const handleCreatePatient = async (data: PatientFormData) => {
+    setIsCreatingPatient(true);
+    try {
+      const newPatient = await patientService.createPatient(data);
+      // Auto-select the newly created patient
+      form.setValue('patient_id', newPatient.patient_id);
+      form.setValue('patient_mrn', newPatient.mrn || `${newPatient.firstName} ${newPatient.lastName}`);
+      setShowPatientSheet(false);
+      setPatients([]);
+      setSearchText('');
+    } catch (error) {
+      console.error('Failed to create patient:', error);
+    } finally {
+      setIsCreatingPatient(false);
+    }
+  };
+
   useEffect(() => {
-    if (open && initial) {
-      const apptDate = initial.appointment_date ? format(new Date(initial.appointment_date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
-      const startT = initial.start_time ? format(new Date(initial.start_time), 'HH:mm') : format(new Date(), 'HH:mm');
-      const endT = initial.end_time ? format(new Date(initial.end_time), 'HH:mm') : format(addMinutes(new Date(), 30), 'HH:mm');
+    if (open) {
+      const apptDate = initial?.appointment_date ? format(new Date(initial.appointment_date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+      const startT = initial?.start_time ? format(new Date(initial.start_time), 'HH:mm') : format(new Date(), 'HH:mm');
+      const endT = initial?.end_time ? format(new Date(initial.end_time), 'HH:mm') : format(addMinutes(new Date(), 30), 'HH:mm');
       form.reset({
-        patient_id: initial.patient_id ?? 0,
-        doctor_id: initial.doctor_id ?? '',
+        patient_id: initial?.patient_id ?? 0,
+        doctor_id: initial?.doctor_id ?? '',
         appointment_date: apptDate,
         start_time: startT,
         end_time: endT,
-        duration: initial.duration ?? undefined,
-        appointment_type: initial.appointment_type ?? '',
-        reason_for_visit: initial.reason_for_visit ?? '',
-        appointment_status: (initial.appointment_status ?? 'SCHEDULED').toUpperCase(),
-        notes: initial.notes ?? '',
-        patient_mrn: initial.patient_mrn ?? '',
+        duration: initial?.duration ?? undefined,
+        appointment_type: initial?.appointment_type ?? '',
+        reason_for_visit: initial?.reason_for_visit ?? '',
+        appointment_status: (initial?.appointment_status ?? defaultStatus ?? 'SCHEDULED').toUpperCase(),
+        notes: initial?.notes ?? '',
+        patient_mrn: initial?.patient_mrn ?? '',
       });
+      setSearchText('');
+      setPatients([]);
     }
-  }, [open, initial, form]);
+  }, [open, initial, form, defaultStatus]);
 
   // Auto-calc: when start/end change, update duration; when start or duration change, update end
   useEffect(() => {
@@ -152,22 +183,29 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
   ];
 
   return (
+    <>
     <SheetForm open={open} onOpenChange={onOpenChange} title={initial?.appointment_id ? 'Edit Appointment' : 'Add Appointment'}>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit((vals) => {
-            // Combine date + time into ISO strings for backend
-            const datePart = typeof vals.appointment_date === 'string' ? vals.appointment_date : format(vals.appointment_date as Date, 'yyyy-MM-dd');
-            const toISO = (time: string) => new Date(`${datePart}T${time}:00`).toISOString();
-            const payload: AppointmentFormValues = {
-              ...vals,
-              appointment_date: datePart,
-              start_time: toISO(vals.start_time),
-              end_time: toISO(vals.end_time),
-              duration: vals.duration ? Number(vals.duration) : undefined,
-            };
-            onSubmit(payload);
-          })}
+          onSubmit={form.handleSubmit(
+            (vals) => {
+              console.log("Form validated, submitting:", vals);
+              // Combine date + time into ISO strings for backend
+              const datePart = typeof vals.appointment_date === 'string' ? vals.appointment_date : format(vals.appointment_date as Date, 'yyyy-MM-dd');
+              const toISO = (time: string) => new Date(`${datePart}T${time}:00`).toISOString();
+              const payload: AppointmentFormValues = {
+                ...vals,
+                appointment_date: datePart,
+                start_time: toISO(vals.start_time),
+                end_time: toISO(vals.end_time),
+                duration: vals.duration ? Number(vals.duration) : undefined,
+              };
+              onSubmit(payload);
+            },
+            (errors) => {
+              console.log("Form validation errors:", errors);
+            }
+          )}
           className="space-y-4 p-2"
         >
           {/* Patient lookup */}
@@ -176,10 +214,25 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
             {patients.length > 0 && (
               <div className="mt-1 rounded-md border bg-card max-h-48 overflow-auto">
                 {patients.map(p => (
-                  <button type="button" key={p.patient_id} className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50" onClick={() => { form.setValue('patient_id', p.patient_id); form.setValue('patient_mrn', `${p.mrn}`); setPatients([]); }}>
+                  <button type="button" key={p.patient_id} className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50" onClick={() => { form.setValue('patient_id', p.patient_id); form.setValue('patient_mrn', `${p.mrn}`); setPatients([]); setHasSearched(false); }}>
                     <span className="font-medium">{p.mrn}</span> – {p.firstName} {p.lastName}
                   </button>
                 ))}
+              </div>
+            )}
+            {hasSearched && patients.length === 0 && (
+              <div className="mt-1 rounded-md border bg-card p-3 text-center">
+                <p className="text-sm text-muted-foreground mb-2">No patients found</p>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2"
+                  onClick={() => setShowPatientSheet(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Patient
+                </Button>
               </div>
             )}
           </div>
@@ -192,7 +245,9 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
           <FormFloatingInput control={form.control} name="duration" label="Duration (mins)" inputMode="numeric" type="number" />
           <FormFloatingSelect control={form.control} name="appointment_type" label="Appointment Type" options={appointmentTypeOptions} placeholder="Select type" />
           <FormFloatingInput control={form.control} name="reason_for_visit" label="Reason for Visit" />
-          <FormFloatingSelect control={form.control} name="appointment_status" label="Status" options={appointmentStatusOptions} placeholder="Select status" />
+          {!hideStatus && (
+            <FormFloatingSelect control={form.control} name="appointment_status" label="Status" options={appointmentStatusOptions} placeholder="Select status" />
+          )}
           <FormFloatingInput control={form.control} name="notes" label="Notes" />
           <Separator />
           <div className="sticky bottom-0 flex items-center justify-end gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t p-3 -mx-2 -mb-2">
@@ -202,6 +257,15 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
         </form>
       </Form>
     </SheetForm>
+
+    {/* Patient Form Sheet */}
+    <PatientFormSheet
+      open={showPatientSheet}
+      onOpenChange={setShowPatientSheet}
+      onSubmit={handleCreatePatient}
+      isLoading={isCreatingPatient}
+    />
+    </>
   );
 }
 

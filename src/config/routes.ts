@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { LayoutDashboardIcon, Users, Settings, ThermometerIcon, CalendarDays } from 'lucide-react';
+import { LayoutDashboardIcon, Users, Settings, ThermometerIcon, CalendarDays, NotebookPen } from 'lucide-react';
 import { type RouteConfig } from '../interface/routes.interface';
 
 const Dashboard = lazy(() => import('../pages/Dashboard'));
@@ -25,12 +25,14 @@ const PatientHistoryPage = lazy(() => import('../features/patients/pages/history
 const PatientVitalsPage = lazy(() => import('../features/patients/pages/vitals/PatientVitalsPage').then(module => ({ default: module.PatientVitalsPage })))
 const PatientDocumentsPage = lazy(() => import('../features/patients/pages/document/PatientDocumentsPage').then(module => ({ default: module.PatientDocumentsPage })))
 const PatientPrescriptionsPage = lazy(() => import('../features/patients/pages/prescription/PatientPrescriptionsPage').then(module => ({ default: module.PatientPrescriptionsPage })))
-const PatientVisitClinicalNotesPage = lazy(() => import('../features/patients/pages/visit/pages/PatientVisitClinicalNotesPage').then(module => ({ default: module.PatientVisitClinicalNotesPage })))
+const PatientClinicalNotesPage = lazy(() => import('../features/patients/pages/notes/PatientClinicalNotesPage').then(module => ({ default: module.PatientClinicalNotesPage })))
 const PatientConsentPage = lazy(() => import('../features/patients/pages/consent/PatientConsentPage').then(module => ({ default: module.PatientConsentPage })))
 const AppointmentsPage = lazy(() => import('../features/appointments/pages/AppointmentsPage').then(module => ({ default: module.AppointmentsPage })))
 const VisitsPage = lazy(() => import('../features/visits/pages/VisitsPage').then(module => ({ default: module.VisitsPage })))
 const DrugsPage = lazy(() => import('../features/drug/pages/DrugsPage').then(module => ({ default: module.DrugsPage })))
+const DocumentTypesPage = lazy(() => import('../features/document-types/pages/DocumentTypesPage').then(module => ({ default: module.DocumentTypesPage })))
 const LocationsPage = lazy(() => import('../features/locations/pages/LocationsPage').then(module => ({ default: module.LocationsPage })))
+const ClinicalNotesPage = lazy(() => import('../features/clinical-notes/pages/ClinicalNotesPage').then(module => ({ default: module.ClinicalNotesPage })))
 
 export const routes: RouteConfig[] = [
   {
@@ -84,6 +86,16 @@ export const routes: RouteConfig[] = [
     module: 'Patient Management',
   },
   {
+    id: 'clinical-notes',
+    path: '/main/clinical-notes',
+    name: 'Clinical Notes',
+    icon: NotebookPen,
+    component: ClinicalNotesPage,
+    roles: [1],
+    showInNav: true,
+    module: 'Clinical Notes',
+  },
+  {
     id: 'patient-details',
     path: '/main/patients/:id',
     name: 'Patient Details',
@@ -99,7 +111,7 @@ export const routes: RouteConfig[] = [
       { id: 'patient-vitals', path: '/main/patients/:id/vitals', name: 'Vitals', icon: Users, component: PatientVitalsPage, roles: [1], showInNav: false, module: 'Patient Management' },
       { id: 'patient-document', path: '/main/patients/:id/document', name: 'Document', icon: Users, component: PatientDocumentsPage, roles: [1], showInNav: false, module: 'Patient Management' },
       { id: 'patient-prescription', path: '/main/patients/:id/prescription', name: 'Prescription', icon: Users, component: PatientPrescriptionsPage, roles: [1], showInNav: false, module: 'Patient Management' },
-      { id: 'patient-notes', path: '/main/patients/:id/notes', name: 'Clinical Notes', icon: Users, component: PatientVisitClinicalNotesPage, roles: [1], showInNav: false, module: 'Patient Management' },
+      { id: 'patient-notes', path: '/main/patients/:id/notes', name: 'Clinical Notes', icon: Users, component: PatientClinicalNotesPage, roles: [1], showInNav: false, module: 'Patient Management' },
       { id: 'patient-consent', path: '/main/patients/:id/consent', name: 'Consent', icon: Users, component: PatientConsentPage, roles: [1], showInNav: false, module: 'Patient Management' },
     ],
   },
@@ -158,6 +170,16 @@ export const routes: RouteConfig[] = [
         name: 'Drug Master',
         icon: Users,
         component: DrugsPage,
+        roles: [1],
+        showInNav: true,
+        module: 'Settings',
+      },
+      {
+        id: 'document-type-master',
+        path: '/main/settings/document-types',
+        name: 'Document Type Master',
+        icon: Users,
+        component: DocumentTypesPage,
         roles: [1],
         showInNav: true,
         module: 'Settings',

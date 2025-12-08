@@ -213,24 +213,24 @@ function Tooth({
   const imageSrc = toothImages[toothNumber];
 
   return (
-    <div className="flex w-14 flex-col items-center">
+    <div className="flex w-[72px] flex-col items-center">
       <button
         type="button"
         onClick={() => onToggle(toothNumber)}
-        className={`flex flex-col items-center rounded-md p-1 outline-none transition ${
-          selected ? "bg-primary/5 ring-1 ring-primary" : "hover:bg-primary/5"
+        className={`flex flex-col items-center rounded-lg p-1.5 outline-none transition ${
+          selected ? "bg-primary/10 ring-2 ring-primary shadow-sm" : "hover:bg-primary/5"
         }`}
       >
         {imageSrc ? (
           <img
             src={imageSrc}
             alt={`Tooth ${toothNumber}`}
-            className="h-12 w-12 object-contain"
+            className="h-20 w-20 object-contain"
           />
         ) : (
-          <div className="h-10 w-10 rounded bg-gray-100" />
+          <div className="h-20 w-20 rounded-lg bg-gray-100" />
         )}
-        <span className="mt-1 text-xs font-medium text-gray-700">
+        <span className="mt-1 text-xs font-semibold text-gray-700">
           {toothNumber}
         </span>
       </button>
@@ -486,13 +486,13 @@ export function HPIDentalChart() {
   };
 
   return (
-    <div className="rounded-md border-y-4 border-primary bg-card p-4 shadow-md">
-      <div className="grid gap-2 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.5fr)]">
-        <div className="flex flex-col gap-3">
+    <div className="py-0 px-1">
+      <div className="grid gap-2 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-2">
           <DentitionToggle view={view} onChange={handleChangeView} />
 
           {view === "permanent" && (
-            <div className="mt-4 space-y-3">
+            <div className="mt-2 space-y-1">
               {renderArch(
                 PERMANENT_UPPER,
                 selectedTeethSet,
@@ -512,7 +512,7 @@ export function HPIDentalChart() {
           )}
 
           {view === "primary" && (
-            <div className="mt-4 space-y-3">
+            <div className="mt-2 space-y-1">
               {renderAlignedPrimaryArch(
                 PRIMARY_UPPER,
                 selectedTeethSet,
@@ -532,7 +532,7 @@ export function HPIDentalChart() {
           )}
 
           {view === "mixed" && (
-            <div className="mt-4 space-y-3">
+            <div className="mt-2 space-y-1">
               {renderArch(
                 MIXED_LAYOUT.permanentUpper,
                 selectedTeethSet,
@@ -560,28 +560,25 @@ export function HPIDentalChart() {
           )}
         </div>
 
-        <div className="flex flex-col gap-3 border-l border-border pl-4">
-          <div className="w-full max-w-md rounded border border-primary/30 bg-primary/5 px-3 py-2">
-            <div className="text-sm font-semibold text-gray-800">
-              Selected Teeth :
-              <span className="ml-2 inline-block max-w-full truncate text-primary align-middle">
-                {selectedTeeth.length
-                  ? [...selectedTeeth].sort().join(", ")
-                  : "None"}
-              </span>
-            </div>
+        <div className="flex flex-col gap-2 border-l border-border pl-3">
+          {/* Selected Teeth Badge */}
+          <div className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5">
+            <span className="text-xs font-semibold text-gray-700">Selected:</span>
+            <span className="text-xs font-medium text-primary">
+              {selectedTeeth.length ? [...selectedTeeth].sort().join(", ") : "None"}
+            </span>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <div className="mb-2 text-sm font-semibold text-primary">
-                Chief Complaints
-              </div>
-              <div className="grid grid-cols-1 gap-1 text-sm">
+          {/* Compact Two-Column Layout */}
+          <div className="grid gap-3 md:grid-cols-2">
+            {/* Chief Complaints */}
+            <div className="rounded-lg border border-border bg-muted/30 p-2">
+              <div className="mb-1.5 text-xs font-semibold text-primary">Chief Complaints</div>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
                 {CHIEF_COMPLAINT_OPTIONS.map((option) => (
                   <label
                     key={option.id}
-                    className="flex cursor-pointer items-center gap-2"
+                    className="flex cursor-pointer items-center gap-1.5"
                   >
                     <input
                       type="checkbox"
@@ -589,147 +586,89 @@ export function HPIDentalChart() {
                       checked={selectedComplaints.includes(option.id)}
                       onChange={() => handleToggleComplaint(option.id)}
                     />
-                    <span className="text-gray-700">{option.label}</span>
+                    <span className="text-[11px] text-gray-700">{option.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <div className="mb-2 text-sm font-semibold text-primary">
-                  Severity
-                </div>
-                <div className="flex gap-4 text-sm">
-                  {(["mild", "moderate", "severe"] as SeverityOption[]).map(
-                    (level) => {
-                      const label =
-                        level.charAt(0).toUpperCase() + level.slice(1);
-                      const selected = severity === level;
-
-                      return (
-                        <label
-                          key={level}
-                          className="flex cursor-pointer items-center gap-2"
+            {/* Severity & Duration */}
+            <div className="space-y-2">
+              {/* Severity */}
+              <div className="rounded-lg border border-border bg-muted/30 p-2">
+                <div className="mb-1 text-xs font-semibold text-primary">Severity</div>
+                <div className="flex gap-3">
+                  {(["mild", "moderate", "severe"] as SeverityOption[]).map((level) => {
+                    const label = level.charAt(0).toUpperCase() + level.slice(1);
+                    const selected = severity === level;
+                    return (
+                      <label key={level} className="flex cursor-pointer items-center gap-1">
+                        <span
+                          className={`flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 ${
+                            selected ? "border-primary" : "border-gray-300"
+                          }`}
                         >
-                          <span
-                            className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
-                              selected ? "border-primary" : "border-gray-300"
-                            }`}
-                          >
-                            {selected && (
-                              <span className="h-2 w-2 rounded-full bg-primary" />
-                            )}
-                          </span>
-                          <input
-                            type="radio"
-                            className="sr-only"
-                            checked={selected}
-                            onChange={() => setSeverity(level)}
-                          />
-                          <span
-                            className={`text-sm ${
-                              selected
-                                ? "font-semibold text-primary"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {label}
-                          </span>
-                        </label>
-                      );
-                    }
-                  )}
+                          {selected && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                        </span>
+                        <span className={`text-[11px] ${selected ? "font-semibold text-primary" : "text-gray-700"}`}>
+                          {label}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div>
-                <div className="mb-2 text-sm font-semibold text-primary">
-                  Duration
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-xs">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] text-gray-600">Years</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={duration.years}
-                      onChange={(event) =>
-                        handleDurationChange("years", event.target.value)
-                      }
-                      className="h-7 rounded border border-gray-300 px-1 text-center text-xs text-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] text-gray-600">Months</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={duration.months}
-                      onChange={(event) =>
-                        handleDurationChange("months", event.target.value)
-                      }
-                      className="h-7 rounded border border-gray-300 px-1 text-center text-xs text-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] text-gray-600">Weeks</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={duration.weeks}
-                      onChange={(event) =>
-                        handleDurationChange("weeks", event.target.value)
-                      }
-                      className="h-7 rounded border border-gray-300 px-1 text-center text-xs text-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] text-gray-600">Days</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={duration.days}
-                      onChange={(event) =>
-                        handleDurationChange("days", event.target.value)
-                      }
-                      className="h-7 rounded border border-gray-300 px-1 text-center text-xs text-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
+              {/* Duration */}
+              <div className="rounded-lg border border-border bg-muted/30 p-2">
+                <div className="mb-1 text-xs font-semibold text-primary">Duration</div>
+                <div className="grid grid-cols-4 gap-1">
+                  {(["years", "months", "weeks", "days"] as (keyof Duration)[]).map((field) => (
+                    <div key={field} className="flex flex-col gap-0.5">
+                      <span className="text-[10px] text-gray-500 capitalize">{field.slice(0, 1).toUpperCase()}</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={duration[field]}
+                        onChange={(e) => handleDurationChange(field, e.target.value)}
+                        className="h-6 w-full rounded border border-gray-300 px-1 text-center text-[11px] text-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        placeholder="0"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div>
-              <div className="mb-1 text-sm font-semibold text-primary">
-                Notes
-              </div>
-              <textarea
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                rows={3}
-                className="w-full rounded border border-gray-300 px-2 py-1 text-xs text-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-            </div>
+          {/* Notes - More Compact */}
+          <div className="rounded-lg border border-border bg-muted/30 p-2">
+            <div className="mb-1 text-xs font-semibold text-primary">Notes</div>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              className="w-full rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="Additional notes..."
+            />
+          </div>
 
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleAddEntry}
-                className="rounded bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
-              >
-                Add
-              </button>
-              <button
-                type="button"
-                onClick={handleClearForm}
-                className="rounded border border-gray-300 px-4 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-              >
-                Clear
-              </button>
-            </div>
+          {/* Action Buttons - Inline */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleAddEntry}
+              className="rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+            >
+              Add Entry
+            </button>
+            <button
+              type="button"
+              onClick={handleClearForm}
+              className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+            >
+              Clear
+            </button>
           </div>
 
           <div className="mt-2 overflow-x-auto rounded border border-primary/30">

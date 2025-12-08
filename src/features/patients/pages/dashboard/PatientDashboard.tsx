@@ -1,53 +1,91 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { useParams, useSearchParams } from "react-router-dom";
 import PatientInfoTab from "./components/PatientInfoTab";
 import PatientEmergencyTab from "./components/PatientEmergencyTab";
+import {
+  User,
+  Phone,
+  Calendar,
+  CreditCard,
+  Shield,
+  Briefcase,
+} from "lucide-react";
+
+const tabs = [
+  { id: "info", label: "Patient Info", icon: User },
+  { id: "emergency", label: "Emergency", icon: Phone },
+  { id: "appointment", label: "Appointment", icon: Calendar },
+  { id: "billing", label: "Billing", icon: CreditCard },
+  { id: "insurances", label: "Insurances", icon: Shield },
+  { id: "occupation", label: "Occupation", icon: Briefcase },
+] as const;
+
+type TabId = (typeof tabs)[number]["id"];
 
 export function PatientDashboard() {
   const { id } = useParams();
   const patientId = Number(id);
   const [searchParams, setSearchParams] = useSearchParams();
-  const currentTab = searchParams.get('tab') || 'info';
+  const currentTab = (searchParams.get("tab") as TabId) || "info";
+
+  const handleTabChange = (tabId: TabId) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", tabId);
+    setSearchParams(next, { replace: true });
+  };
 
   return (
-    <div className="space-y-4">
-      <Tabs value={currentTab} onValueChange={(val) => {
-        const next = new URLSearchParams(searchParams);
-        next.set('tab', val);
-        setSearchParams(next, { replace: true });
-      }} className="w-full">
-        <TabsList className="bg-muted/30">
-          <TabsTrigger value="info" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Patient Info</TabsTrigger>
-          <TabsTrigger value="emergency" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Emergency</TabsTrigger>
-          <TabsTrigger value="appointment" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Appointment</TabsTrigger>
-          <TabsTrigger value="billing" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Billing</TabsTrigger>
-          <TabsTrigger value="insurances" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Insurances</TabsTrigger>
-          <TabsTrigger value="occupation" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Occupation</TabsTrigger>
-        </TabsList>
+    <Card className="border-border shadow-sm overflow-hidden">
+      {/* Compact Tabs */}
+      <div className="px-1 border-b border-border">
+        <nav 
+          className="flex items-center overflow-x-auto"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {tabs.map(({ id, label, icon: Icon }) => {
+            const isActive = currentTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => handleTabChange(id)}
+                className={`
+                  group relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all duration-150 whitespace-nowrap
+                  ${isActive 
+                    ? "text-primary" 
+                    : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+                  }
+                `}
+              >
+                <Icon className={`h-3.5 w-3.5 ${!isActive && "group-hover:scale-110 transition-transform"}`} />
+                <span>{label}</span>
+                {isActive && (
+                  <span className="absolute inset-x-0 -bottom-[1px] h-[2px] bg-primary rounded-t-full" />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
 
-        <TabsContent value="info" className="mt-4">
-          <PatientInfoTab patientId={patientId} />
-        </TabsContent>
+      <CardContent className="p-4">
+        {currentTab === "info" && <PatientInfoTab patientId={patientId} />}
+        {currentTab === "emergency" && <PatientEmergencyTab patientId={patientId} />}
 
-        <TabsContent value="emergency" className="mt-4">
-          <PatientEmergencyTab patientId={patientId} />
-        </TabsContent>
-
-        {["appointment", "billing", "insurances", "occupation"].map((key) => (
-          <TabsContent key={key} value={key} className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="capitalize">{key}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-muted-foreground">No data available.</div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
+        {["appointment", "billing", "insurances", "occupation"].includes(currentTab) && (
+          <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              {(() => {
+                const tab = tabs.find(t => t.id === currentTab);
+                const TabIcon = tab?.icon || User;
+                return <TabIcon className="h-4 w-4" />;
+              })()}
+            </div>
+            <p className="text-sm font-medium capitalize">{currentTab}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">No data available.</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

@@ -4,31 +4,40 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   ArrowLeft,
+  AudioLines,
   CalendarDays,
   ExternalLink,
+  FileText,
   Loader2,
-  Pill,
+  Mic,
+  Type,
   User,
 } from "lucide-react";
 import { patientService } from "@/features/patients/services/patient.service";
 import { visitService } from "@/features/visits/services/visit.service";
 import type { VisitItem } from "@/features/visits/types/visit.types";
-import { usePrescriptions } from "@/features/visits/hooks/usePrescriptions";
-import { PrescriptionCard } from "@/features/patients/components/PrescriptionCard";
+import { useClinicalNotes } from "@/features/visits/hooks/useClinicalNotes";
+
+const formatDate = (dt?: string) => (dt ? new Date(dt).toLocaleDateString() : "");
 
 /**
- * PatientPrescriptionsPage
- * Used in: /patient/:id/prescription
+ * PatientClinicalNotesPage
+ * Used in: /patient/:id/notes
  * 
- * Read-only view of prescriptions.
- * Shows visits list -> select visit -> view prescriptions (read-only).
- * To edit, user is redirected to Visit page prescription tab.
+ * Read-only view of clinical notes.
+ * Shows visits list -> select visit -> view notes (read-only).
+ * To edit, user is redirected to Visit page notes tab.
  */
-export function PatientPrescriptionsPage() {
+export function PatientClinicalNotesPage() {
   const { id } = useParams<{ id: string }>();
   const patientId = Number(id);
   const navigate = useNavigate();
@@ -59,13 +68,13 @@ export function PatientPrescriptionsPage() {
   const visits: VisitItem[] = visitsData?.visits ?? [];
   const selectedVisit = visits.find((v) => v.visit_id === selectedVisitId) || null;
 
-  const { data: prescriptions = [], isLoading: prescriptionsLoading } = usePrescriptions(
+  const { data: notes = [], isLoading: notesLoading } = useClinicalNotes(
     selectedVisitId || undefined
   );
 
   const handleGoToEdit = () => {
     if (selectedVisitId) {
-      navigate(`/main/patients/${patientId}/visit?tab=prescription&visitId=${selectedVisitId}`);
+      navigate(`/main/patients/${patientId}/visit?tab=notes&visitId=${selectedVisitId}`);
     }
   };
 
@@ -75,14 +84,14 @@ export function PatientPrescriptionsPage() {
       <Card className="border-border shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">
-            <Pill className="h-4 w-4 text-emerald-500" />
-            <h2 className="text-sm font-semibold">Prescriptions</h2>
+            <FileText className="h-4 w-4 text-blue-500" />
+            <h2 className="text-sm font-semibold">Clinical Notes</h2>
           </div>
           {visitsLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </div>
         <CardContent className="p-3">
           <p className="text-xs text-muted-foreground mb-3">
-            Select a visit to view its prescriptions
+            Select a visit to view its clinical notes
           </p>
 
           {visitsLoading ? (
@@ -133,7 +142,7 @@ export function PatientPrescriptionsPage() {
     );
   }
 
-  // Selected Visit Prescriptions View (Read-Only)
+  // Selected Visit Notes View (Read-Only)
   return (
     <Card className="border-border shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -151,41 +160,81 @@ export function PatientPrescriptionsPage() {
         </div>
         <Button size="sm" onClick={handleGoToEdit} className="h-7 text-xs">
           <ExternalLink className="h-3.5 w-3.5 mr-1" />
-          Edit Prescriptions
+          Edit Notes
         </Button>
       </div>
 
       <CardContent className="p-3">
-        {prescriptionsLoading ? (
+        {notesLoading ? (
           <div className="space-y-2">
             {[1, 2].map((i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
           </div>
-        ) : prescriptions.length === 0 ? (
+        ) : notes.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
-            <Pill className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-            <p className="text-sm font-medium">No prescriptions</p>
-            <p className="text-xs text-muted-foreground mb-3">This visit has no prescriptions yet</p>
+            <AudioLines className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+            <p className="text-sm font-medium">No clinical notes</p>
+            <p className="text-xs text-muted-foreground mb-3">This visit has no notes yet</p>
             <Button variant="outline" size="sm" onClick={handleGoToEdit} className="h-8">
               <ExternalLink className="h-3.5 w-3.5 mr-1" />
               Go to Visit to Add
             </Button>
           </div>
         ) : (
-          <ScrollArea className="max-h-[500px]">
-            <div className="space-y-2 pr-1">
-              {prescriptions.map((prescription) => (
-                <PrescriptionCard
-                  key={prescription.prescription_id}
-                  prescription={prescription}
-                  // No edit/delete - read-only view
-                />
-              ))}
-            </div>
-          </ScrollArea>
+          <Accordion type="multiple" className="space-y-2">
+            {notes.map((note) => {
+              const isAudio = note.notes_type === "audio";
+
+              return (
+                <AccordionItem
+                  key={note.cn_id}
+                  value={String(note.cn_id)}
+                  className="border border-border rounded-lg bg-card px-3 data-[state=open]:bg-muted/30"
+                >
+                  <AccordionTrigger className="hover:no-underline py-3">
+                    <div className="flex items-center gap-3 w-full">
+                      {/* Icon */}
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        isAudio 
+                          ? "bg-purple-100 dark:bg-purple-900/50" 
+                          : "bg-blue-100 dark:bg-blue-900/50"
+                      }`}>
+                        {isAudio ? (
+                          <Mic className="h-4 w-4 text-purple-600" />
+                        ) : (
+                          <Type className="h-4 w-4 text-blue-600" />
+                        )}
+                      </div>
+                      
+                      {/* Header Info */}
+                      <div className="flex items-center gap-2 flex-1 text-left">
+                        <Badge 
+                          variant={isAudio ? "secondary" : "default"} 
+                          className="px-1.5 py-0 text-[10px]"
+                        >
+                          {isAudio ? "Dictation" : "Text"}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(note.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-2 pb-4">
+                    <div 
+                      className="prose prose-sm dark:prose-invert max-w-none text-sm [&>p]:my-1.5 [&>ul]:my-1.5 [&>ol]:my-1.5 [&>h1]:text-lg [&>h2]:text-base [&>h3]:text-sm"
+                      dangerouslySetInnerHTML={{ 
+                        __html: note.editor_notes || note.transcription || '<p class="text-muted-foreground">No content</p>' 
+                      }}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
         )}
       </CardContent>
     </Card>
   );
 }
 
-export default PatientPrescriptionsPage;
+export default PatientClinicalNotesPage;

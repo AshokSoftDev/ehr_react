@@ -25,8 +25,8 @@ type FormFloatingSelectProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 > = {
-  control: Control<TFieldValues, unknown, TFieldValues>;
-  name: TName;
+  control?: Control<TFieldValues, unknown, TFieldValues>;
+  name?: TName;
   label: string;
   options: SelectOption[];
   placeholder?: string;
@@ -107,7 +107,7 @@ export function FormFloatingSelect<
   return (
     <Controller
       control={control}
-      name={name}
+      name={name!}
       render={({ field, fieldState }) => {
         const hasValue = (field.value ?? "").toString().length > 0;
         const hasError = Boolean(fieldState.error);

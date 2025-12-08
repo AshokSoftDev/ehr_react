@@ -11,7 +11,11 @@ interface SheetFormProps {
 export function SheetForm({ open, onOpenChange, title, children }: SheetFormProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg">
+      <SheetContent 
+        side="right" 
+        className="w-full sm:max-w-lg"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>

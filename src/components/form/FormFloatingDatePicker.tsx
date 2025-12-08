@@ -21,14 +21,17 @@ type FormFloatingDatePickerProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 > = {
-  control: Control<TFieldValues, unknown, TFieldValues>;
-  name: TName;
+  control?: Control<TFieldValues, unknown, TFieldValues>;
+  name?: TName;
   label: string;
   className?: string;
   disabled?: boolean;
   fromDate?: Date;
   toDate?: Date;
-} & Omit<React.ComponentPropsWithoutRef<"button">, "name">;
+  // External controlled mode props
+  value?: Date | string;
+  onValueChange?: (date: Date | undefined) => void;
+} & Omit<React.ComponentPropsWithoutRef<"button">, "name" | "value">;
 
 export function FormFloatingDatePicker<
   TFieldValues extends FieldValues,
@@ -42,6 +45,8 @@ export function FormFloatingDatePicker<
     disabled,
     fromDate,
     toDate,
+    value,
+    onValueChange,
     ...rest
   } = props;
 
@@ -65,10 +70,72 @@ export function FormFloatingDatePicker<
         )}-${String(date.getDate()).padStart(2, "0")}`
       : "";
 
+  // External controlled mode (used outside RHF forms, e.g. filters)
+  if (value !== undefined && onValueChange) {
+    const selectedDate = value instanceof Date ? value : parseDate(value);
+    const hasValue = Boolean(selectedDate);
+
+    return (
+      <div className={cn("grid gap-2", className)}>
+        <Popover open={open} onOpenChange={setOpen}>
+          <div className="relative group">
+            <label
+              className={cn(
+                "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
+                "transition-all duration-300 bg-background/0 group-focus-within:bg-background/100",
+                !hasValue
+                  ? "top-1/2 -translate-y-1/2"
+                  : "top-0 -translate-y-1/2 text-xs",
+                "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs"
+              )}
+            >
+              {label}
+            </label>
+
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full h-12 pt-3 pb-2 px-3 justify-start text-left font-normal bg-card",
+                  !hasValue && "text-muted-foreground"
+                )}
+                disabled={disabled}
+                {...rest}
+              >
+                {selectedDate ? (
+                  format(selectedDate, "dd/MM/yyyy")
+                ) : (
+                  <span> </span>
+                )}
+                <CalendarIcon className="ml-auto h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+          </div>
+
+          <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+            <Calendar
+              captionLayout="dropdown"
+              mode="single"
+              selected={selectedDate}
+              fromDate={fromDate ?? new Date(1900, 0, 1)}
+              toDate={toDate ?? new Date(2100, 11, 31)}
+              onSelect={(date) => {
+                onValueChange(date);
+                setOpen(false);
+              }}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+    );
+  }
+
+  // Default behavior with form control
   return (
     <Controller
       control={control}
-      name={name}
+      name={name!}
       render={({ field, fieldState }) => {
         const selectedDate = parseDate(field.value);
         const hasValue = Boolean(selectedDate);
