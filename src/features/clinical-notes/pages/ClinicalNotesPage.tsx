@@ -39,6 +39,8 @@ import { AudioPlayer } from "../components/AudioPlayer";
 import { ClinicalNotesFilters } from "../components/ClinicalNotesFilters";
 import { AddClinicalNotePanel } from "../components/AddClinicalNotePanel";
 import { AddPrescriptionPanel } from "../components/AddPrescriptionPanel";
+import { EditClinicalNotePanel } from "../components/EditClinicalNotePanel";
+import { EditPrescriptionPanel } from "../components/EditPrescriptionPanel";
 
 const formatDate = (dt: string | Date) => new Date(dt).toLocaleDateString();
 
@@ -53,10 +55,14 @@ function VisitAccordionContent({
   visit,
   onAddClinicalNotes,
   onAddPrescription,
+  onEditNote,
+  onEditPrescription,
 }: {
   visit: VisitItem;
   onAddClinicalNotes: () => void;
   onAddPrescription: () => void;
+  onEditNote: (noteId: number) => void;
+  onEditPrescription: () => void;
 }) {
   const { data: notes = [], isLoading: notesLoading } = useClinicalNotes(visit.visit_id);
   const { data: prescriptions = [], isLoading: prescriptionsLoading } = usePrescriptions(visit.visit_id);
@@ -65,8 +71,7 @@ function VisitAccordionContent({
   const hasPrescriptions = prescriptions.length > 0;
 
   const handleEdit = (noteId: number) => {
-    console.log("Edit note:", noteId);
-    // TODO: Implement edit functionality
+    onEditNote(noteId);
   };
 
   const handlePrint = (note: typeof notes[0]) => {
@@ -190,7 +195,7 @@ function VisitAccordionContent({
                         <div
                           role="button"
                           tabIndex={0}
-                          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 cursor-pointer"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -204,7 +209,7 @@ function VisitAccordionContent({
                         <div
                           role="button"
                           tabIndex={0}
-                          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-600 cursor-pointer"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -218,7 +223,7 @@ function VisitAccordionContent({
                         <div
                           role="button"
                           tabIndex={0}
-                          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent text-destructive hover:text-destructive cursor-pointer"
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-red-100 dark:hover:bg-red-900/50 text-destructive cursor-pointer"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -266,6 +271,25 @@ function VisitAccordionContent({
                 {hasPrescriptions && (
                   <Badge variant="secondary" className="text-xs">{prescriptions.length}</Badge>
                 )}
+                {/* Edit Button for Prescriptions */}
+                {hasPrescriptions && (
+                  <div className="flex items-center gap-1 ml-auto mr-2">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onEditPrescription();
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && onEditPrescription()}
+                      title="Edit Prescriptions"
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                    </div>
+                  </div>
+                )}
               </div>
             </AccordionTrigger>
             <AccordionContent className="pt-2 pb-3">
@@ -297,6 +321,10 @@ export function ClinicalNotesPage() {
   const [showVisitSheet, setShowVisitSheet] = useState(false);
   const [addNoteForVisit, setAddNoteForVisit] = useState<VisitItem | null>(null);
   const [addPrescriptionForVisit, setAddPrescriptionForVisit] = useState<VisitItem | null>(null);
+  // Edit Note state - stores visit and noteId
+  const [editNoteState, setEditNoteState] = useState<{ visit: VisitItem; noteId: number } | null>(null);
+  // Edit Prescription state - stores visit for bulk prescription editing
+  const [editPrescriptionForVisit, setEditPrescriptionForVisit] = useState<VisitItem | null>(null);
 
   // Filter state
   const [patientSearch, setPatientSearch] = useState("");
@@ -414,6 +442,39 @@ export function ClinicalNotesPage() {
           onBack={() => setAddPrescriptionForVisit(null)}
           onComplete={() => {
             setAddPrescriptionForVisit(null);
+            refetchVisits();
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Show Edit Clinical Note Panel
+  if (editNoteState) {
+    return (
+      <div className="h-[calc(100vh-4rem)] overflow-hidden p-4">
+        <EditClinicalNotePanel
+          visit={editNoteState.visit}
+          noteId={editNoteState.noteId}
+          onBack={() => setEditNoteState(null)}
+          onComplete={() => {
+            setEditNoteState(null);
+            refetchVisits();
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Show Edit Prescription Panel
+  if (editPrescriptionForVisit) {
+    return (
+      <div className="h-[calc(100vh-4rem)] overflow-hidden p-4">
+        <EditPrescriptionPanel
+          visit={editPrescriptionForVisit}
+          onBack={() => setEditPrescriptionForVisit(null)}
+          onComplete={() => {
+            setEditPrescriptionForVisit(null);
             refetchVisits();
           }}
         />
@@ -542,6 +603,8 @@ export function ClinicalNotesPage() {
                         visit={visit}
                         onAddClinicalNotes={() => setAddNoteForVisit(visit)}
                         onAddPrescription={() => setAddPrescriptionForVisit(visit)}
+                        onEditNote={(noteId) => setEditNoteState({ visit, noteId })}
+                        onEditPrescription={() => setEditPrescriptionForVisit(visit)}
                       />
                     </AccordionContent>
                   </AccordionItem>

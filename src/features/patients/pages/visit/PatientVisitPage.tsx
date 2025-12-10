@@ -235,7 +235,7 @@ export function PatientVisitPage() {
           </div>
         )}
 
-        {currentTab === "hpi" && <HPIDentalChart />}
+        {currentTab === "hpi" && <HPIDentalChart visitId={selectedVisitId ?? undefined} />}
 
         {currentTab === "treatment" && (
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">

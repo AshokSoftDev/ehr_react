@@ -1,5 +1,23 @@
 import { toothImages } from "@/assets/toothImages";
 import { useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
+import {
+  useDentalHpiList,
+  useCreateDentalHpi,
+  useUpdateDentalHpi,
+  useDeleteDentalHpi,
+} from "@/features/visits/hooks/useDentalHpi";
+import type { DentalHPI } from "@/features/visits/types/dentalHpi.types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type DentitionView = "primary" | "mixed" | "permanent";
 
@@ -40,14 +58,7 @@ type ChiefComplaintOption = {
   label: string;
 };
 
-type HPIEntry = {
-  id: number;
-  teeth: string[];
-  complaints: ChiefComplaintId[];
-  severity: SeverityOption | "";
-  duration: Duration;
-  notes: string;
-};
+
 
 const CHIEF_COMPLAINT_OPTIONS: ChiefComplaintOption[] = [
   { id: "toothache", label: "Toothache" },
@@ -140,56 +151,147 @@ interface ToothSurfaceMapProps {
   onToggleRegion: (region: ToothRegionId) => void;
 }
 
+// Dental tooth surface selector - round center with 4 curved quadrant sections
 function ToothSurfaceMap({
   selectedRegions,
   onToggleRegion,
 }: ToothSurfaceMapProps) {
   const isSelected = (region: ToothRegionId) => selectedRegions.includes(region);
+  const allSelected = selectedRegions.length === 5;
 
-  const baseCellClasses =
-    "flex items-center justify-center text-[8px] leading-none cursor-pointer transition border border-border box-border";
-  const selectedClasses = "bg-primary text-primary-foreground";
-  const unselectedClasses = "bg-card text-gray-500";
+  // CSS for curved quadrant sections around center circle
+  // Each quadrant is a quarter-circle arc that wraps around the center
+  const quadrantStyles = {
+    topLeft: {
+      clipPath: "polygon(0 0, 50% 0, 50% 50%, 0 50%)",
+      borderRadius: "0 0 100% 0",
+    },
+    topRight: {
+      clipPath: "polygon(50% 0, 100% 0, 100% 50%, 50% 50%)",
+      borderRadius: "0 0 0 100%",
+    },
+    bottomLeft: {
+      clipPath: "polygon(0 50%, 50% 50%, 50% 100%, 0 100%)",
+      borderRadius: "0 100% 0 0",
+    },
+    bottomRight: {
+      clipPath: "polygon(50% 50%, 100% 50%, 100% 100%, 50% 100%)",
+      borderRadius: "100% 0 0 0",
+    },
+  };
+
+  const getQuadrantColor = (region: ToothRegionId) => {
+    return isSelected(region) 
+      ? "bg-primary" 
+      : "bg-slate-200 dark:bg-slate-700 hover:bg-primary/20 dark:hover:bg-primary/30";
+  };
 
   return (
-    <div className="mt-1 h-8 w-8 overflow-hidden rounded border border-border bg-card">
-      <div className="grid h-full w-full grid-cols-3 grid-rows-2">
+    <div className="mt-2 flex flex-col items-center gap-1">
+      {/* Square container with curved sections */}
+      <div className={`
+        relative w-14 h-14
+        border-2 rounded-lg transition-all duration-300
+        ${allSelected 
+          ? "border-primary shadow-lg shadow-primary/30" 
+          : "border-slate-400 dark:border-slate-500"
+        }
+        bg-slate-100 dark:bg-slate-800
+        overflow-hidden
+      `}>
+        {/* Top-Left quadrant */}
         <button
           type="button"
-          className={`${baseCellClasses} rounded-tl-[6px] ${
-            isSelected("leftTop") ? selectedClasses : unselectedClasses
-          }`}
           onClick={() => onToggleRegion("leftTop")}
+          className={`
+            absolute inset-0 cursor-pointer transition-colors duration-150
+            ${getQuadrantColor("leftTop")}
+            ${allSelected ? "border-r border-b border-white/50" : ""}
+          `}
+          style={quadrantStyles.topLeft}
+          title="Top-Left (Mesial)"
         />
+        
+        {/* Top-Right quadrant */}
         <button
           type="button"
-          className={`${baseCellClasses} row-span-2 ${
-            isSelected("center") ? selectedClasses : unselectedClasses
-          }`}
-          onClick={() => onToggleRegion("center")}
-        />
-        <button
-          type="button"
-          className={`${baseCellClasses} rounded-tr-[6px] ${
-            isSelected("rightTop") ? selectedClasses : unselectedClasses
-          }`}
           onClick={() => onToggleRegion("rightTop")}
+          className={`
+            absolute inset-0 cursor-pointer transition-colors duration-150
+            ${getQuadrantColor("rightTop")}
+            ${allSelected ? "border-l border-b border-white/50" : ""}
+          `}
+          style={quadrantStyles.topRight}
+          title="Top-Right (Distal)"
+        />
+        
+        {/* Bottom-Left quadrant */}
+        <button
+          type="button"
+          onClick={() => onToggleRegion("leftBottom")}
+          className={`
+            absolute inset-0 cursor-pointer transition-colors duration-150
+            ${getQuadrantColor("leftBottom")}
+            ${allSelected ? "border-r border-t border-white/50" : ""}
+          `}
+          style={quadrantStyles.bottomLeft}
+          title="Bottom-Left (Buccal)"
+        />
+        
+        {/* Bottom-Right quadrant */}
+        <button
+          type="button"
+          onClick={() => onToggleRegion("rightBottom")}
+          className={`
+            absolute inset-0 cursor-pointer transition-colors duration-150
+            ${getQuadrantColor("rightBottom")}
+            ${allSelected ? "border-l border-t border-white/50" : ""}
+          `}
+          style={quadrantStyles.bottomRight}
+          title="Bottom-Right (Lingual)"
         />
 
+        {/* Divider lines between quadrants */}
+        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-slate-400/50 dark:bg-slate-500/50 pointer-events-none" />
+        <div className="absolute left-0 right-0 top-1/2 h-px bg-slate-400/50 dark:bg-slate-500/50 pointer-events-none" />
+
+        {/* Center circle (Occlusal) - larger size */}
         <button
           type="button"
-          className={`${baseCellClasses} rounded-bl-[6px] ${
-            isSelected("leftBottom") ? selectedClasses : unselectedClasses
-          }`}
-          onClick={() => onToggleRegion("leftBottom")}
-        />
-        <button
-          type="button"
-          className={`${baseCellClasses} rounded-br-[6px] ${
-            isSelected("rightBottom") ? selectedClasses : unselectedClasses
-          }`}
-          onClick={() => onToggleRegion("rightBottom")}
-        />
+          onClick={() => onToggleRegion("center")}
+          className={`
+            absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+            w-7 h-7 rounded-full
+            transition-all duration-150
+            flex items-center justify-center
+            text-[10px] font-bold
+            border-2 z-10
+            ${isSelected("center") 
+              ? "bg-primary text-primary-foreground border-primary/80" 
+              : "bg-white dark:bg-slate-600 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-500 hover:bg-primary/10 hover:border-primary hover:text-primary"
+            }
+          `}
+          title="Center (Occlusal)"
+        >
+          O
+        </button>
+
+        {/* Corner labels */}
+        <span className={`absolute top-0.5 left-1 text-[7px] font-bold pointer-events-none z-20 ${isSelected("leftTop") ? "text-primary-foreground" : "text-slate-500"}`}>M</span>
+        <span className={`absolute top-0.5 right-1 text-[7px] font-bold pointer-events-none z-20 ${isSelected("rightTop") ? "text-primary-foreground" : "text-slate-500"}`}>D</span>
+        <span className={`absolute bottom-0.5 left-1 text-[7px] font-bold pointer-events-none z-20 ${isSelected("leftBottom") ? "text-primary-foreground" : "text-slate-500"}`}>B</span>
+        <span className={`absolute bottom-0.5 right-1 text-[7px] font-bold pointer-events-none z-20 ${isSelected("rightBottom") ? "text-primary-foreground" : "text-slate-500"}`}>L</span>
+      </div>
+      
+      {/* Selection indicator */}
+      <div className={`
+        text-[8px] font-medium px-1.5 py-0.5 rounded-full transition-all
+        ${allSelected 
+          ? "bg-primary/20 text-primary dark:bg-primary/30" 
+          : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+        }
+      `}>
+        {selectedRegions.length}/5
       </div>
     </div>
   );
@@ -355,7 +457,11 @@ function DentitionToggle({ view, onChange }: DentitionToggleProps) {
   );
 }
 
-export function HPIDentalChart() {
+interface HPIDentalChartProps {
+  visitId?: number;
+}
+
+export function HPIDentalChart({ visitId }: HPIDentalChartProps) {
   const [view, setView] = useState<DentitionView>("primary");
   const [selectedTeeth, setSelectedTeeth] = useState<string[]>([]);
   const [selectedComplaints, setSelectedComplaints] = useState<
@@ -369,8 +475,15 @@ export function HPIDentalChart() {
     days: "",
   });
   const [notes, setNotes] = useState("");
-  const [entries, setEntries] = useState<HPIEntry[]>([]);
   const [toothRegions, setToothRegions] = useState<ToothRegionMap>({});
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+
+  // API hooks
+  const { data: apiEntries = [], isLoading } = useDentalHpiList(visitId);
+  const createMutation = useCreateDentalHpi(visitId);
+  const updateMutation = useUpdateDentalHpi(visitId);
+  const deleteMutation = useDeleteDentalHpi(visitId);
 
   const selectedTeethSet = new Set(selectedTeeth);
 
@@ -381,14 +494,23 @@ export function HPIDentalChart() {
   };
 
   const handleToggleTooth = (toothNumber: string) => {
+    const ALL_REGIONS: ToothRegionId[] = ["leftTop", "rightTop", "leftBottom", "rightBottom", "center"];
+    
     setSelectedTeeth((prev) => {
       if (prev.includes(toothNumber)) {
+        // Deselect tooth - remove all its regions
         setToothRegions((prevRegions) => {
-          const { [toothNumber]: _removed, ...rest } = prevRegions;
+          const { [toothNumber]: removed, ...rest } = prevRegions;
+          void removed; // suppress unused variable warning
           return rest;
         });
         return prev.filter((t) => t !== toothNumber);
       }
+      // Select tooth - auto-select all 5 regions
+      setToothRegions((prevRegions) => ({
+        ...prevRegions,
+        [toothNumber]: ALL_REGIONS,
+      }));
       return [...prev, toothNumber];
     });
   };
@@ -426,6 +548,8 @@ export function HPIDentalChart() {
   };
 
   const handleClearForm = () => {
+    setSelectedTeeth([]);
+    setToothRegions({});
     setSelectedComplaints([]);
     setSeverity("");
     setDuration({
@@ -435,32 +559,63 @@ export function HPIDentalChart() {
       days: "",
     });
     setNotes("");
+    setEditingId(null);
   };
 
-  const handleAddEntry = () => {
-    if (!selectedTeeth.length) {
+  const handleSaveEntry = async () => {
+    if (!selectedTeeth.length || !visitId) {
       return;
     }
 
-    const newEntry: HPIEntry = {
-      id: Date.now(),
-      teeth: [...selectedTeeth].sort(),
-      complaints: [...selectedComplaints],
-      severity,
-      duration: { ...duration },
-      notes,
+    const payload = {
+      dentition_type: view as "primary" | "mixed" | "permanent",
+      teeth_surfaces: toothRegions,
+      chief_complaints: selectedComplaints,
+      severity: severity || undefined,
+      duration_years: parseInt(duration.years) || 0,
+      duration_months: parseInt(duration.months) || 0,
+      duration_weeks: parseInt(duration.weeks) || 0,
+      duration_days: parseInt(duration.days) || 0,
+      notes: notes || undefined,
     };
 
-    setEntries((prev) => [...prev, newEntry]);
+    if (editingId) {
+      // Update existing entry
+      await updateMutation.mutateAsync({ hpiId: editingId, payload });
+    } else {
+      // Create new entry
+      await createMutation.mutateAsync(payload);
+    }
+
     handleClearForm();
   };
 
-  const handleRemoveEntry = (id: number) => {
-    setEntries((prev) => prev.filter((entry) => entry.id !== id));
+  const handleEditEntry = (entry: DentalHPI) => {
+    // Load entry data into the form for editing
+    setView(entry.dentition_type as DentitionView);
+    setSelectedTeeth(Object.keys(entry.teeth_surfaces));
+    setToothRegions(entry.teeth_surfaces as ToothRegionMap);
+    setSelectedComplaints(entry.chief_complaints as ChiefComplaintId[]);
+    setSeverity((entry.severity as SeverityOption) || "");
+    setDuration({
+      years: entry.duration_years?.toString() || "",
+      months: entry.duration_months?.toString() || "",
+      weeks: entry.duration_weeks?.toString() || "",
+      days: entry.duration_days?.toString() || "",
+    });
+    setNotes(entry.notes || "");
+    setEditingId(entry.hpi_id);
   };
 
-  const handleSave = () => {
-    // Integrate with API or parent form as needed.
+  const handleDeleteEntry = async (hpiId: number) => {
+    setDeleteConfirmId(hpiId);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteConfirmId) {
+      await deleteMutation.mutateAsync(deleteConfirmId);
+      setDeleteConfirmId(null);
+    }
   };
 
   const renderDurationText = (value: Duration) => {
@@ -602,7 +757,11 @@ export function HPIDentalChart() {
                     const label = level.charAt(0).toUpperCase() + level.slice(1);
                     const selected = severity === level;
                     return (
-                      <label key={level} className="flex cursor-pointer items-center gap-1">
+                      <label
+                        key={level}
+                        className="flex cursor-pointer items-center gap-1"
+                        onClick={() => setSeverity(selected ? "" : level)}
+                      >
                         <span
                           className={`flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 ${
                             selected ? "border-primary" : "border-gray-300"
@@ -657,10 +816,15 @@ export function HPIDentalChart() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleAddEntry}
-              className="rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+              onClick={handleSaveEntry}
+              disabled={!selectedTeeth.length || createMutation.isPending || updateMutation.isPending}
+              className="rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add Entry
+              {createMutation.isPending || updateMutation.isPending
+                ? "Saving..."
+                : editingId
+                ? "Update"
+                : "Save"}
             </button>
             <button
               type="button"
@@ -689,7 +853,16 @@ export function HPIDentalChart() {
                 </tr>
               </thead>
               <tbody>
-                {entries.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-2 py-3 text-center text-gray-400"
+                    >
+                      Loading...
+                    </td>
+                  </tr>
+                ) : apiEntries.length === 0 ? (
                   <tr>
                     <td
                       colSpan={5}
@@ -699,8 +872,8 @@ export function HPIDentalChart() {
                     </td>
                   </tr>
                 ) : (
-                  entries.map((entry) => {
-                    const complaintLabels = entry.complaints
+                  apiEntries.map((entry) => {
+                    const complaintLabels = (entry.chief_complaints as string[])
                       .map(
                         (id) =>
                           CHIEF_COMPLAINT_OPTIONS.find(
@@ -710,35 +883,55 @@ export function HPIDentalChart() {
                       .filter((label): label is string => Boolean(label))
                       .join(", ");
 
-                    const severityLabel =
-                      entry.severity.charAt(0).toUpperCase() +
-                      entry.severity.slice(1);
+                    const severityLabel = entry.severity
+                      ? entry.severity.charAt(0).toUpperCase() +
+                        entry.severity.slice(1)
+                      : "-";
+
+                    const durationValue = {
+                      years: entry.duration_years?.toString() || "",
+                      months: entry.duration_months?.toString() || "",
+                      weeks: entry.duration_weeks?.toString() || "",
+                      days: entry.duration_days?.toString() || "",
+                    };
 
                     return (
                       <tr
-                        key={entry.id}
+                        key={entry.hpi_id}
                         className="odd:bg-muted/40 even:bg-card"
                       >
                         <td className="px-2 py-1 align-top text-gray-800">
-                          {entry.teeth.join(", ")}
+                          {Object.keys(entry.teeth_surfaces).sort().join(", ")}
                         </td>
                         <td className="px-2 py-1 align-top text-gray-800">
                           {complaintLabels || "-"}
                         </td>
                         <td className="px-2 py-1 align-top text-gray-800">
-                          {entry.severity ? severityLabel : "-"}
+                          {severityLabel}
                         </td>
                         <td className="px-2 py-1 align-top text-gray-800">
-                          {renderDurationText(entry.duration)}
+                          {renderDurationText(durationValue)}
                         </td>
                         <td className="px-2 py-1 align-top">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveEntry(entry.id)}
-                            className="rounded border border-destructive/60 px-2 py-0.5 text-[11px] font-semibold text-destructive hover:bg-destructive/10"
-                          >
-                            Remove
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleEditEntry(entry)}
+                              className="rounded p-1 text-primary hover:bg-primary/10"
+                              title="Edit"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteEntry(entry.hpi_id)}
+                              disabled={deleteMutation.isPending}
+                              className="rounded p-1 text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -747,18 +940,29 @@ export function HPIDentalChart() {
               </tbody>
             </table>
           </div>
-
-          <div className="mt-3 flex justify-end">
-            <button
-              type="button"
-              onClick={handleSave}
-              className="rounded bg-primary px-5 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-            >
-              Save
-            </button>
-          </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmId !== null} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Entry</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this HPI entry? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
