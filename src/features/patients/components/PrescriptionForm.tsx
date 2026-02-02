@@ -73,7 +73,7 @@ export function PrescriptionForm({
     setValue,
     formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       drug_name: initialData?.drug_name || "",
       drug_generic: initialData?.drug_generic || "",

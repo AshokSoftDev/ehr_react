@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { subDays, startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,14 +41,9 @@ import { AddClinicalNotePanel } from "../components/AddClinicalNotePanel";
 import { AddPrescriptionPanel } from "../components/AddPrescriptionPanel";
 import { EditClinicalNotePanel } from "../components/EditClinicalNotePanel";
 import { EditPrescriptionPanel } from "../components/EditPrescriptionPanel";
+import { StatusCountCards } from "../components/StatusCountCards";
 
 const formatDate = (dt: string | Date) => new Date(dt).toLocaleDateString();
-
-// Default to last 1 week
-const getDefaultDateRange = () => ({
-  from: subDays(new Date(), 7),
-  to: new Date(),
-});
 
 // Visit Accordion Content Component
 function VisitAccordionContent({
@@ -318,7 +313,6 @@ function VisitAccordionContent({
 
 export function ClinicalNotesPage() {
   const [showAppointmentSheet, setShowAppointmentSheet] = useState(false);
-  const [showVisitSheet, setShowVisitSheet] = useState(false);
   const [addNoteForVisit, setAddNoteForVisit] = useState<VisitItem | null>(null);
   const [addPrescriptionForVisit, setAddPrescriptionForVisit] = useState<VisitItem | null>(null);
   // Edit Note state - stores visit and noteId
@@ -326,19 +320,46 @@ export function ClinicalNotesPage() {
   // Edit Prescription state - stores visit for bulk prescription editing
   const [editPrescriptionForVisit, setEditPrescriptionForVisit] = useState<VisitItem | null>(null);
 
-  // Filter state
+  // Input filter state (what user is typing/selecting)
+  const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(new Date());
   const [patientSearch, setPatientSearch] = useState("");
-  const [doctorFilter, setDoctorFilter] = useState<string>("");
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(getDefaultDateRange());
+  const [doctorFilter, setDoctorFilter] = useState<string>("all");
 
-  // Fetch visits
+  // Applied filter state (what API uses - only updated on Search click)
+  const [appliedFilters, setAppliedFilters] = useState({
+    date: new Date() as Date | undefined,
+    patient: "",
+    doctor: "all",
+  });
+
+  // Helper to get doctor ID for API (returns undefined for "all")
+  const getDoctorIdForApi = (doctorValue: string) => (doctorValue === "all" ? undefined : doctorValue);
+
+  // Fetch visits with APPLIED filters (not input filters)
   const {
     data: visitsData,
     isLoading: visitsLoading,
     refetch: refetchVisits,
   } = useQuery({
-    queryKey: ["clinical-notes-visits"],
-    queryFn: () => visitService.list({ status: "1", page: 1, limit: 100 }),
+    queryKey: ["clinical-notes-visits", appliedFilters],
+    queryFn: () => visitService.list({
+      status: "1",
+      page: 1,
+      limit: 100,
+      dateFrom: appliedFilters.date ? startOfDay(appliedFilters.date).toISOString() : undefined,
+      dateTo: appliedFilters.date ? endOfDay(appliedFilters.date).toISOString() : undefined,
+      doctor_id: getDoctorIdForApi(appliedFilters.doctor),
+      patient: appliedFilters.patient || undefined,
+    }),
+  });
+
+  // Fetch status counts for APPLIED filters
+  const { data: statusCounts, isLoading: statusCountsLoading } = useQuery({
+    queryKey: ["status-counts", appliedFilters.date?.toISOString(), appliedFilters.doctor],
+    queryFn: () => visitService.getStatusCounts({
+      date: appliedFilters.date?.toISOString(),
+      doctorId: getDoctorIdForApi(appliedFilters.doctor),
+    }),
   });
 
   // Fetch doctors for filter and appointment form
@@ -349,47 +370,29 @@ export function ClinicalNotesPage() {
 
   const visits = useMemo<VisitItem[]>(() => visitsData?.visits ?? [], [visitsData]);
 
-  // Filter visits based on all criteria
-  const filteredVisits = useMemo(() => {
-    return visits.filter((v) => {
-      // Patient/MRN filter
-      if (patientSearch.trim()) {
-        const q = patientSearch.toLowerCase();
-        const matchesPatient =
-          v.patient?.firstName?.toLowerCase().includes(q) ||
-          v.patient?.lastName?.toLowerCase().includes(q) ||
-          v.patient?.mrn?.toLowerCase().includes(q);
-        if (!matchesPatient) return false;
-      }
+  // No client-side filtering needed - server handles it
+  const filteredVisits = visits;
 
-      // Doctor filter
-      if (doctorFilter && v.doctor?.id !== doctorFilter) {
-        return false;
-      }
-
-      // Date range filter
-      if (dateRange.from && dateRange.to) {
-        const visitDate = new Date(v.visit_date);
-        if (visitDate < startOfDay(dateRange.from) || visitDate > endOfDay(dateRange.to)) {
-          return false;
-        }
-      }
-
-      return true;
+  // Apply current input filters to trigger API call
+  const handleSearch = () => {
+    setAppliedFilters({
+      date: appointmentDate,
+      patient: patientSearch,
+      doctor: doctorFilter,
     });
-  }, [visits, patientSearch, doctorFilter, dateRange]);
-
-  const defaultDateRange = getDefaultDateRange();
-  const hasActiveFilters = Boolean(
-    patientSearch ||
-    doctorFilter ||
-    dateRange.from.getTime() !== defaultDateRange.from.getTime()
-  );
+  };
 
   const clearFilters = () => {
+    // Reset input filters
+    setAppointmentDate(new Date());
     setPatientSearch("");
-    setDoctorFilter("");
-    setDateRange(getDefaultDateRange());
+    setDoctorFilter("all");
+    // Reset and apply
+    setAppliedFilters({
+      date: new Date(),
+      patient: "",
+      doctor: "all",
+    });
   };
 
   const handleAppointmentSubmit = async (data: AppointmentFormValues) => {
@@ -410,7 +413,6 @@ export function ClinicalNotesPage() {
       console.log("API payload:", payload);
       await appointmentService.create(payload);
       setShowAppointmentSheet(false);
-      setShowVisitSheet(false);
       refetchVisits();
     } catch (error) {
       console.error("Failed to create appointment", error);
@@ -484,7 +486,7 @@ export function ClinicalNotesPage() {
 
   return (
     <>
-      <div className="h-[calc(100vh-4rem)] overflow-auto flex flex-col">
+      <div className="h-[calc(100vh-4rem)] overflow-auto flex flex-col p-4">
         {/* Header Section */}
         <div className="pb-4">
           <div className="flex items-center justify-between mb-4">
@@ -496,40 +498,33 @@ export function ClinicalNotesPage() {
                 Manage clinical notes and prescriptions for patient visits
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-4">
+              {/* Status Count Cards */}
+              <StatusCountCards
+                counts={statusCounts ?? { scheduled: 0, pending: 0, notesGenerated: 0, postedToEHR: 0 }}
+                isLoading={statusCountsLoading}
+              />
+              {/* Add Appointment Button */}
               <Button
-                variant="secondary"
+                className="bg-primary-gradient hover:opacity-90 shadow-lg"
                 onClick={() => setShowAppointmentSheet(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add Appointment
               </Button>
-              <Button
-                className="bg-primary-gradient hover:opacity-90 shadow-lg"
-                onClick={() => setShowVisitSheet(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Visit
-              </Button>
             </div>
           </div>
 
-          {/* Inline Filters */}
+          {/* Filters Row */}
           <ClinicalNotesFilters
+            appointmentDate={appointmentDate}
+            onDateChange={setAppointmentDate}
             patientSearch={patientSearch}
             onPatientSearchChange={setPatientSearch}
             doctorFilter={doctorFilter}
             onDoctorFilterChange={setDoctorFilter}
-            dateFrom={dateRange.from}
-            dateTo={dateRange.to}
-            onDateFromChange={(date) =>
-              date && setDateRange((prev) => ({ ...prev, from: date }))
-            }
-            onDateToChange={(date) =>
-              date && setDateRange((prev) => ({ ...prev, to: date }))
-            }
             doctors={doctors}
-            hasActiveFilters={hasActiveFilters}
+            onSearch={handleSearch}
             onReset={clearFilters}
           />
         </div>
@@ -625,15 +620,6 @@ export function ClinicalNotesPage() {
         hideStatus={true}
       />
 
-      {/* Visit Form Sheet - Creates appointment with status "WITH DOCTOR" */}
-      <AppointmentFormSheet
-        open={showVisitSheet}
-        onOpenChange={setShowVisitSheet}
-        onSubmit={handleAppointmentSubmit}
-        doctors={doctors}
-        defaultStatus="WITH DOCTOR"
-        hideStatus={true}
-      />
     </>
   );
 }

@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
 import { Switch } from './switch';
 import { Label } from './label';

@@ -2,10 +2,10 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDoctor } from './useDoctor';
 import { useDoctors } from './useDoctors';
-import type { Doctor, CreateDoctorDto, UpdateDoctorDto, DoctorFilters, PaginationParams } from '../types/doctor.types';
+import type { Doctor, CreateDoctorDto, UpdateDoctorDto, DoctorFiltersType, PaginationParams } from '../types/doctor.types';
 
 interface UseDoctorManagementOptions {
-  initialFilters?: DoctorFilters;
+  initialFilters?: DoctorFiltersType;
   initialPagination?: PaginationParams;
   navigateOnCreate?: boolean;
   navigateOnUpdate?: boolean;

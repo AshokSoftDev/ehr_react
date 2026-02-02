@@ -74,7 +74,7 @@ export const UsersPage: React.FC = () => {
     }
   };
 
-  const handleFormSubmit = async (data: CreateUserDto | UpdateUserDto) => {
+  const handleFormSubmit = async (data: any) => {
     if (selectedUser) {
       await updateMutation.mutateAsync({
         id: selectedUser.userId,

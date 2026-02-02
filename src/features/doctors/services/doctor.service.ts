@@ -6,6 +6,7 @@ import type {
   // DoctorFiltersType,
   PaginationParams,
   DoctorListResponse,
+  DoctorFiltersType,
 } from '../types/doctor.types';
 
 export class DoctorService {
@@ -35,7 +36,7 @@ export class DoctorService {
   }
 
   async getAllDoctors(
-    filters: DoctorFilters = {},
+    filters: DoctorFiltersType = {},
     pagination: PaginationParams = {}
   ): Promise<DoctorListResponse> {
     const params = {

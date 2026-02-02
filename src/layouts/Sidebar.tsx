@@ -35,6 +35,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     [hasModuleAccess]
   );
 
+  // console.log(accessibleRoutes);
+  
+
   useEffect(() => {
     if (isMobile) {
       setIsExpanded(isSidebarExpanded);
@@ -82,7 +85,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const renderNavItem = (route: RouteConfig, level: number = 0) => {
-    const hasChildren = route.children && route.children.length > 0;
+    const navChildren = route.children?.filter((child) => child.showInNav) ?? [];
+    const hasChildren = navChildren.length > 0;
     const isItemExpanded = expandedItems.includes(route.id);
 
     const isAnyChildActive = (route: RouteConfig): boolean => {
@@ -165,7 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {hasChildren && (isExpanded || isMobile) && isItemExpanded && (
           <div className="mt-1 space-y-1">
-            {route.children?.map((child) => renderNavItem(child, level + 1))}
+            {navChildren.map((child) => renderNavItem(child, level + 1))}
           </div>
         )}
       </div>

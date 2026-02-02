@@ -116,8 +116,8 @@ export const GroupsPage: React.FC = () => {
   };
 
   const responseData = data as GroupsResponse;
-  const groups = responseData?.data.groups || [];
-  const pagination = responseData?.data.pagination;
+  const groups = responseData?.data?.groups || [];
+  // const pagination = responseData?.data?.pagination;
   const modules = (modulesData as ModulesResponse)?.data || [];
 
   // Hide system group (root-only) from UI list/edit/delete

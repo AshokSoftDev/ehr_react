@@ -17,7 +17,7 @@ export const createUserSchema = z.object({
   password: passwordSchema,
   phoneNumber: z.string().optional(),
   groupId: z.string().optional(),
-  dob: z.string().optional(),
+  dob: z.union([z.date(), z.string()]).optional(),
 });
 
 export const updateUserSchema = z.object({
@@ -27,8 +27,8 @@ export const updateUserSchema = z.object({
   lastName: z.string().min(1, 'Last name is required').optional(),
   phoneNumber: z.string().optional(),
   groupId: z.string().optional(),
-  userStatus: z.number().optional(),
-  dob: z.string().optional(),
+  userStatus: z.coerce.number().optional(),
+  dob: z.union([z.date(), z.string()]).optional(),
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;

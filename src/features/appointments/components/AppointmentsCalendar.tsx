@@ -25,7 +25,7 @@ export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: Ap
   const [details, setDetails] = useState<AppointmentItem | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
-  const [forceRender, setForceRender] = useState(0);
+  const [forceRender] = useState(0);
   const [draggedAppointmentId, setDraggedAppointmentId] = useState<number | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [targetMonth, setTargetMonth] = useState<Date | null>(null);

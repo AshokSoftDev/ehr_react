@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../../components/ui/sheet';
@@ -9,8 +9,8 @@ import { FormFloatingSelect } from '../../../components/form/FormFloatingSelect'
 import { FormFloatingDatePicker } from '../../../components/form/FormFloatingDatePicker';
 import { FormSearchSelectWithCreate } from '../../../components/form/FormSearchSelectWithCreate';
 import { ScrollArea } from '../../../components/ui/scroll-area';
-import { Loader2, User2, Mail, Phone, Shield, UserCheck } from 'lucide-react';
-import { createUserSchema, updateUserSchema, type UpdateUserInput } from '../schemas/user.schema';
+import { Loader2, User2, Mail, Shield, UserCheck } from 'lucide-react';
+import { createUserSchema, updateUserSchema } from '../schemas/user.schema';
 import type { User } from '../types/user.types';
 import { useGroups } from '../../groups/hooks/useGroups';
 import { FormSheetContext } from '../../../contexts/FormSheetContext/index';
@@ -21,7 +21,7 @@ interface UserFormProps {
   open: boolean;
   onClose: () => void;
   user?: User | null;
-  onSubmit: (data: CreateUserFormData | UpdateUserFormData) => Promise<void>;
+  onSubmit: (data: CreateUserFormData | UpdateUserFormData) => any;
 }
 
 export const UserForm: React.FC<UserFormProps> = ({
@@ -38,7 +38,7 @@ export const UserForm: React.FC<UserFormProps> = ({
   });
 
   const form = useForm<CreateUserFormData | UpdateUserFormData>({
-    resolver: zodResolver(user ? updateUserSchema : createUserSchema),
+    resolver: zodResolver(user ? updateUserSchema : createUserSchema) as any,
     defaultValues: {
       title: 'Mr',
       firstName: '',
@@ -47,7 +47,7 @@ export const UserForm: React.FC<UserFormProps> = ({
       password: '',
       phoneNumber: '',
       groupId: '',
-      dob: '',
+      dob: undefined,
     },
   });
 
@@ -66,7 +66,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         email: user.email,
         phoneNumber: user.phoneNumber || '',
         groupId: user.groupId || '',
-        userStatus: user.userStatus.toString(),
+        userStatus: user.userStatus,
         dob: user.dob ? new Date(user.dob) : undefined,
       });
     } else {

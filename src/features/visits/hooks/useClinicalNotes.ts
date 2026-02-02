@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import type {
-  ClinicalNote,
   CreateClinicalNotePayload,
   UpdateClinicalNotePayload,
 } from '../types/clinicalNote.types';

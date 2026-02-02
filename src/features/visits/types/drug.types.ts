@@ -5,8 +5,11 @@ export interface Drug {
   drug_type: string;
   drug_dosage: string;
   drug_measure: string;
-  instruction?: string;
+  amount: number;
+  instruction?: string | null;
   status: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface DrugFilters {
@@ -14,3 +17,4 @@ export interface DrugFilters {
   page?: number;
   limit?: number;
 }
+

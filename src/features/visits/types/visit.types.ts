@@ -37,6 +37,7 @@ export interface VisitFilters {
   dateFrom?: string;
   dateTo?: string;
   doctor?: string;
+  doctor_id?: string; // direct doctor ID filter
   patient?: string; // name or MRN
   patient_id?: number; // direct patient ID filter
   reason?: string;

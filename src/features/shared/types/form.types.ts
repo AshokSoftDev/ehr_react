@@ -15,14 +15,14 @@ export interface GroupFormData {
   // User form types - separate create and update
   export interface CreateUserFormData {
     title: string;
-    fullName: string;
+    fullName?: string;
     firstName: string;
     lastName: string;
     email: string;
     password: string;
     phoneNumber?: string;
     groupId?: string;
-    dob?: string;
+    dob?: Date | string;
   }
   
   export interface UpdateUserFormData {
@@ -32,8 +32,8 @@ export interface GroupFormData {
     lastName?: string;
     phoneNumber?: string;
     groupId?: string;
-    userStatus?: string;
-    dob?: string;
+    userStatus?: number;
+    dob?: Date | string;
   }
   
   // Union type for user forms

@@ -28,7 +28,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onC
     resolver: zodResolver(patientSchema),
     defaultValues: patient ? {
       ...patient,
-      dateOfBirth: patient.dateOfBirth.split('T')[0],
+      dateOfBirth: patient.dateOfBirth?.split('T')[0],
     } : {
       title: '',
       firstName: '',

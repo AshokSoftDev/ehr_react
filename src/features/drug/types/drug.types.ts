@@ -5,6 +5,7 @@ export interface DrugItem {
   drug_type: string;
   drug_dosage: string;
   drug_measure: string;
+  amount: number;
   instruction?: string | null;
   status: number;
   createdAt: string;
@@ -21,6 +22,7 @@ export interface CreateDrugInput {
   drug_type: string;
   drug_dosage: string;
   drug_measure: string;
+  amount: number;
   instruction?: string;
   status?: number;
 }

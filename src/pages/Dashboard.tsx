@@ -1,17 +1,15 @@
 import React from "react";
 import {
-  Activity,
   Users,
   Calendar,
   FileText,
-  Heart,
   Clock,
-  TrendingUp,
   AlertCircle,
   UserCheck,
-  Stethoscope,
   Pill,
   BedDouble,
+  Stethoscope,
+  TrendingUp,
 } from "lucide-react";
 import {
   Card,
@@ -38,8 +36,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,

@@ -73,8 +73,9 @@ export function DrugsPage() {
         drug_type: values.drug_type,
         drug_dosage: values.drug_dosage,
         drug_measure: values.drug_measure,
+        amount: values.amount,
         instruction: values.instruction,
-        status: values.status ?? 1,
+        status: values.status ? 1 : 0,
       }),
     onSuccess: () => {
       setOpenForm(false);
@@ -90,8 +91,9 @@ export function DrugsPage() {
         drug_type: input.values.drug_type,
         drug_dosage: input.values.drug_dosage,
         drug_measure: input.values.drug_measure,
+        amount: input.values.amount,
         instruction: input.values.instruction,
-        status: input.values.status,
+        status: input.values.status ? 1 : 0,
       }),
     onSuccess: () => {
       setOpenForm(false);

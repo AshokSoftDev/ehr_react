@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
 import { PermissionProvider } from "./contexts/PermissionContext";
 import { SessionExpiredDialog } from "./components/SessionExpiredDialog";
+import { AIChatWidget } from "./components/ai-chat-widget";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ function App() {
             <AppRouter />
             {/* <GlobalFormSheets /> */}
             <SessionExpiredDialog />
+            <AIChatWidget />
             <ToastContainer
               position="top-right"
               autoClose={3000}
@@ -42,3 +44,4 @@ function App() {
 }
 
 export default App;
+

@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { LayoutDashboardIcon, Users, Settings, ThermometerIcon, CalendarDays, NotebookPen } from 'lucide-react';
+import { LayoutDashboardIcon, Users, Settings, ThermometerIcon, CalendarDays, NotebookPen, Receipt, Bot } from 'lucide-react';
 import { type RouteConfig } from '../interface/routes.interface';
 
 const Dashboard = lazy(() => import('../pages/Dashboard'));
@@ -33,6 +33,10 @@ const DrugsPage = lazy(() => import('../features/drug/pages/DrugsPage').then(mod
 const DocumentTypesPage = lazy(() => import('../features/document-types/pages/DocumentTypesPage').then(module => ({ default: module.DocumentTypesPage })))
 const LocationsPage = lazy(() => import('../features/locations/pages/LocationsPage').then(module => ({ default: module.LocationsPage })))
 const ClinicalNotesPage = lazy(() => import('../features/clinical-notes/pages/ClinicalNotesPage').then(module => ({ default: module.ClinicalNotesPage })))
+const BillingLayout = lazy(() => import('../features/billing/pages/BillingLayout').then(module => ({ default: module.BillingLayout })))
+const InvoicePage = lazy(() => import('../features/billing/pages/InvoicePage').then(module => ({ default: module.InvoicePage })))
+const ReceiptPage = lazy(() => import('../features/billing/pages/ReceiptPage').then(module => ({ default: module.ReceiptPage })))
+const AIChatPage = lazy(() => import('../features/ai-chat/pages/AIChatPage').then(module => ({ default: module.AIChatPage })))
 
 export const routes: RouteConfig[] = [
   {
@@ -96,6 +100,16 @@ export const routes: RouteConfig[] = [
     module: 'Clinical Notes',
   },
   {
+    id: 'ai-chat',
+    path: '/main/ai-chat',
+    name: 'AI Assistant',
+    icon: Bot,
+    component: AIChatPage,
+    roles: [1],
+    showInNav: false, // Now using floating widget instead
+    module: 'AI Chat',
+  },
+  {
     id: 'patient-details',
     path: '/main/patients/:id',
     name: 'Patient Details',
@@ -134,6 +148,20 @@ export const routes: RouteConfig[] = [
     roles: [1],
     showInNav: true,
     module: 'Visits',
+  },
+  {
+    id: 'billing',
+    path: '/main/billing',
+    name: 'Billing',
+    icon: Receipt,
+    component: BillingLayout,
+    roles: [1],
+    showInNav: true,
+    module: 'Billing',
+    children: [
+      { id: 'billing-invoice', path: '/main/billing/invoice', name: 'Invoice', icon: Receipt, component: InvoicePage, roles: [1], showInNav: false, module: 'Billing' },
+      { id: 'billing-receipt', path: '/main/billing/receipt', name: 'Receipt', icon: Receipt, component: ReceiptPage, roles: [1], showInNav: false, module: 'Billing' },
+    ],
   },
   {
     id: 'settings',

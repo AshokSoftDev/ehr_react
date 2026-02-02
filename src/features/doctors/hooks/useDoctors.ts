@@ -29,7 +29,7 @@ export const useDoctors = (options?: UseDoctorsOptions) => {
 
   // Prefetch next page
   useEffect(() => {
-    const { page = 1, limit = 10 } = pagination;
+    const { page = 1 } = pagination;
     const totalPages = doctorsQuery.data?.totalPages || 1;
     
     if (page < totalPages) {

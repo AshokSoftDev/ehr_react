@@ -36,12 +36,12 @@ export function PatientsPage() {
   };
 
   const handleDelete = (patient: Patient) => {
-    deletePatient(patient.patient_id);
+    deletePatient(patient.patient_id ?? 0);
   };
 
   const handleSubmit = (data: PatientFormData) => {
     if (selectedPatient) {
-      updatePatient({ id: selectedPatient.patient_id, data });
+      updatePatient({ id: selectedPatient.patient_id ?? 0, data });
     } else {
       createPatient(data);
     }
@@ -68,8 +68,6 @@ export function PatientsPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         // Navigate to patient details on row click
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        // @ts-expect-error generic passthrough to underlying table
         onRowClick={(row: Patient) =>
           navigate(`/main/patients/${row.patient_id}/dashboard`)
         }

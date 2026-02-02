@@ -1,5 +1,4 @@
 import React from 'react';
-import { X } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { PatientForm } from './PatientForm';
 import type { Patient } from '../types/patient.types';

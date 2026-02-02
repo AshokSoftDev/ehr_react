@@ -17,8 +17,7 @@ export const DoctorsPage: React.FC = () => {
     doctors,
     total,
     page,
-    totalPages,
-
+    
     // State
     filters,
     pagination,

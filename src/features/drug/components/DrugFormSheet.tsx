@@ -15,10 +15,11 @@ const schema = z.object({
   drug_generic: z.string().min(1, "Generic name is required"),
   drug_name: z.string().min(1, "Drug name is required"),
   drug_type: z.string().min(1, "Type is required"),
-  drug_dosage: z.coerce.number().min(0.01, "Dosage must be greater than 0"),
+  drug_dosage: z.string().min(1, "Dosage is required"),
   drug_measure: z.enum(["mg", "g", "mcg", "ml", "l", "capsule", "tablet"]),
+  amount: z.coerce.number().min(0.01, "Amount must be at least 0.01"),
   instruction: z.string().optional(),
-  status: z.coerce.number().int().min(0).max(1).optional(),
+  status: z.boolean().optional(),
 });
 
 type DrugFormInput = z.input<typeof schema>;
@@ -43,10 +44,11 @@ export function DrugFormSheet({
       drug_generic: initial?.drug_generic ?? "",
       drug_name: initial?.drug_name ?? "",
       drug_type: initial?.drug_type ?? "",
-      drug_dosage: initial?.drug_dosage ?? 0,
-      drug_measure: (initial?.drug_measure as any) ?? "mg",
+      drug_dosage: initial?.drug_dosage ?? "",
+      drug_measure: (initial?.drug_measure as "mg" | "g" | "mcg" | "ml" | "l" | "capsule" | "tablet") ?? "mg",
+      amount: initial?.amount ?? 1,
       instruction: initial?.instruction ?? "",
-      status: initial?.status ?? 1,
+      status: initial?.status === 1,
     },
   });
 
@@ -56,10 +58,11 @@ export function DrugFormSheet({
         drug_generic: initial?.drug_generic ?? "",
         drug_name: initial?.drug_name ?? "",
         drug_type: initial?.drug_type ?? "",
-        drug_dosage: initial?.drug_dosage ?? 0,
-        drug_measure: (initial?.drug_measure as any) ?? "mg",
+        drug_dosage: initial?.drug_dosage ?? "",
+        drug_measure: (initial?.drug_measure as "mg" | "g" | "mcg" | "ml" | "l" | "capsule" | "tablet") ?? "mg",
+        amount: initial?.amount ?? 1,
         instruction: initial?.instruction ?? "",
-        status: initial?.status ?? 1,
+        status: initial?.status === 1,
       });
     }
   }, [open, initial, form]);
@@ -84,7 +87,7 @@ export function DrugFormSheet({
               label="Brand Name"
             />
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-4">
             <FormFloatingInput
               control={form.control}
               name="drug_type"
@@ -111,6 +114,13 @@ export function DrugFormSheet({
                 { label: "Tablet", value: "tablet" },
               ]}
             />
+            <FormFloatingInput
+              control={form.control}
+              name="amount"
+              label="Amount"
+              type="number"
+              inputMode="numeric"
+            />
           </div>
           <FormFloatingInput
             control={form.control}
@@ -122,8 +132,6 @@ export function DrugFormSheet({
             name="status"
             label="Active"
             description="Toggle to deactivate/activate this drug"
-            transformChecked={(checked) => (checked ? 1 : 0)}
-            transformValue={(val) => val === 1}
           />
           <Separator />
           <div className="sticky bottom-0 flex items-center justify-end gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t p-3 -mx-2 -mb-2">

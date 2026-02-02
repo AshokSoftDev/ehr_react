@@ -34,6 +34,10 @@ export const createDrugColumns = ({
     header: 'Measure',
   },
   {
+    accessorKey: 'amount',
+    header: 'Amount',
+  },
+  {
     accessorKey: 'instruction',
     header: 'Instruction',
     cell: ({ row }) => {

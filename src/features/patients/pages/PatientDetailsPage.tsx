@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParams, NavLink, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -19,7 +19,7 @@ export function PatientDetailsPage() {
   const patientId = Number(params.id);
   const [section, setSection] = useState<Section>("dashboard");
 
-  const { data: patient, isLoading } = useQuery<Patient>({
+  const { data: patient } = useQuery<Patient>({
     queryKey: ["patient", patientId],
     queryFn: () => patientService.getPatient(patientId),
     enabled: Number.isFinite(patientId) && patientId > 0,

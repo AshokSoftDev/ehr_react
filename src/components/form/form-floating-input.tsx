@@ -96,7 +96,7 @@ export function FormFloatingInput<
   return (
     <Controller
       control={control}
-      name={name}
+      name={name as TName}
       render={({ field, fieldState }) => {
         const hasValue = (field.value ?? "").toString().length > 0;
         const hasError = Boolean(fieldState.error);

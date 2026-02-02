@@ -12,6 +12,7 @@ import {
   FileText,
   NotebookPen,
   Pill,
+  Receipt,
   Stethoscope,
   User,
 } from "lucide-react";
@@ -22,6 +23,7 @@ import { HPIDentalChart } from "./hpi/HPIDentalChart";
 import { PatientVisitPrescriptionPage } from "./pages/PatientVisitPrescriptionPage";
 import { PatientVisitClinicalNotesPage } from "./pages/PatientVisitClinicalNotesPage";
 import { PatientVisitDocumentPage } from "./pages/PatientVisitDocumentPage";
+import { CreateInvoiceSheet } from "@/features/billing/components/CreateInvoiceSheet";
 
 const tabs = [
   { id: "overview", label: "Overview", icon: ClipboardList },
@@ -44,6 +46,7 @@ export function PatientVisitPage() {
     initialVisitId ? Number(initialVisitId) : null
   );
   const currentTab = (searchParams.get("tab") as TabId) || "overview";
+  const [showInvoiceSheet, setShowInvoiceSheet] = useState(false);
 
   const { data: patient } = useQuery({
     queryKey: ["patient", patientId],
@@ -179,7 +182,18 @@ export function PatientVisitPage() {
             </div>
           </div>
         </div>
-        <Badge variant="secondary" className="text-[10px]">#{selectedVisit.visit_id}</Badge>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowInvoiceSheet(true)}
+            className="h-7 px-2 text-xs gap-1"
+          >
+            <Receipt className="h-3 w-3" />
+            Create Invoice
+          </Button>
+          <Badge variant="secondary" className="text-[10px]">#{selectedVisit.visit_id}</Badge>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -249,6 +263,14 @@ export function PatientVisitPage() {
         {currentTab === "document" && <PatientVisitDocumentPage />}
         {currentTab === "notes" && <PatientVisitClinicalNotesPage />}
       </CardContent>
+
+      {/* Invoice Sheet */}
+      <CreateInvoiceSheet
+        open={showInvoiceSheet}
+        onOpenChange={setShowInvoiceSheet}
+        visitId={selectedVisitId}
+        patientId={patientId}
+      />
     </Card>
   );
 }
