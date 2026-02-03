@@ -1,49 +1,54 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
+import { format, differenceInYears } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Edit, Trash, User, Calendar } from 'lucide-react';
+import { Edit, Trash, User, Calendar, Clock } from 'lucide-react';
 import type { AppointmentItem } from '../types/appointment.types';
 
 interface AppointmentTableColumnsProps {
   onEdit: (appointment: AppointmentItem) => void;
-  onDelete: (id: number) => void;
+  onDelete: (appointment: AppointmentItem) => void;
   onStatusChange: (id: number, status: string) => void;
   navigate: (path: string) => void;
 }
 
 export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, navigate }: AppointmentTableColumnsProps): ColumnDef<AppointmentItem>[] => [
   {
-    accessorKey: 'patient_mrn',
-    header: 'MRN',
-    cell: ({ row }) => (
-      <Badge variant="secondary" className="font-mono">
-        {row.getValue('patient_mrn')}
-      </Badge>
-    ),
-  },
-  {
     accessorKey: 'patient_name',
     header: 'Patient',
     cell: ({ row }) => {
       const appointment = row.original;
+      
+      let age = '';
+      if (appointment.patient?.dateOfBirth) {
+        age = differenceInYears(new Date(), new Date(appointment.patient.dateOfBirth)).toString() + 'y';
+      }
+      
+      const gender = appointment.patient?.gender ? appointment.patient.gender[0].toUpperCase() : '';
+      const demo = [age, gender].filter(Boolean).join('/');
+
       return (
-        <div className="space-y-2">
+        <div className="space-y-1">
           <button
             onClick={() => navigate(`/main/patients/${appointment.patient_id}`)}
-            className="group flex items-center gap-2 text-left hover:bg-blue-50 dark:hover:bg-blue-950 p-2 rounded-md transition-colors w-full"
+            className="group flex items-center gap-2 text-left hover:bg-blue-50 dark:hover:bg-blue-950 p-1 rounded-md transition-colors w-full"
           >
-            <div className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded-full group-hover:bg-blue-200 dark:group-hover:bg-blue-800 transition-colors">
+            <div className="p-1 bg-blue-100 dark:bg-blue-900 rounded-full group-hover:bg-blue-200 dark:group-hover:bg-blue-800 transition-colors shrink-0">
               <User className="h-3 w-3 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <div className="font-medium text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 group-hover:underline">
                 {appointment.patient_title} {appointment.patient_firstName} {appointment.patient_lastName}
+                <span className="text-muted-foreground font-normal ml-1 text-xs no-underline">
+                  ({appointment.patient_mrn})
+                </span>
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                Click to view patient details
-              </div>
+              {demo && (
+                 <div className="text-xs text-muted-foreground">
+                   {demo}
+                 </div>
+              )}
             </div>
           </button>
         </div>
@@ -80,12 +85,13 @@ export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, nav
       
       return (
         <div className="space-y-1">
-          <div className={`flex items-center gap-2 text-sm font-medium ${isToday ? 'text-blue-600 dark:text-blue-400' : isPast ? 'text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
-            <Calendar className="h-3 w-3" />
+          <div className={`flex items-center gap-2 text-xs font-medium ${isToday ? 'text-blue-600 dark:text-blue-400' : isPast ? 'text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+            <Calendar className="h-3 w-3 text-blue-500" />
             {format(date, 'dd/MM/yyyy')}
             {isToday && <Badge variant="default" className="text-xs px-1 py-0">Today</Badge>}
           </div>
-          <div className="text-xs text-gray-600 dark:text-gray-400 font-mono">
+          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-mono">
+            <Clock className="h-3 w-3 text-blue-500" />
             {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
           </div>
         </div>
@@ -129,10 +135,10 @@ export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, nav
           onValueChange={(newStatus) => onStatusChange(appointment.appointment_id, newStatus)}
           disabled={isCompleted}
         >
-          <SelectTrigger className={`w-32 h-8 ${isCompleted ? 'opacity-60 cursor-not-allowed' : ''}`}>
+          <SelectTrigger className={`w-[130px] h-7 px-2 text-xs ${isCompleted ? 'opacity-60 cursor-not-allowed' : ''}`}>
             <SelectValue>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${currentStatus?.color || 'bg-gray-100 text-gray-800'}`}>
-                {status}
+              <span className={`truncate block w-full text-left font-medium px-1.5 py-0.5 rounded-full ${currentStatus?.color || 'bg-gray-100 text-gray-800'}`}>
+                {currentStatus?.label || status}
               </span>
             </SelectValue>
           </SelectTrigger>
@@ -155,11 +161,11 @@ export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, nav
     cell: ({ row }) => {
       const reason = row.getValue('reason_for_visit') as string;
       return reason ? (
-        <div className="max-w-[200px] truncate text-sm" title={reason}>
+        <div className="max-w-[200px] truncate text-xs" title={reason}>
           {reason}
         </div>
       ) : (
-        <span className="text-muted-foreground text-sm">-</span>
+        <span className="text-muted-foreground text-xs">-</span>
       );
     },
   },
@@ -190,7 +196,7 @@ export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, nav
             size="icon"
             onClick={(event) => {
               event.stopPropagation();
-              onDelete(appointment.appointment_id);
+              onDelete(appointment);
             }}
             className="h-8 w-8 text-destructive hover:bg-muted/50 hover:text-destructive"
             aria-label="Delete appointment"

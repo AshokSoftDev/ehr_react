@@ -102,7 +102,7 @@ export function FormSearchSelect<
                     aria-expanded={open}
                     disabled={disabled}
                     className={cn(
-                      "w-full justify-between h-12 pt-3 pb-2 px-3 text-left truncate",
+                      "w-full justify-between h-10 pt-2 pb-1 px-3 text-left truncate",
                       "border border-input bg-background rounded-md",
                       "focus-visible:ring-2 focus-visible:ring-ring bg-card",
                       hasError &&

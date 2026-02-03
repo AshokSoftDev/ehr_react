@@ -31,7 +31,8 @@ import { Avatar, AvatarFallback } from "../../../components/ui/avatar";
 // import { Separator } from '../../../components/ui/separator';
 import { cn } from "../../../lib/utils";
 import { useDoctorDetails } from "../hooks";
-import { DoctorFormSheet, DoctorDeleteDialog } from "../components";
+import { DoctorFormSheet } from "../components";
+import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 import type { UpdateDoctorDto } from "../types/doctor.types";
 import type { DoctorFormData } from "../schemas/doctor.schema";
 
@@ -352,11 +353,26 @@ export const DoctorDetailsPage: React.FC = () => {
       />
 
       {/* Delete Dialog */}
-      <DoctorDeleteDialog
+      <ConfirmDeleteDialog
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
-        doctor={doctor}
         onConfirm={handleDelete}
+        title="Delete Doctor"
+        description={
+          doctor ? (
+            <span>
+              Are you sure you want to delete{" "}
+              <span className="font-bold">{doctor.displayName}</span>?
+              <br />
+              <span className="text-muted-foreground text-sm mt-1 block">
+                {doctor.specialty} • {doctor.degree}
+              </span>
+              <span className="block mt-2">This action cannot be undone.</span>
+            </span>
+          ) : (
+            "This action cannot be undone."
+          )
+        }
         isDeleting={isDeleting}
       />
     </div>

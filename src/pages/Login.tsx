@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Loader2, RefreshCw, User, Lock, Shield, Activity, Heart, Stethoscope, Sparkles } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Form } from '../components/ui/form';
 import { FormFloatingInput } from '../components/form/form-floating-input';
 import { Input } from '../components/ui/input';
@@ -160,7 +160,7 @@ const Login: React.FC = () => {
       ctx.rotate(rotation);
       
       // Vary the font size slightly
-      const fontSize = 22 + Math.random() * 6;
+      const fontSize = 16 + Math.random() * 4;
       
       // Pick random font style
       const fontStyle = fontStyles[Math.floor(Math.random() * fontStyles.length)];
@@ -484,7 +484,8 @@ const Login: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="rememberMe"
-                        {...form.register('rememberMe')}
+                        checked={form.watch('rememberMe')}
+                        onCheckedChange={(checked) => form.setValue('rememberMe', checked === true)}
                         className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                       />
                       <Label
@@ -522,27 +523,7 @@ const Login: React.FC = () => {
               </Form>
             </CardContent>
 
-            <CardFooter className="flex flex-col space-y-4">
-              <div className="relative w-full">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">
-                    New to our platform?
-                  </span>
-                </div>
-              </div>
 
-              <Link to="/register" className="w-full">
-                <Button 
-                  variant="outline" 
-                  className="w-full hover:bg-primary/10 hover:text-primary hover:border-primary transition-all duration-300"
-                >
-                  Create an Account
-                </Button>
-              </Link>
-            </CardFooter>
           </Card>
 
           {/* Footer */}

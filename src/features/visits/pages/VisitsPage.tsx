@@ -4,18 +4,19 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { Form } from "@/components/ui/form";
-import { FormFloatingInput } from "@/components/form/FormFloatingInput";
+import { FormFloatingInput } from "@/components/form/form-floating-input";
 import { FormFloatingDatePicker } from "@/components/form/FormFloatingDatePicker";
 import { Button } from "@/components/ui/button";
 import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
 import type { ColumnDef } from "@tanstack/react-table";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { X } from "lucide-react";
 import type {
   VisitFilters as VisitFiltersType,
   VisitItem,
 } from "../types/visit.types";
 import { visitService } from "../services/visit.service";
 import { createVisitColumns } from "./visitColumns";
-import VisitFilters from "../components/VisitFilters";
 import { FormFloatingSelect } from "@/components/form/FormFloatingSelect";
 import { useNavigate } from "react-router-dom";
 import { appointmentService } from "../../appointments/services/appointment.service";
@@ -85,10 +86,6 @@ export function VisitsPage() {
     return [...base, ...items];
   }, [doctorsQuery.data]);
 
-  const onClearFilter = (key: string) => {
-    filterForm.setValue(key as any, undefined);
-  };
-
   const onClearAll = () => {
     filterForm.reset();
   };
@@ -109,75 +106,110 @@ export function VisitsPage() {
   );
 
   return (
-    <div className="h-full w-full space-y-4">
-      <h2 className="text-2xl font-bold">Visits</h2>
-
-      {/* Filters */}
-      <Form {...filterForm}>
-        <form className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <FormFloatingDatePicker
-            control={filterForm.control}
-            name="dateFrom"
-            label="From date"
-          />
-          <FormFloatingDatePicker
-            control={filterForm.control}
-            name="dateTo"
-            label="To date"
-          />
-          <FormFloatingSelect
-            control={filterForm.control}
-            name="doctor"
-            label="Doctor"
-            options={doctorOptions}
-            placeholder="Select doctor"
-          />
-          <FormFloatingInput
-            control={filterForm.control}
-            name="patient"
-            label="Patient/MRN"
-          />
-          <FormFloatingInput
-            control={filterForm.control}
-            name="reason"
-            label="Reason"
-          />
-          <FormFloatingSelect
-            control={filterForm.control}
-            name="status"
-            label="Status"
-            options={[
-              { label: "All", value: "" },
-              { label: "Active", value: "1" },
-              { label: "Inactive", value: "0" },
-            ]}
-            placeholder="Select status"
-          />
-          <div className="col-span-full flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={onClearAll}>
-              Clear
-            </Button>
+    <div className="h-full flex flex-col bg-background">
+      {/* Header Section */}
+      <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Visits
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              View and filter patient visits history
+            </p>
           </div>
-        </form>
-      </Form>
+          {/* Add Visit button could go here if functionality existed, for now just empty or could link to patient list */}
+        </div>
 
-      <VisitFilters
-        filters={filterForm.getValues()}
-        onClearFilter={onClearFilter}
-        onClearAll={onClearAll}
-      />
+        {/* Filters */}
+        <Form {...filterForm}>
+          <form className="grid gap-3 md:grid-cols-6 items-end">
+            <div className="md:col-span-1">
+              <FormFloatingDatePicker
+                control={filterForm.control}
+                name="dateFrom"
+                label="From date"
+                className="h-10"
+              />
+            </div>
+            <div className="md:col-span-1">
+               <FormFloatingDatePicker
+                control={filterForm.control}
+                name="dateTo"
+                label="To date"
+                className="h-10"
+              />
+            </div>
+            <div className="md:col-span-1">
+               <FormFloatingSelect
+                control={filterForm.control}
+                name="doctor"
+                label="Doctor"
+                options={doctorOptions}
+                placeholder="Select doctor"
+                className="h-10"
+              />
+            </div>
+            <div className="md:col-span-1">
+               <FormFloatingInput
+                control={filterForm.control}
+                name="patient"
+                label="Patient/MRN"
+                className="h-10"
+              />
+            </div>
+            <div className="md:col-span-1">
+              <FormFloatingInput
+                control={filterForm.control}
+                name="reason"
+                label="Reason"
+                className="h-10"
+              />
+            </div>
+            <div className="md:col-span-1 flex gap-2">
+               <FormFloatingSelect
+                control={filterForm.control}
+                name="status"
+                label="Status"
+                options={[
+                  { label: "All", value: "" },
+                  { label: "Active", value: "1" },
+                  { label: "Inactive", value: "0" },
+                ]}
+                placeholder="Select status"
+                className="h-10 w-full"
+              />
+               <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                onClick={onClearAll}
+                className="h-10 w-10 shrink-0"
+                title="Clear Filters"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Clear</span>
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
 
-      {/* Table */}
-      <AdvancedDataTable<VisitItem, unknown>
-        columns={columns}
-        data={data?.visits ?? []}
-        isLoading={isLoading}
-        page={page}
-        limit={limit}
-        total={data?.total ?? 0}
-        onPageChange={setPage}
-        onLimitChange={setLimit}
-      />
+       {/* Main Content */}
+      <ScrollArea className="flex-1">
+        <div className="">
+          <AdvancedDataTable<VisitItem, unknown>
+            columns={columns}
+            data={data?.visits ?? []}
+            isLoading={isLoading}
+            page={page}
+            limit={limit}
+            total={data?.total ?? 0}
+            onPageChange={setPage}
+            onLimitChange={setLimit}
+          />
+        </div>
+      </ScrollArea>
     </div>
   );
 }

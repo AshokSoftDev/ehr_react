@@ -44,112 +44,111 @@
   --color-sidebar-hover-bg: var(--sidebar-hover-bg);
 }
 
-
 :root {
   --radius: 0.625rem;
-  
+
   /* Primary gradient colors for rich blue effect */
-  --primary-gradient-start: oklch(0.55 0.25 265);  /* Deep rich blue */
-  --primary-gradient-mid: oklch(0.62 0.22 250);    /* Vibrant blue */
-  --primary-gradient-end: oklch(0.68 0.18 235);    /* Lighter blue */
-  
+  --primary-gradient-start: oklch(0.55 0.25 265); /* Deep rich blue */
+  --primary-gradient-mid: oklch(0.62 0.22 250); /* Vibrant blue */
+  --primary-gradient-end: oklch(0.68 0.18 235); /* Lighter blue */
+
   /* Primary as base color (middle of gradient) */
   --primary: oklch(0.62 0.22 250);
   --primary-foreground: oklch(0.98 0 0);
-  
+
   /* Light theme colors based on primary blue */
-  --background: oklch(0.98 0.005 250);              /* Very light blue tint */
-  --foreground: oklch(0.15 0.02 250);               /* Dark blue-black */
-  --card: oklch(1 0 0);                             /* Pure white */
-  --card-foreground: oklch(0.15 0.02 250);          /* Dark blue-black */
-  --popover: oklch(1 0 0);                          /* Pure white */
-  --popover-foreground: oklch(0.15 0.02 250);       /* Dark blue-black */
-  
+  --background: oklch(0.98 0.005 250); /* Very light blue tint */
+  --foreground: oklch(0.15 0.02 250); /* Dark blue-black */
+  --card: oklch(1 0 0); /* Pure white */
+  --card-foreground: oklch(0.15 0.02 250); /* Dark blue-black */
+  --popover: oklch(1 0 0); /* Pure white */
+  --popover-foreground: oklch(0.15 0.02 250); /* Dark blue-black */
+
   /* Secondary - complementary to primary */
-  --secondary: oklch(0.88 0.06 245);                /* Light blue */
-  --secondary-foreground: oklch(0.25 0.04 250);     /* Dark blue */
-  
+  --secondary: oklch(0.88 0.06 245); /* Light blue */
+  --secondary-foreground: oklch(0.25 0.04 250); /* Dark blue */
+
   /* Muted - subtle blue tones */
-  --muted: oklch(0.94 0.015 250);                   /* Very light blue-gray */
-  --muted-foreground: oklch(0.45 0.02 250);         /* Medium blue-gray */
-  
+  --muted: oklch(0.94 0.015 250); /* Very light blue-gray */
+  --muted-foreground: oklch(0.45 0.02 250); /* Medium blue-gray */
+
   /* Accent - lighter variation of primary */
-  --accent: oklch(0.92 0.04 245);                   /* Light accent blue */
-  --accent-foreground: oklch(0.25 0.04 250);        /* Dark blue */
-  
+  --accent: oklch(0.92 0.04 245); /* Light accent blue */
+  --accent-foreground: oklch(0.25 0.04 250); /* Dark blue */
+
   /* States and inputs */
-  --destructive: oklch(0.65 0.25 25);               /* Red for errors */
-  --destructive-foreground: oklch(0.98 0 0);        /* White */
-  --border: oklch(0.88 0.015 250);                  /* Light blue-gray border */
-  --input: oklch(0.95 0.01 250);                    /* Very light blue input */
-  --ring: var(--primary);                           /* Primary blue for focus */
-  
+  --destructive: oklch(0.65 0.25 25); /* Red for errors */
+  --destructive-foreground: oklch(0.98 0 0); /* White */
+  --border: oklch(0.88 0.015 250); /* Light blue-gray border */
+  --input: oklch(0.95 0.01 250); /* Very light blue input */
+  --ring: var(--primary); /* Primary blue for focus */
+
   /* Chart colors - blue spectrum */
-  --chart-1: oklch(0.62 0.22 250);                  /* Primary blue */
-  --chart-2: oklch(0.65 0.18 220);                  /* Blue-purple */
-  --chart-3: oklch(0.68 0.16 200);                  /* Sky blue */
-  --chart-4: oklch(0.70 0.14 180);                  /* Cyan-blue */
-  --chart-5: oklch(0.58 0.20 270);                  /* Deep purple-blue */
-  
+  --chart-1: oklch(0.62 0.22 250); /* Primary blue */
+  --chart-2: oklch(0.65 0.18 220); /* Blue-purple */
+  --chart-3: oklch(0.68 0.16 200); /* Sky blue */
+  --chart-4: oklch(0.7 0.14 180); /* Cyan-blue */
+  --chart-5: oklch(0.58 0.2 270); /* Deep purple-blue */
+
   /* Sidebar with blue theme */
-  --sidebar: oklch(1 0 0);                          /* White */
-  --sidebar-foreground: oklch(0.2 0.02 250);        /* Dark blue */
-  --primary-sidebar: var(--primary);                /* Primary blue */
-  --primary-sidebar-foreground: oklch(1 0 0);       /* White */
-  --sidebar-accent: oklch(0.94 0.03 245);           /* Light blue accent */
+  --sidebar: oklch(1 0 0); /* White */
+  --sidebar-foreground: oklch(0.2 0.02 250); /* Dark blue */
+  --primary-sidebar: var(--primary); /* Primary blue */
+  --primary-sidebar-foreground: oklch(1 0 0); /* White */
+  --sidebar-accent: oklch(0.94 0.03 245); /* Light blue accent */
   --sidebar-accent-foreground: oklch(0.2 0.02 250); /* Dark blue */
-  --sidebar-border: oklch(0.92 0.01 250);           /* Light blue border */
-  --sidebar-ring: var(--primary);                   /* Primary blue */
+  --sidebar-border: oklch(0.92 0.01 250); /* Light blue border */
+  --sidebar-ring: var(--primary); /* Primary blue */
   --sidebar-active-bg: var(--primary-sidebar);
   --sidebar-hover-bg: var(--sidebar-accent);
 }
 
 .dark {
   /* Dark theme with rich blue tones */
-  --primary-gradient-start: oklch(0.65 0.28 265);   /* Bright deep blue */
-  --primary-gradient-mid: oklch(0.72 0.25 250);     /* Bright vibrant blue */
-  --primary-gradient-end: oklch(0.78 0.20 235);     /* Bright light blue */
-  
-  --primary: oklch(0.72 0.25 250);                  /* Bright primary blue */
-  --primary-foreground: oklch(0.98 0 0);            /* White */
-  
-  --background: oklch(0.12 0.015 250);              /* Very dark blue */
-  --foreground: oklch(0.98 0 0);                    /* Pure white - FIXED */
-  --card: oklch(0.16 0.015 250);                    /* Dark blue card */
-  --card-foreground: oklch(0.98 0 0);               /* Pure white - FIXED */
-  --popover: oklch(0.16 0.015 250);                 /* Dark blue popover */
-  --popover-foreground: oklch(0.98 0 0);            /* Pure white - FIXED */
-  
-  --secondary: oklch(0.35 0.08 245);                /* Muted dark blue */
-  --secondary-foreground: oklch(0.98 0 0);          /* Pure white - FIXED */
-  
-  --muted: oklch(0.22 0.02 250);                    /* Dark muted blue */
-  --muted-foreground: oklch(0.70 0.01 250);         /* Lighter blue-gray - FIXED */
-  
-  --accent: oklch(0.28 0.05 245);                   /* Dark accent blue */
-  --accent-foreground: oklch(0.98 0 0);             /* Pure white - FIXED */
-  
-  --destructive: oklch(0.68 0.24 25);               /* Bright red */
-  --destructive-foreground: oklch(0.98 0 0);        /* White */
-  --border: oklch(0.25 0.02 250);                   /* Dark blue border */
-  --input: oklch(0.20 0.015 250);                   /* Dark blue input */
-  --ring: var(--primary);                           /* Primary blue */
-  
+  --primary-gradient-start: oklch(0.65 0.28 265); /* Bright deep blue */
+  --primary-gradient-mid: oklch(0.72 0.25 250); /* Bright vibrant blue */
+  --primary-gradient-end: oklch(0.78 0.2 235); /* Bright light blue */
+
+  --primary: oklch(0.72 0.25 250); /* Bright primary blue */
+  --primary-foreground: oklch(0.98 0 0); /* White */
+
+  --background: oklch(0.12 0.015 250); /* Very dark blue */
+  --foreground: oklch(0.98 0 0); /* Pure white - FIXED */
+  --card: oklch(0.16 0.015 250); /* Dark blue card */
+  --card-foreground: oklch(0.98 0 0); /* Pure white - FIXED */
+  --popover: oklch(0.16 0.015 250); /* Dark blue popover */
+  --popover-foreground: oklch(0.98 0 0); /* Pure white - FIXED */
+
+  --secondary: oklch(0.35 0.08 245); /* Muted dark blue */
+  --secondary-foreground: oklch(0.98 0 0); /* Pure white - FIXED */
+
+  --muted: oklch(0.22 0.02 250); /* Dark muted blue */
+  --muted-foreground: oklch(0.7 0.01 250); /* Lighter blue-gray - FIXED */
+
+  --accent: oklch(0.28 0.05 245); /* Dark accent blue */
+  --accent-foreground: oklch(0.98 0 0); /* Pure white - FIXED */
+
+  --destructive: oklch(0.68 0.24 25); /* Bright red */
+  --destructive-foreground: oklch(0.98 0 0); /* White */
+  --border: oklch(0.25 0.02 250); /* Dark blue border */
+  --input: oklch(0.2 0.015 250); /* Dark blue input */
+  --ring: var(--primary); /* Primary blue */
+
   /* Chart colors - vibrant blue spectrum for dark mode */
-  --chart-1: oklch(0.72 0.25 250);                  /* Bright primary blue */
-  --chart-2: oklch(0.70 0.22 220);                  /* Bright blue-purple */
-  --chart-3: oklch(0.75 0.20 200);                  /* Bright sky blue */
-  --chart-4: oklch(0.78 0.18 180);                  /* Bright cyan-blue */
-  --chart-5: oklch(0.68 0.24 270);                  /* Bright purple-blue */
-  
-  --sidebar: oklch(0.14 0.015 250);                 /* Dark blue sidebar */
-  --sidebar-foreground: oklch(0.98 0 0);            /* Pure white - FIXED */
-  --primary-sidebar: var(--primary);                /* Primary blue */
-  --primary-sidebar-foreground: oklch(1 0 0);       /* White */
-  --sidebar-accent: oklch(0.22 0.03 245);           /* Dark blue accent */
-  --sidebar-accent-foreground: oklch(0.98 0 0);     /* Pure white - FIXED */
-  --sidebar-border: oklch(0.20 0.015 250);          /* Dark blue border */
-  --sidebar-ring: var(--primary);                   /* Primary blue */
+  --chart-1: oklch(0.72 0.25 250); /* Bright primary blue */
+  --chart-2: oklch(0.7 0.22 220); /* Bright blue-purple */
+  --chart-3: oklch(0.75 0.2 200); /* Bright sky blue */
+  --chart-4: oklch(0.78 0.18 180); /* Bright cyan-blue */
+  --chart-5: oklch(0.68 0.24 270); /* Bright purple-blue */
+
+  --sidebar: oklch(0.14 0.015 250); /* Dark blue sidebar */
+  --sidebar-foreground: oklch(0.98 0 0); /* Pure white - FIXED */
+  --primary-sidebar: var(--primary); /* Primary blue */
+  --primary-sidebar-foreground: oklch(1 0 0); /* White */
+  --sidebar-accent: oklch(0.22 0.03 245); /* Dark blue accent */
+  --sidebar-accent-foreground: oklch(0.98 0 0); /* Pure white - FIXED */
+  --sidebar-border: oklch(0.2 0.015 250); /* Dark blue border */
+  --sidebar-ring: var(--primary); /* Primary blue */
   --sidebar-active-bg: var(--primary-sidebar);
   --sidebar-hover-bg: var(--sidebar-accent);
 }
@@ -183,26 +182,30 @@ select:focus {
   color: var(--foreground);
 }
 
-
-
 /* Gradient classes for primary color */
 .bg-primary-gradient {
-  background: linear-gradient(135deg, 
-    var(--primary-gradient-start) 0%, 
-    var(--primary-gradient-mid) 50%, 
-    var(--primary-gradient-end) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-gradient-start) 0%,
+    var(--primary-gradient-mid) 50%,
+    var(--primary-gradient-end) 100%
+  );
 }
 
 .bg-primary-gradient-radial {
-  background: radial-gradient(circle at center, 
-    var(--primary-gradient-mid) 0%, 
-    var(--primary-gradient-start) 70%);
+  background: radial-gradient(
+    circle at center,
+    var(--primary-gradient-mid) 0%,
+    var(--primary-gradient-start) 70%
+  );
 }
 
 .text-primary-gradient {
-  background: linear-gradient(135deg, 
-    var(--primary-gradient-start) 0%, 
-    var(--primary-gradient-end) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-gradient-start) 0%,
+    var(--primary-gradient-end) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -210,28 +213,40 @@ select:focus {
 
 /* Hover states with gradient */
 .hover\:bg-primary-gradient:hover {
-  background: linear-gradient(135deg, 
-    var(--primary-gradient-start) 0%, 
-    var(--primary-gradient-mid) 50%, 
-    var(--primary-gradient-end) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-gradient-start) 0%,
+    var(--primary-gradient-mid) 50%,
+    var(--primary-gradient-end) 100%
+  );
 }
 
 /* Button gradient variations */
 .bg-primary-gradient-subtle {
-  background: linear-gradient(135deg, 
-    var(--primary) 0%, 
-    color-mix(in oklch, var(--primary) 85%, var(--primary-gradient-end)) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    color-mix(in oklch, var(--primary) 85%, var(--primary-gradient-end)) 100%
+  );
 }
 
 /* Rest of your animations and utility classes remain the same */
 @keyframes accordion-down {
-  from { height: 0; }
-  to { height: var(--radix-accordion-content-height); }
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
 }
 
 @keyframes accordion-up {
-  from { height: var(--radix-accordion-content-height); }
-  to { height: 0; }
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
 }
 
 .animate-accordion-down {
@@ -244,15 +259,27 @@ select:focus {
 
 /* Soft gradient drift + float used in clinical notes hero */
 @keyframes gradient-shift {
-  0% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(6px, -6px, 0); }
-  100% { transform: translate3d(0, 0, 0); }
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(6px, -6px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 @keyframes float-slow {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 
 .animate-gradient-slow {
@@ -264,54 +291,189 @@ select:focus {
 }
 
 /* Existing Tailwind CSS classes */
-.bg-background { background-color: var(--background); }
-.text-foreground { color: var(--foreground); }
-.bg-card { background-color: var(--card); }
-.text-card-foreground { color: var(--card-foreground); }
-.bg-popover { background-color: var(--popover); }
-.text-popover-foreground { color: var(--popover-foreground); }
-.bg-primary { background-color: var(--primary); }
-.text-primary-foreground { color: var(--primary-foreground); }
-.bg-secondary { background-color: var(--secondary); }
-.text-secondary-foreground { color: var(--secondary-foreground); }
-.bg-destructive { background-color: var(--destructive); }
-.text-destructive-foreground { color: var(--destructive-foreground); }
-.bg-muted { background-color: var(--muted); }
-.text-muted-foreground { color: var(--muted-foreground); }
-.bg-accent { background-color: var(--accent); }
-.text-accent-foreground { color: var(--accent-foreground); }
-.border-border { border-color: var(--border); }
-.border-input { border-color: var(--input); }
-.ring-ring { --tw-ring-color: var(--ring); }
+.bg-background {
+  background-color: var(--background);
+}
+.text-foreground {
+  color: var(--foreground);
+}
+.bg-card {
+  background-color: var(--card);
+}
+.text-card-foreground {
+  color: var(--card-foreground);
+}
+.bg-popover {
+  background-color: var(--popover);
+}
+.text-popover-foreground {
+  color: var(--popover-foreground);
+}
+.bg-primary {
+  background-color: var(--primary);
+}
+.text-primary-foreground {
+  color: var(--primary-foreground);
+}
+.bg-secondary {
+  background-color: var(--secondary);
+}
+.text-secondary-foreground {
+  color: var(--secondary-foreground);
+}
+.bg-destructive {
+  background-color: var(--destructive);
+}
+.text-destructive-foreground {
+  color: var(--destructive-foreground);
+}
+.bg-muted {
+  background-color: var(--muted);
+}
+.text-muted-foreground {
+  color: var(--muted-foreground);
+}
+.bg-accent {
+  background-color: var(--accent);
+}
+.text-accent-foreground {
+  color: var(--accent-foreground);
+}
+.border-border {
+  border-color: var(--border);
+}
+.border-input {
+  border-color: var(--input);
+}
+.ring-ring {
+  --tw-ring-color: var(--ring);
+}
 
 /* Chart Colors */
-.fill-chart-1 { fill: var(--chart-1); }
-.fill-chart-2 { fill: var(--chart-2); }
-.fill-chart-3 { fill: var(--chart-3); }
-.fill-chart-4 { fill: var(--chart-4); }
-.fill-chart-5 { fill: var(--chart-5); }
-.stroke-chart-1 { stroke: var(--chart-1); }
-.stroke-chart-2 { stroke: var(--chart-2); }
-.stroke-chart-3 { stroke: var(--chart-3); }
-.stroke-chart-4 { stroke: var(--chart-4); }
-.stroke-chart-5 { stroke: var(--chart-5); }
+.fill-chart-1 {
+  fill: var(--chart-1);
+}
+.fill-chart-2 {
+  fill: var(--chart-2);
+}
+.fill-chart-3 {
+  fill: var(--chart-3);
+}
+.fill-chart-4 {
+  fill: var(--chart-4);
+}
+.fill-chart-5 {
+  fill: var(--chart-5);
+}
+.stroke-chart-1 {
+  stroke: var(--chart-1);
+}
+.stroke-chart-2 {
+  stroke: var(--chart-2);
+}
+.stroke-chart-3 {
+  stroke: var(--chart-3);
+}
+.stroke-chart-4 {
+  stroke: var(--chart-4);
+}
+.stroke-chart-5 {
+  stroke: var(--chart-5);
+}
 
 /* Sidebar Specific Classes */
-.bg-sidebar { background-color: var(--sidebar); }
-.text-sidebar-foreground { color: var(--sidebar-foreground); }
-.bg-primary-sidebar { background-color: var(--primary-sidebar); }
-.text-primary-sidebar-foreground { color: var(--primary-sidebar-foreground); }
-.bg-sidebar-accent { background-color: var(--sidebar-accent); }
-.text-sidebar-accent-foreground { color: var(--sidebar-accent-foreground); }
-.border-sidebar-border { border-color: var(--sidebar-border); }
-.ring-sidebar-ring { --tw-ring-color: var(--sidebar-ring); }
-.bg-sidebar-active { background: var(--sidebar-active-bg); }
-.hover\:bg-sidebar-hover:hover { background: var(--sidebar-hover-bg); }
+.bg-sidebar {
+  background-color: var(--sidebar);
+}
+.text-sidebar-foreground {
+  color: var(--sidebar-foreground);
+}
+.bg-primary-sidebar {
+  background-color: var(--primary-sidebar);
+}
+.text-primary-sidebar-foreground {
+  color: var(--primary-sidebar-foreground);
+}
+.bg-sidebar-accent {
+  background-color: var(--sidebar-accent);
+}
+.text-sidebar-accent-foreground {
+  color: var(--sidebar-accent-foreground);
+}
+.border-sidebar-border {
+  border-color: var(--sidebar-border);
+}
+.ring-sidebar-ring {
+  --tw-ring-color: var(--sidebar-ring);
+}
+.bg-sidebar-active {
+  background: var(--sidebar-active-bg);
+}
+.hover\:bg-sidebar-hover:hover {
+  background: var(--sidebar-hover-bg);
+}
 
 /* Border radius classes */
-.rounded-lg { border-radius: var(--radius-lg); }
-.rounded-md { border-radius: var(--radius-md); }
-.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}
+.rounded-md {
+  border-radius: var(--radius-md);
+}
+.rounded-sm {
+  border-radius: var(--radius-sm);
+}
+
+/* Button Utility Classes */
+.btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--primary-gradient-start) 0%,
+    var(--primary-gradient-mid) 50%,
+    var(--primary-gradient-end) 100%
+  );
+  color: var(--primary-foreground);
+  border: none;
+  transition: opacity 0.2s ease;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-cancel {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  border: none;
+  transition: background-color 0.2s ease;
+}
+.btn-cancel:hover {
+  background-color: color-mix(in oklch, var(--muted) 80%, transparent);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+.btn-outline:hover {
+  background-color: var(--accent);
+}
+
+/* Input Capitalize (first letter) - applied via CSS */
+input[type="text"]:not([data-no-capitalize]),
+textarea:not([data-no-capitalize]) {
+  text-transform: none; /* JS handles capitalization */
+}
+
+/* Section Header Icon Background */
+.section-icon {
+  padding: 0.375rem;
+  border-radius: var(--radius-md);
+  background-color: color-mix(in oklch, var(--primary) 10%, transparent);
+}
+.section-icon svg {
+  color: var(--primary);
+}
 
 canvas {
   image-rendering: crisp-edges;
@@ -335,7 +497,6 @@ canvas {
   margin-block: 0.25rem;
 }
 
-
 /* .border {
   border-color: var(--border);
 } */
@@ -343,3 +504,20 @@ canvas {
 * {
   border-color: var(--border);
 }
+
+/* Hide number input spinners/arrows */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Standard Icon Colors */
+.icon-people { @apply text-blue-600 dark:text-blue-400; }
+.icon-contact { @apply text-indigo-500; }
+.icon-location { @apply text-muted-foreground; }
+.icon-date { @apply text-blue-500; }

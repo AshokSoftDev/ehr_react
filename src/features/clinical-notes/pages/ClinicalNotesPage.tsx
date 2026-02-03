@@ -32,9 +32,10 @@ import AppointmentFormSheet, {
   type AppointmentFormValues,
 } from "@/features/appointments/components/AppointmentFormSheet";
 import type { CreateAppointmentInput } from "@/features/appointments/types/appointment.types";
-import { useClinicalNotes } from "@/features/visits/hooks/useClinicalNotes";
+import { useClinicalNotes, useDeleteClinicalNote } from "@/features/visits/hooks/useClinicalNotes";
 import { usePrescriptions } from "@/features/visits/hooks/usePrescriptions";
 import { PrescriptionCard } from "@/features/patients/components/PrescriptionCard";
+import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 import { AudioPlayer } from "../components/AudioPlayer";
 import { ClinicalNotesFilters } from "../components/ClinicalNotesFilters";
 import { AddClinicalNotePanel } from "../components/AddClinicalNotePanel";
@@ -61,6 +62,8 @@ function VisitAccordionContent({
 }) {
   const { data: notes = [], isLoading: notesLoading } = useClinicalNotes(visit.visit_id);
   const { data: prescriptions = [], isLoading: prescriptionsLoading } = usePrescriptions(visit.visit_id);
+  const deleteNoteMutation = useDeleteClinicalNote(visit.visit_id);
+  const [noteToDelete, setNoteToDelete] = useState<{ id: number; createdAt: string } | null>(null);
 
   const hasNotes = notes.length > 0;
   const hasPrescriptions = prescriptions.length > 0;
@@ -119,9 +122,8 @@ function VisitAccordionContent({
     }
   };
 
-  const handleDelete = (noteId: number) => {
-    console.log("Delete note:", noteId);
-    // TODO: Implement delete functionality
+  const handleDelete = (noteId: number, createdAt: string) => {
+    setNoteToDelete({ id: noteId, createdAt });
   };
 
   if (notesLoading || prescriptionsLoading) {
@@ -222,9 +224,9 @@ function VisitAccordionContent({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleDelete(note.cn_id);
+                            handleDelete(note.cn_id, note.createdAt || "");
                           }}
-                          onKeyDown={(e) => e.key === 'Enter' && handleDelete(note.cn_id)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleDelete(note.cn_id, note.createdAt || "")}
                           title="Delete"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -306,7 +308,36 @@ function VisitAccordionContent({
             </AccordionContent>
           </AccordionItem>
         </Accordion>
+
+
       </div>
+      
+      <ConfirmDeleteDialog
+        open={!!noteToDelete}
+        onOpenChange={(open) => !open && setNoteToDelete(null)}
+        onConfirm={() => {
+          if (noteToDelete) {
+             deleteNoteMutation.mutateAsync(noteToDelete.id);
+             setNoteToDelete(null);
+          }
+        }}
+        title="Delete Clinical Note"
+        description={
+          noteToDelete ? (
+            <span>
+              Are you sure you want to delete the clinical note from{" "}
+              <span className="font-bold">{formatDate(noteToDelete.createdAt)}</span>?
+              <br />
+              <span className="text-muted-foreground text-sm mt-1 block">
+                This action cannot be undone.
+              </span>
+            </span>
+          ) : (
+            "Are you sure you want to delete this clinical note?"
+          )
+        }
+        isDeleting={deleteNoteMutation.isPending}
+      />
     </div>
   );
 }
@@ -319,6 +350,27 @@ export function ClinicalNotesPage() {
   const [editNoteState, setEditNoteState] = useState<{ visit: VisitItem; noteId: number } | null>(null);
   // Edit Prescription state - stores visit for bulk prescription editing
   const [editPrescriptionForVisit, setEditPrescriptionForVisit] = useState<VisitItem | null>(null);
+
+  // Accordion state and auto-scroll logic
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+  const handleAccordionChange = (value: string[]) => {
+    // specific logic to find the newly added item to scroll to it
+    const newItems = value.filter((item) => !expandedItems.includes(item));
+    setExpandedItems(value);
+
+    // If an item was added (opened), scroll it into view
+    if (newItems.length > 0) {
+      const newItemId = newItems[0];
+      // Small timeout to allow the accordion to start opening/rendering
+      setTimeout(() => {
+        const element = document.getElementById(`visit-accordion-${newItemId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    }
+  };
 
   // Input filter state (what user is typing/selecting)
   const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(new Date());
@@ -484,54 +536,57 @@ export function ClinicalNotesPage() {
     );
   }
 
+
   return (
     <>
-      <div className="h-[calc(100vh-4rem)] overflow-auto flex flex-col p-4">
+      <div className="h-full flex flex-col bg-background">
         {/* Header Section */}
-        <div className="pb-4">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Clinical Notes
-              </h1>
-              <p className="text-muted-foreground text-sm mt-1">
-                Manage clinical notes and prescriptions for patient visits
-              </p>
+        <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+          <div className="">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                  Clinical Notes
+                </h1>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Manage clinical notes and prescriptions for patient visits
+                </p>
+              </div>
+              <div className="flex items-center gap-4">
+                {/* Status Count Cards */}
+                <StatusCountCards
+                  counts={statusCounts ?? { scheduled: 0, pending: 0, notesGenerated: 0, postedToEHR: 0 }}
+                  isLoading={statusCountsLoading}
+                />
+                {/* Add Appointment Button */}
+                <Button
+                  className="bg-primary-gradient hover:opacity-90 shadow-lg"
+                  onClick={() => setShowAppointmentSheet(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Appointment
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              {/* Status Count Cards */}
-              <StatusCountCards
-                counts={statusCounts ?? { scheduled: 0, pending: 0, notesGenerated: 0, postedToEHR: 0 }}
-                isLoading={statusCountsLoading}
-              />
-              {/* Add Appointment Button */}
-              <Button
-                className="bg-primary-gradient hover:opacity-90 shadow-lg"
-                onClick={() => setShowAppointmentSheet(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Appointment
-              </Button>
-            </div>
-          </div>
 
-          {/* Filters Row */}
-          <ClinicalNotesFilters
-            appointmentDate={appointmentDate}
-            onDateChange={setAppointmentDate}
-            patientSearch={patientSearch}
-            onPatientSearchChange={setPatientSearch}
-            doctorFilter={doctorFilter}
-            onDoctorFilterChange={setDoctorFilter}
-            doctors={doctors}
-            onSearch={handleSearch}
-            onReset={clearFilters}
-          />
+            {/* Filters Row */}
+            <ClinicalNotesFilters
+              appointmentDate={appointmentDate}
+              onDateChange={setAppointmentDate}
+              patientSearch={patientSearch}
+              onPatientSearchChange={setPatientSearch}
+              doctorFilter={doctorFilter}
+              onDoctorFilterChange={setDoctorFilter}
+              doctors={doctors}
+              onSearch={handleSearch}
+              onReset={clearFilters}
+            />
+          </div>
         </div>
 
         {/* Visit Accordion List */}
         <ScrollArea className="flex-1">
-          <div className="space-y-2 pr-4">
+          <div className="space-y-2 pr-4 pt-4">
             {visitsLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-20 rounded-lg" />
@@ -545,12 +600,18 @@ export function ClinicalNotesPage() {
                 </p>
               </div>
             ) : (
-              <Accordion type="multiple" className="space-y-2">
+              <Accordion 
+                type="multiple" 
+                className="space-y-2"
+                value={expandedItems}
+                onValueChange={handleAccordionChange}
+              >
                 {filteredVisits.map((visit) => (
                   <AccordionItem
                     key={visit.visit_id}
                     value={String(visit.visit_id)}
-                    className="border rounded-lg bg-card px-4"
+                    id={`visit-accordion-${visit.visit_id}`}
+                    className="border rounded-lg bg-card px-4 scroll-mt-2" // scroll-mt-2 adds a little spacing from the top when scrolled
                   >
                     <AccordionTrigger className="hover:no-underline py-4">
                       <div className="flex items-center gap-4 flex-1 text-left">
@@ -619,7 +680,7 @@ export function ClinicalNotesPage() {
         defaultStatus="WITH DOCTOR"
         hideStatus={true}
       />
-
+      
     </>
   );
 }

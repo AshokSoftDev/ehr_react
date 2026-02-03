@@ -8,7 +8,7 @@ export const api: AxiosInstance = axios.create({ baseURL: config.API_BASE_URL, t
 
 api.interceptors.request.use(
     (config) => {
-        const token = sessionStorage.getItem('access_token')
+        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token')
 
         if (token && !config.url?.includes("/auth/login")) {
             config.headers.Authorization = `Bearer ${token}`

@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FormControl, FormItem, FormMessage } from "@/components/ui/form";
+import { FormControl, FormItem } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 
 export type SelectOption = {
@@ -34,6 +34,7 @@ type FormFloatingSelectProps<
   disabled?: boolean;
   value?: string;
   onValueChange?: (value: string) => void;
+  required?: boolean;
 };
 
 export function FormFloatingSelect<
@@ -51,6 +52,7 @@ export function FormFloatingSelect<
     disabled,
     value,
     onValueChange,
+    required,
   } = props;
 
   // If external value/onChange provided, use them instead of form control
@@ -62,21 +64,21 @@ export function FormFloatingSelect<
         <label
           className={cn(
             "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
-            "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-            "bg-background/0 group-focus-within:bg-background/100",
+            "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
             !hasValue
-              ? "top-1/2 -translate-y-1/2"
-              : "top-0 -translate-y-1/2 text-xs",
-            "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs"
+              ? "top-1/2 -translate-y-1/2 bg-transparent"
+              : "top-0 -translate-y-1/2 text-xs bg-card",
+            "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs group-focus-within:bg-card"
           )}
         >
           {label}
+          {required && <span className="text-destructive ml-0.5">*</span>}
         </label>
 
         <Select disabled={disabled} onValueChange={onValueChange} value={value}>
           <SelectTrigger
             className={cn(
-              "h-12 min-h-[48px] pt-3 pb-2 px-3 w-full",
+              "h-10 min-h-[40px] pt-2 pb-1 px-3 w-full",
               "border border-input bg-background rounded-md",
               "focus-visible:ring-2 focus-visible:ring-ring",
               "text-left",
@@ -116,15 +118,16 @@ export function FormFloatingSelect<
             <label
               className={cn(
                 "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
-                "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-                "bg-background/0 group-focus-within:bg-background/100",
+                "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
                 !hasValue
-                  ? "top-1/2 -translate-y-1/2"
-                  : "top-0 -translate-y-1/2 text-xs",
-                "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs"
+                  ? "top-1/2 -translate-y-1/2 bg-transparent"
+                  : "top-0 -translate-y-1/2 text-xs bg-card",
+                "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs group-focus-within:bg-card",
+                hasError && "text-destructive"
               )}
             >
               {label}
+              {required && <span className="text-destructive ml-0.5">*</span>}
             </label>
 
             <FormControl>
@@ -135,7 +138,7 @@ export function FormFloatingSelect<
               >
                 <SelectTrigger
                   className={cn(
-                    "h-12 min-h-[48px] pt-3 pb-2 px-3 w-full",
+                    "h-10 min-h-[40px] pt-2 pb-1 px-3 w-full",
                     "border border-input bg-background rounded-md",
                     "focus-visible:ring-2 focus-visible:ring-ring bg-card",
                     hasError &&
@@ -160,7 +163,11 @@ export function FormFloatingSelect<
               </Select>
             </FormControl>
 
-            <FormMessage />
+            {fieldState.error && (
+              <p className="text-destructive text-xs -mt-1 px-1">
+                {fieldState.error.message}
+              </p>
+            )}
           </FormItem>
         );
       }}

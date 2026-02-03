@@ -4,24 +4,16 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Form } from '@/components/ui/form';
 import { FormFloatingInput } from '@/components/form/form-floating-input';
 import { AdvancedDataTable } from '@/components/ui/advanced-data-table';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus } from "lucide-react";
 import type { DrugItem } from '../types/drug.types';
 import { drugService } from '../services/drug.service';
 import { DrugFormSheet, type DrugFormValues } from '../components/DrugFormSheet';
 import { createDrugColumns } from '../components/DrugTableColumns';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { ConfirmDeleteDialog } from '@/components/common/ConfirmDeleteDialog';
 
 const filterSchema = z.object({
   search: z.string().optional(),
@@ -36,7 +28,7 @@ export function DrugsPage() {
   const [openForm, setOpenForm] = useState(false);
   const [editItem, setEditItem] = useState<DrugItem | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [deleteItem, setDeleteItem] = useState<DrugItem | null>(null);
 
   const filterForm = useForm<FilterValues>({
     resolver: zodResolver(filterSchema),
@@ -116,8 +108,8 @@ export function DrugsPage() {
           setEditItem(drug);
           setOpenForm(true);
         },
-        onDelete: (id) => {
-          setPendingDeleteId(id);
+        onDelete: (drug) => {
+          setDeleteItem(drug);
           setDeleteDialogOpen(true);
         },
       }),
@@ -125,45 +117,51 @@ export function DrugsPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Drug Master</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage drug catalog and search by generic or name.
-          </p>
+    <div className="h-full flex flex-col bg-background">
+      <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Drug Master
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Manage drug catalog and search by generic or name
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              setEditItem(null);
+              setOpenForm(true);
+            }}
+            className="bg-primary-gradient hover:opacity-90 shadow-lg"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Drug
+          </Button>
         </div>
-        <Button
-          onClick={() => {
-            setEditItem(null);
-            setOpenForm(true);
-          }}
-        >
-          Add Drug
-        </Button>
+
+        <Form {...filterForm}>
+          <form className="grid gap-3 md:grid-cols-4">
+            <FormFloatingInput control={filterForm.control} name="search" label="Search (generic, name)" className="h-10" />
+          </form>
+        </Form>
       </div>
 
-      <Form {...filterForm}>
-        <form className="grid gap-3 md:grid-cols-3">
-          <FormFloatingInput control={filterForm.control} name="search" label="Search (generic, name)" />
-        </form>
-      </Form>
-
-      <Separator />
-
-      <AdvancedDataTable
-        columns={columns}
-        data={pagedDrugs}
-        isLoading={listQuery.isLoading}
-        page={page}
-        limit={limit}
-        total={total}
-        onPageChange={setPage}
-        onLimitChange={(value) => {
-          setLimit(value);
-          setPage(1);
-        }}
-      />
+      <ScrollArea className="flex-1 mt-4">
+        <AdvancedDataTable
+          columns={columns}
+          data={pagedDrugs}
+          isLoading={listQuery.isLoading}
+          page={page}
+          limit={limit}
+          total={total}
+          onPageChange={setPage}
+          onLimitChange={(value) => {
+            setLimit(value);
+            setPage(1);
+          }}
+        />
+      </ScrollArea>
 
       <DrugFormSheet
         open={openForm}
@@ -183,35 +181,28 @@ export function DrugsPage() {
         initial={editItem ?? undefined}
       />
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Drug</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this drug?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => {
-                setPendingDeleteId(null);
-              }}
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (pendingDeleteId != null) {
-                  deleteMutation.mutate(pendingDeleteId);
-                  setPendingDeleteId(null);
-                }
-              }}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={() => {
+          if (deleteItem) {
+            deleteMutation.mutate(deleteItem.drug_id);
+            setDeleteItem(null);
+          }
+        }}
+        title="Delete Drug"
+        description={
+          deleteItem ? (
+            <span>
+              Are you sure you want to delete the drug{" "}
+              <span className="font-bold">"{deleteItem.drug_name}"</span>?
+            </span>
+          ) : (
+            "This action cannot be undone."
+          )
+        }
+        isDeleting={deleteMutation.isPending}
+      />
     </div>
   );
 }

@@ -43,6 +43,7 @@ import type { VisitDocument } from "@/features/visits/types/visitDocument.types"
 import { visitDocumentService } from "@/features/visits/services/visitDocument.service";
 import { useDocumentTypes, useCreateDocumentType } from "@/features/masters/hooks/useDocumentTypes";
 import { DocumentTypeFormSheet, type DocumentTypeFormValues } from "@/features/document-types/components/DocumentTypeFormSheet";
+import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 
 const uploadFormSchema = z.object({
   document_name: z.string().min(1, "Document name is required"),
@@ -79,6 +80,7 @@ export function PatientVisitDocumentPage() {
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedDocType, setSelectedDocType] = useState<{ id: number; name: string } | null>(null);
+  const [documentToDelete, setDocumentToDelete] = useState<VisitDocument | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load blob URL when viewing document
@@ -146,10 +148,8 @@ export function PatientVisitDocumentPage() {
     resetForm();
   };
 
-  const handleDelete = async (documentId: number) => {
-    if (confirm("Are you sure you want to delete this document?")) {
-      await deleteMutation.mutateAsync(documentId);
-    }
+  const handleDelete = (doc: VisitDocument) => {
+    setDocumentToDelete(doc);
   };
 
   const handleDownload = (doc: VisitDocument) => {
@@ -406,7 +406,7 @@ export function PatientVisitDocumentPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleDelete(doc.document_id)}
+                  onClick={() => handleDelete(doc)}
                   disabled={deleteMutation.isPending}
                   className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                   title="Delete"
@@ -418,6 +418,7 @@ export function PatientVisitDocumentPage() {
           ))}
         </div>
       )}
+
 
       {/* Document Preview Dialog */}
       <Dialog open={!!viewingDoc} onOpenChange={(open) => !open && setViewingDoc(null)}>
@@ -465,6 +466,33 @@ export function PatientVisitDocumentPage() {
           </div>
         </DialogContent>
       </Dialog>
+      
+      <ConfirmDeleteDialog
+        open={!!documentToDelete}
+        onOpenChange={(open) => !open && setDocumentToDelete(null)}
+        onConfirm={() => {
+          if (documentToDelete) {
+            deleteMutation.mutateAsync(documentToDelete.document_id);
+            setDocumentToDelete(null);
+          }
+        }}
+        title="Delete Document"
+        description={
+          documentToDelete ? (
+            <span>
+              Are you sure you want to delete{" "}
+              <span className="font-bold">{documentToDelete.file_name}</span>?
+              <br />
+              <span className="text-muted-foreground text-sm mt-1 block">
+                This action cannot be undone.
+              </span>
+            </span>
+          ) : (
+             "Are you sure you want to delete this document?"
+          )
+        }
+        isDeleting={deleteMutation.isPending}
+      />
     </div>
   );
 }

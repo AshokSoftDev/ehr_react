@@ -1,17 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { Plus, Search, Loader2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../../../components/ui/alert-dialog";
+import { Plus, Search } from "lucide-react";
+import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 import { GroupForm } from "../components/GroupForm";
 import {
   useGroups,
@@ -136,7 +127,7 @@ export const GroupsPage: React.FC = () => {
       {/* Header Section */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="mx-auto">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 Group Management
@@ -205,40 +196,30 @@ export const GroupsPage: React.FC = () => {
         onSubmit={handleFormSubmit}
       />
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Group</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{groupToDelete?.name}"?
-              {groupToDelete?._count?.users ? (
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        title="Delete Group"
+        description={
+          groupToDelete ? (
+            <span>
+              Are you sure you want to delete "
+              <span className="font-bold">{groupToDelete.name}</span>"?
+              {groupToDelete._count?.users ? (
                 <span className="mt-2 block font-semibold text-destructive">
                   Warning: This group has {groupToDelete._count.users} user(s)
                   assigned.
                 </span>
               ) : null}
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              <span className="block mt-1">This action cannot be undone.</span>
+            </span>
+          ) : (
+            "This action cannot be undone."
+          )
+        }
+        isDeleting={deleteMutation.isPending}
+      />
     </div>
   );
 };

@@ -1,15 +1,15 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, User, MapPin, FileText } from 'lucide-react';
 import { differenceInYears } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { FormFloatingInput } from '@/components/form/form-floating-input';
 import { FormFloatingSelect } from '@/components/form/FormFloatingSelect';
 import { FormFloatingDatePicker } from '@/components/form/FormFloatingDatePicker';
+import { FormFloatingTextarea } from '@/components/form/form-floating-textarea';
 import { patientSchema, type PatientFormData } from '../schemas/patient.schema';
 import type { Patient } from '../types/patient.types';
 
@@ -30,12 +30,12 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onC
       ...patient,
       dateOfBirth: patient.dateOfBirth?.split('T')[0],
     } : {
-      title: '',
+      title: 'Mr.',
       firstName: '',
       lastName: '',
       dateOfBirth: '',
-      age: 0,
-      gender: '',
+      age: 20,
+      gender: 'Male',
       mobileNumber: '',
       address: '',
       area: '',
@@ -68,86 +68,138 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onC
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="h-full flex flex-col">
-        <Tabs defaultValue="personal" className="flex-1 flex flex-col overflow-y-hidden">
-            <div className="px-6 pt-6">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="personal">Personal</TabsTrigger>
-                    <TabsTrigger value="address">Contact & Address</TabsTrigger>
-                </TabsList>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="h-full flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-2 py-2">
+          <div className="space-y-5">
+            {/* Personal Information Section */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 border-b pb-2">
+                <div className="p-1.5 rounded-md bg-primary/10">
+                  <User className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold">Personal Information</h3>
+                  <p className="text-xs text-muted-foreground">Basic patient details</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <FormFloatingSelect
+                  control={form.control}
+                  name="title"
+                  label="Title"
+                  required
+                  className="w-24"
+                  options={titleOptions.map(title => ({ label: title, value: title }))}
+                />
+                <FormFloatingInput control={form.control} name="firstName" label="First Name" required className="flex-1" />
+                <FormFloatingInput control={form.control} name="lastName" label="Last Name" required className="flex-1" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <FormFloatingDatePicker 
+                  control={form.control} 
+                  name="dateOfBirth" 
+                  label="Date of Birth" 
+                  required 
+                  toDate={new Date()} // Disable future dates
+                />
+                <FormFloatingInput control={form.control} name="age" label="Age" type="number" />
+                <FormFloatingSelect
+                  control={form.control}
+                  name="gender"
+                  label="Gender"
+                  required
+                  options={genderOptions.map(gender => ({ label: gender, value: gender }))}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <FormFloatingInput 
+                  control={form.control} 
+                  name="mobileNumber" 
+                  label="Mobile Number" 
+                  required
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={10}
+                />
+                <FormFloatingInput 
+                  control={form.control} 
+                  name="aadhar" 
+                  label="Aadhar Number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={12}
+                />
+              </div>
             </div>
 
-            <TabsContent value="personal" className="flex-1 overflow-y-auto p-6 space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>Basic personal details of the patient.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4">
-                      <FormFloatingSelect
-                        control={form.control}
-                        name="title"
-                        label="Title"
-                        options={titleOptions.map(title => ({ label: title, value: title }))}
-                      />
-                      <FormFloatingInput control={form.control} name="firstName" label="First Name" />
-                      <FormFloatingInput control={form.control} name="lastName" label="Last Name" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <FormFloatingDatePicker control={form.control} name="dateOfBirth" label="Date of Birth" />
-                      <FormFloatingInput control={form.control} name="age" label="Age" type="number" />
-                      <FormFloatingSelect
-                        control={form.control}
-                        name="gender"
-                        label="Gender"
-                        options={genderOptions.map(gender => ({ label: gender, value: gender }))}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+            {/* Contact & Address Section */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 border-b pb-2">
+                <div className="p-1.5 rounded-md bg-primary/10">
+                  <MapPin className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold">Address Details</h3>
+                  <p className="text-xs text-muted-foreground">Where the patient resides</p>
+                </div>
+              </div>
+              <FormFloatingInput control={form.control} name="address" label="Street Address" required />
+              <div className="grid grid-cols-2 gap-3">
+                <FormFloatingInput control={form.control} name="area" label="Area / Locality" required />
+                <FormFloatingInput control={form.control} name="city" label="City" required />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <FormFloatingInput control={form.control} name="state" label="State" required />
+                <FormFloatingInput control={form.control} name="country" label="Country" required />
+                <FormFloatingInput 
+                  control={form.control} 
+                  name="pincode" 
+                  label="Pincode" 
+                  required 
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                />
+              </div>
+            </div>
 
-              <TabsContent value="address" className="flex-1 max-h-[65vh] overflow-y-auto p-6 space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Contact & Address</CardTitle>
-                    <CardDescription>Patient's contact and address information.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormFloatingInput control={form.control} name="mobileNumber" label="Mobile Number" />
-                      <FormFloatingInput control={form.control} name="aadhar" label="Aadhar Number" />
-                    </div>
-                    <FormFloatingInput control={form.control} name="address" label="Street Address" />
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormFloatingInput control={form.control} name="area" label="Area" />
-                      <FormFloatingInput control={form.control} name="city" label="City" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <FormFloatingInput control={form.control} name="state" label="State" />
-                      <FormFloatingInput control={form.control} name="country" label="Country" />
-                      <FormFloatingInput control={form.control} name="pincode" label="Pincode" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Other Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormFloatingInput control={form.control} name="referalSource" label="Referral Source" />
-                    <FormFloatingInput control={form.control} name="comments" label="Comments" />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-        </Tabs>
+            {/* Other Information Section */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 border-b pb-2">
+                <div className="p-1.5 rounded-md bg-primary/10">
+                  <FileText className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold">Additional Information</h3>
+                  <p className="text-xs text-muted-foreground">Referral and notes</p>
+                </div>
+              </div>
+              <FormFloatingInput control={form.control} name="referalSource" label="Referral Source" />
+              <FormFloatingTextarea 
+                control={form.control} 
+                name="comments" 
+                label="Comments / Notes"
+                rows={2}
+              />
+            </div>
+          </div>
+        </div>
 
-        <div className="flex justify-end gap-3 px-6 py-4 border-t bg-background">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+        {/* Footer with buttons */}
+        <div className="flex justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">
+          <Button 
+            type="button" 
+            variant="secondary" 
+            onClick={onCancel} 
+            disabled={isLoading}
+            className="btn-cancel"
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="btn-primary">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {patient ? 'Update Patient' : 'Create Patient'}
           </Button>

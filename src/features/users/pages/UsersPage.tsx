@@ -1,16 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Button } from "../../../components/ui/button";
-import { Plus, Loader2, Download } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../../../components/ui/alert-dialog";
+import { Plus } from "lucide-react";
+import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 import { UserForm } from "../components/UserForm";
 import { UserFilters } from "../components/UserFilters";
 import {
@@ -22,7 +13,7 @@ import {
 import { useGroups } from "../../groups/hooks/useGroups";
 import type { User, CreateUserDto, UpdateUserDto } from "../types/user.types";
 import { useDebounce } from "../../../hooks/use-debounce";
-import { toast } from "react-toastify";
+
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -100,9 +91,7 @@ export const UsersPage: React.FC = () => {
     accountTypeFilter
   );
 
-  const handleExport = () => {
-    toast.info("Export functionality coming soon");
-  };
+
 
   const users = data?.data.users || [];
   const pagination = data?.data.pagination;
@@ -131,9 +120,9 @@ export const UsersPage: React.FC = () => {
       {/* Header Section */}
       <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 User Management
               </h1>
               <p className="text-muted-foreground text-sm mt-1">
@@ -141,10 +130,6 @@ export const UsersPage: React.FC = () => {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleExport}>
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
               <Button
                 onClick={() => {
                   setSelectedUser(null);
@@ -214,42 +199,33 @@ export const UsersPage: React.FC = () => {
         }}
         user={selectedUser}
         onSubmit={handleFormSubmit}
+        isLoading={createMutation.isPending || updateMutation.isPending}
       />
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete User</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{userToDelete?.fullName}"?
-              {userToDelete?.children && userToDelete.children.length > 0 && (
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        title="Delete User"
+        description={
+          userToDelete ? (
+            <span>
+              Are you sure you want to delete "
+              <span className="font-bold">{userToDelete.fullName}</span>"?
+              {userToDelete.children && userToDelete.children.length > 0 && (
                 <span className="mt-2 block font-semibold text-destructive">
                   Warning: This user has {userToDelete.children.length} child
                   user(s).
                 </span>
               )}
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              <span className="block mt-1">This action cannot be undone.</span>
+            </span>
+          ) : (
+            "This action cannot be undone."
+          )
+        }
+        isDeleting={deleteMutation.isPending}
+      />
     </div>
   );
 };

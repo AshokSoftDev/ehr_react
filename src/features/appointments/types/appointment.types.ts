@@ -9,6 +9,8 @@ export interface AppointmentPatientLite {
   mrn: string;
   firstName?: string;
   lastName?: string;
+  dateOfBirth?: string | Date;
+  gender?: string;
 }
 
 export interface AppointmentItem {

@@ -1,12 +1,12 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Edit, Trash } from 'lucide-react';
+import { Edit, Trash, Pill } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { DrugItem } from '../types/drug.types';
 
 interface DrugTableColumnsProps {
   onEdit: (drug: DrugItem) => void;
-  onDelete: (id: number) => void;
+  onDelete: (drug: DrugItem) => void;
 }
 
 export const createDrugColumns = ({
@@ -16,6 +16,14 @@ export const createDrugColumns = ({
   {
     accessorKey: 'drug_generic',
     header: 'Generic',
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <div className="p-1 bg-blue-100 dark:bg-blue-900 rounded-md">
+          <Pill className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        </div>
+        <span className="font-medium">{row.getValue('drug_generic') as string}</span>
+      </div>
+    ),
   },
   {
     accessorKey: 'drug_name',
@@ -92,7 +100,7 @@ export const createDrugColumns = ({
             size="icon"
             onClick={(event) => {
               event.stopPropagation();
-              onDelete(drug.drug_id);
+              onDelete(drug);
             }}
             className="h-8 w-8 text-destructive hover:bg-muted/50 hover:text-destructive"
             aria-label="Delete drug"

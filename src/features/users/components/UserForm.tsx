@@ -22,6 +22,7 @@ interface UserFormProps {
   onClose: () => void;
   user?: User | null;
   onSubmit: (data: CreateUserFormData | UpdateUserFormData) => any;
+  isLoading?: boolean;
 }
 
 export const UserForm: React.FC<UserFormProps> = ({
@@ -29,6 +30,7 @@ export const UserForm: React.FC<UserFormProps> = ({
   onClose,
   user,
   onSubmit,
+  isLoading,
 }) => {
   const formSheetContext = useContext(FormSheetContext);
   const { data: groupsData } = useGroups({
@@ -57,8 +59,6 @@ export const UserForm: React.FC<UserFormProps> = ({
 
   useEffect(() => {
     if (user) {
-      console.log(user);
-      
       form.reset({
         title: user.title,
         firstName: user.firstName,
@@ -156,39 +156,26 @@ export const UserForm: React.FC<UserFormProps> = ({
       }}
     >
       <SheetContent 
-        className="w-full sm:max-w-lg p-0 flex flex-col h-full gap-0"
+        side="right"
+        preventClose
+        className="w-full sm:max-w-lg p-0 flex flex-col h-full"
         onInteractOutside={(e) => {
           e.preventDefault();
         }}
       >
-        <SheetHeader className="sr-only">
-          <SheetTitle>{user ? 'Edit User' : 'Create New User'}</SheetTitle>
+        <SheetHeader className="px-4 border-b shrink-0 py-4">
+          <SheetTitle>
+            {user ? 'Edit User' : 'Create New User'}
+          </SheetTitle>
         </SheetHeader>
-        
-        {/* Fixed Header */}
-        <div className="px-6 py-4 border-b bg-gradient-to-r from-background to-primary/5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <User2 className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold">
-                {user ? 'Edit User' : 'Create New User'}
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {user ? 'Update user information' : 'Add a new user to the system'}
-              </p>
-            </div>
-          </div>
-        </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col flex-1 overflow-hidden">
             {/* Scrollable Content */}
             <ScrollArea className="flex-1">
-              <div className="px-6 py-4 space-y-5">
+              <div className="p-4 space-y-3">
                 {/* Personal Information Section */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-primary">
                     <User2 className="h-3.5 w-3.5" />
                     <span>Personal Information</span>
@@ -234,7 +221,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                 </div>
 
                 {/* Contact Information Section */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-primary">
                     <Mail className="h-3.5 w-3.5" />
                     <span>Contact Information</span>
@@ -267,7 +254,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                 </div>
 
                 {/* Security Section */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-primary">
                     <Shield className="h-3.5 w-3.5" />
                     <span>Security & Access</span>
@@ -332,33 +319,23 @@ export const UserForm: React.FC<UserFormProps> = ({
             </ScrollArea>
 
             {/* Fixed Footer */}
-            <div className="px-6 py-3 border-t bg-gradient-to-r from-background to-primary/5">
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleClose}
-                  className="flex-1 h-9"
-                  size="sm"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex-1 h-9 bg-primary-gradient hover:opacity-90"
-                  size="sm"
-                  disabled={form.formState.isSubmitting}
-                >
-                  {form.formState.isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                      {user ? 'Updating...' : 'Creating...'}
-                    </>
-                  ) : (
-                    <>{user ? 'Update User' : 'Create User'}</>
-                  )}
-                </Button>
-              </div>
+            <div className="flex justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isLoading || form.formState.isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-primary-gradient hover:opacity-90"
+                disabled={isLoading || form.formState.isSubmitting}
+              >
+                {(isLoading || form.formState.isSubmitting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {user ? 'Update User' : 'Create User'}
+              </Button>
             </div>
           </form>
         </Form>

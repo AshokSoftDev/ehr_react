@@ -26,9 +26,13 @@ export function SessionExpiredDialog() {
   const handleOk = () => {
     setOpen(false);
     sessionManager.reset();
-    // Clear session storage
+    // Clear both localStorage and sessionStorage
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("refresh_token");
     sessionStorage.removeItem("access_token");
     sessionStorage.removeItem("user");
+    sessionStorage.removeItem("refresh_token");
     // Redirect to login
     navigate("/login", { replace: true });
   };

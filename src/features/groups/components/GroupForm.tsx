@@ -248,7 +248,7 @@ export const GroupForm: React.FC<GroupFormProps> = ({
                       <FormFloatingInput
                         control={form.control}
                         name="name"
-                        label="Group Name"
+                        label="Group Name *"
                         className="bg-background/50"
                       />
 

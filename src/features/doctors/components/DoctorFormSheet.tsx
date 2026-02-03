@@ -29,9 +29,10 @@ export const DoctorFormSheet: React.FC<DoctorFormSheetProps> = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[540px] lg:w-[720px] sm:max-w-none p-0"
+        preventClose
+        className="w-full sm:w-[540px] lg:w-[720px] sm:max-w-none p-0 flex flex-col h-full"
       >
-        <SheetHeader className="px-6 py-4 border-b">
+        <SheetHeader className="px-4 border-b shrink-0 py-4">
           <div className="flex items-center justify-between">
             <div>
               <SheetTitle>

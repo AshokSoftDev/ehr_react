@@ -1,12 +1,12 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Edit, Trash } from 'lucide-react';
+import { Edit, Trash, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { LocationItem } from '../types/location.types';
 
 interface LocationTableColumnsProps {
   onEdit: (location: LocationItem) => void;
-  onDelete: (id: number) => void;
+  onDelete: (location: LocationItem) => void;
 }
 
 export const createLocationColumns = ({
@@ -17,7 +17,12 @@ export const createLocationColumns = ({
     accessorKey: 'location_name',
     header: 'Location Name',
     cell: ({ row }) => (
-      <span className="font-medium">{row.getValue('location_name') as string}</span>
+      <div className="flex items-center gap-2">
+        <div className="p-1 bg-primary/10 rounded-md">
+          <MapPin className="h-4 w-4 text-primary" />
+        </div>
+        <span className="font-medium">{row.getValue('location_name') as string}</span>
+      </div>
     ),
   },
   {
@@ -82,7 +87,7 @@ export const createLocationColumns = ({
             size="icon"
             onClick={event => {
               event.stopPropagation();
-              onDelete(location.location_id);
+              onDelete(location);
             }}
             className="h-8 w-8 text-destructive hover:bg-muted/50 hover:text-destructive"
             aria-label="Delete location"

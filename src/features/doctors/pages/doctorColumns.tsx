@@ -45,12 +45,12 @@ export const doctorColumns = (
       return (
         <div className="space-y-1">
           <p className="text-xs flex items-center gap-1">
-            <Mail className="h-3 w-3 text-muted-foreground" />
+            <Mail className="h-3 w-3 text-indigo-500" />
             {doctor.email}
           </p>
           {doctor.city && (
             <p className="text-xs flex items-center gap-1 text-muted-foreground">
-              <MapPin className="h-3 w-3" />
+              <MapPin className="h-3 w-3 text-muted-foreground" />
               {doctor.city}
             </p>
           )}
@@ -96,7 +96,7 @@ export const doctorColumns = (
 
       return (
         <Badge variant="outline" className="gap-1">
-          <Clock className="h-3 w-3" />
+          <Clock className="h-3 w-3 text-blue-500" />
           {doctor.timeBlock}
         </Badge>
       );

@@ -1,36 +1,35 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Patient } from "../types/patient.types";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash, User } from "lucide-react";
+import { Edit, Trash, User, Calendar, Phone, MapPin } from "lucide-react";
 import { format } from "date-fns";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const patientColumns = (
   onEdit: (patient: Patient) => void,
   onDelete: (patient: Patient) => void
 ): ColumnDef<Patient>[] => [
   {
-    accessorKey: "mrn",
-    header: "MRN",
-    cell: ({ row }) => (
-      <span className="font-semibold text-blue-600 dark:text-blue-400">{String(row.getValue("mrn"))}</span>
-    ),
-  },
-  {
     id: "patient",
     header: "Patient",
     cell: ({ row }) => {
       const p = row.original;
       return (
-        <div className="space-y-1">
+        <div className="space-y-1 py-1">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded-full">
+            <span className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded-full shrink-0">
               <User className="h-3 w-3 text-blue-600 dark:text-blue-400" />
             </span>
-            <div>
-              <div className="font-medium text-blue-600 dark:text-blue-400">
+            <div className="min-w-0">
+              <div className="font-medium text-blue-600 dark:text-blue-400 truncate">
                 {p.title ? `${p.title} ` : ''}{p.firstName} {p.lastName}
+                <span className="ml-2 text-muted-foreground font-normal text-xs">({p.mrn})</span>
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground truncate">
                 {p.age} yrs • {p.gender}
               </div>
             </div>
@@ -44,61 +43,48 @@ export const patientColumns = (
     header: "DOB",
     cell: ({ row }) => {
       const dob = row.getValue("dateOfBirth") as string | undefined;
-      if (!dob) return <span className="text-muted-foreground text-sm">-</span>;
-      return <span className="text-sm">{format(new Date(dob), 'dd/MM/yyyy')}</span>;
+      if (!dob) return <span className="text-muted-foreground text-xs">-</span>;
+      return (
+        <div className="flex items-center gap-2">
+          <Calendar className="h-3.5 w-3.5 text-blue-500" />
+          <span className="text-xs font-medium">{format(new Date(dob), 'dd/MM/yyyy')}</span>
+        </div>
+      );
     },
   },
   {
     accessorKey: "mobileNumber",
     header: "Mobile",
     cell: ({ row }) => (
-      <span className="font-mono text-sm">{String(row.getValue("mobileNumber"))}</span>
+      <div className="flex items-center gap-2">
+        <Phone className="h-3.5 w-3.5 text-indigo-500" />
+        <span className="font-mono text-xs">{String(row.getValue("mobileNumber"))}</span>
+      </div>
     ),
-  },
-  {
-    accessorKey: "aadhar",
-    header: "Aadhar",
-    cell: ({ row }) => {
-      const val = (row.getValue("aadhar") as string | undefined) || "";
-      return val ? (
-        <span className="font-mono text-sm" title={val}>{val}</span>
-      ) : (
-        <span className="text-muted-foreground text-sm">-</span>
-      );
-    },
-  },
-  {
-    accessorKey: "pincode",
-    header: "Pincode",
-    cell: ({ row }) => {
-      const val = (row.getValue("pincode") as string | undefined) || "";
-      return val ? (
-        <span className="font-mono text-sm">{val}</span>
-      ) : (
-        <span className="text-muted-foreground text-sm">-</span>
-      );
-    },
-  },
-  {
-    accessorKey: "referalSource",
-    header: "Referral Source",
-    cell: ({ row }) => {
-      const val = (row.getValue("referalSource") as string | undefined) || "";
-      return val ? (
-        <span className="text-sm">{val}</span>
-      ) : (
-        <span className="text-muted-foreground text-sm">-</span>
-      );
-    },
   },
   {
     id: "location",
     header: "Location",
     cell: ({ row }) => {
       const p = row.original;
-      const parts = [p.area, p.city, p.state].filter(Boolean).join(', ');
+      const parts = [p.area, p.city, p.state].filter(Boolean);
+      if (p.pincode) parts.push(p.pincode);
+      const address = parts.join(', ');
+      
+      if (!address) return <span className="text-muted-foreground text-xs">-</span>;
+
       return (
-        <div className="max-w-[240px] truncate text-sm" title={parts}>{parts}</div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-1 max-w-[200px] cursor-help text-xs">
+              <MapPin className="h-3 w-3 shrink-0 text-muted-foreground" />
+              <span className="truncate">{address}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-[300px] text-xs">
+            {address}
+          </TooltipContent>
+        </Tooltip>
       );
     },
   },
@@ -121,7 +107,7 @@ export const patientColumns = (
             aria-label="Edit patient"
             title="Edit patient"
           >
-            <Edit className="h-4 w-4" />
+            <Edit className="h-3.5 w-3.5" />
           </Button>
           <Button
             variant="ghost"
@@ -134,7 +120,7 @@ export const patientColumns = (
             aria-label="Delete patient"
             title="Delete patient"
           >
-            <Trash className="h-4 w-4" />
+            <Trash className="h-3.5 w-3.5" />
           </Button>
         </div>
       );

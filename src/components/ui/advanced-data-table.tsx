@@ -8,8 +8,6 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
 } from "lucide-react";
 
 import {
@@ -30,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface AdvancedDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -43,6 +42,10 @@ interface AdvancedDataTableProps<TData, TValue> {
   page?: number;
   limit?: number;
   total?: number;
+  hideRowsPerPage?: boolean;
+  cellClassName?: string;
+  headerClassName?: string;
+  searchPlaceholder?: string;
 }
 
 export function AdvancedDataTable<TData, TValue>({
@@ -57,6 +60,10 @@ export function AdvancedDataTable<TData, TValue>({
   page = 1,
   limit = 10,
   total = 0,
+  hideRowsPerPage = true,
+  cellClassName,
+  headerClassName,
+  searchPlaceholder = "Search...",
 }: AdvancedDataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -75,13 +82,13 @@ export function AdvancedDataTable<TData, TValue>({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4 flex-1">
           {onSearch && (
             <Input
-              placeholder="Search..."
+              placeholder={searchPlaceholder}
               onChange={(event) => onSearch(event.target.value)}
               className="max-w-sm h-10 bg-background"
             />
@@ -107,7 +114,7 @@ export function AdvancedDataTable<TData, TValue>({
                   return (
                     <TableHead
                       key={header.id}
-                      className="h-12 px-6 text-sm font-semibold text-foreground bg-muted/15"
+                      className={cn("h-8 px-4 text-sm font-semibold text-foreground bg-muted/30", headerClassName)}
                     >
                       {header.isPlaceholder
                         ? null
@@ -137,7 +144,7 @@ export function AdvancedDataTable<TData, TValue>({
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="px-6 py-4 text-xs">
+                    <TableCell key={cell.id} className={cn("px-4 py-[2px] text-sm", cellClassName)}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -161,79 +168,122 @@ export function AdvancedDataTable<TData, TValue>({
       </div>
 
       {/* Pagination Section */}
-      <div className="flex items-center justify-between px-2">
-        {/* Left: Rows per page */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground">
-            Rows per page:
-          </span>
-          <Select
-            value={`${limit}`}
-            onValueChange={(value) => {
-              onLimitChange?.(Number(value));
-            }}
-          >
-            <SelectTrigger className="h-9 w-[75px] bg-card">
-              <SelectValue placeholder={limit} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[10, 20, 30].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span className="text-sm text-muted-foreground ml-4">
-            Showing {startRecord} to {endRecord} of {total} entries
-          </span>
-        </div>
+      {total > 0 && (
+        <div className="flex items-center justify-between px-2">
+          {/* Left: Rows per page */}
+          <div className="flex items-center gap-2">
+            {!hideRowsPerPage && (
+              <>
+                <span className="text-sm font-medium text-muted-foreground">
+                  Rows per page:
+                </span>
+                <Select
+                  value={`${limit}`}
+                  onValueChange={(value) => {
+                    onLimitChange?.(Number(value));
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-[75px] bg-card">
+                    <SelectValue placeholder={limit} />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {[10, 20, 30].map((pageSize) => (
+                      <SelectItem key={pageSize} value={`${pageSize}`}>
+                        {pageSize}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            )}
+            <span className="text-sm text-muted-foreground">
+              Showing {startRecord} to {endRecord} of {total} entries
+            </span>
+          </div>
 
-        {/* Right: Page navigation */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground mr-2">
-            Page {page} of {totalPages || 1}
-          </span>
+          {/* Right: Page navigation with numbers */}
           <div className="flex items-center gap-1">
+            {/* Previous button */}
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9 bg-card"
-              onClick={() => onPageChange?.(1)}
-              disabled={page <= 1}
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 bg-card"
+              className="h-8 w-8 bg-card"
               onClick={() => onPageChange?.(page - 1)}
               disabled={page <= 1}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
+
+            {/* Page numbers */}
+            {(() => {
+              const pages: (number | string)[] = [];
+              const maxVisible = 5;
+              
+              if (totalPages <= maxVisible) {
+                // Show all pages if total is small
+                for (let i = 1; i <= totalPages; i++) {
+                  pages.push(i);
+                }
+              } else {
+                // Always show first page
+                pages.push(1);
+                
+                if (page > 3) {
+                  pages.push('...');
+                }
+                
+                // Show pages around current
+                const start = Math.max(2, page - 1);
+                const end = Math.min(totalPages - 1, page + 1);
+                
+                for (let i = start; i <= end; i++) {
+                  if (!pages.includes(i)) {
+                    pages.push(i);
+                  }
+                }
+                
+                if (page < totalPages - 2) {
+                  pages.push('...');
+                }
+                
+                // Always show last page
+                if (!pages.includes(totalPages)) {
+                  pages.push(totalPages);
+                }
+              }
+              
+              return pages.map((p, idx) => (
+                typeof p === 'number' ? (
+                  <Button
+                    key={p}
+                    variant={page === p ? "default" : "outline"}
+                    size="icon"
+                    className={`h-8 w-8 ${page === p ? 'bg-primary text-primary-foreground' : 'bg-card'}`}
+                    onClick={() => onPageChange?.(p)}
+                  >
+                    {p}
+                  </Button>
+                ) : (
+                  <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
+                    {p}
+                  </span>
+                )
+              ));
+            })()}
+
+            {/* Next button */}
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9 bg-card"
+              className="h-8 w-8 bg-card"
               onClick={() => onPageChange?.(page + 1)}
               disabled={page >= totalPages}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 bg-card"
-              onClick={() => onPageChange?.(totalPages)}
-              disabled={page >= totalPages}
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

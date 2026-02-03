@@ -75,7 +75,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
             placeholder="Search users by name or email..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 bg-background/50 border-primary/20 focus:border-primary/40 h-12"
+            className="pl-10 bg-background/50 border-primary/20 focus:border-primary/40 h-10"
           />
         </div>
 
@@ -88,7 +88,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
               options={groupOptions}
               value={groupId}
               onValueChange={onGroupChange}
-              triggerClassName="bg-background/50 h-12"
+              triggerClassName="bg-background/50 h-10"
             />
           </div>
 
@@ -100,7 +100,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
               options={statusOptions}
               value={status}
               onValueChange={onStatusChange}
-              triggerClassName="bg-background/50 h-12"
+              triggerClassName="bg-background/50 h-10"
             />
           </div>
 
@@ -112,15 +112,15 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
               options={accountTypeOptions}
               value={accountType}
               onValueChange={onAccountTypeChange}
-              triggerClassName="bg-background/50 h-12"
+              triggerClassName="bg-background/50 h-10"
             />
           </div>
 
           {hasActiveFilters && (
             <Button
-              variant="ghost"
+              variant="secondary"
               onClick={onReset}
-              className="gap-2 h-12"
+              className="gap-2 h-10 bg-muted hover:bg-muted/80 text-muted-foreground"
             >
               <X className="h-4 w-4" />
               Clear

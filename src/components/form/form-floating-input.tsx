@@ -24,9 +24,10 @@ type FormFloatingInputProps<
   onValueChange?: (value: string) => void;
   control?: Control<TFieldValues, unknown, TFieldValues>;
   name?: TName;
+  required?: boolean;
 } & Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
-  "name" | "type" | "onChange" | "value" | "defaultValue" | "placeholder"
+  "name" | "type" | "onChange" | "value" | "defaultValue" | "placeholder" | "required"
 >;
 
 export function FormFloatingInput<
@@ -44,6 +45,7 @@ export function FormFloatingInput<
     onValueChange,
     control,
     name,
+    required,
     ...rest
   } = props;
 
@@ -58,28 +60,32 @@ export function FormFloatingInput<
             className={cn(
               "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
               "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
-              "bg-background/0 group-focus-within:bg-background/100",
               !hasValue
-                ? "top-1/2 -translate-y-1/2"
-                : "top-0 -translate-y-1/2 text-xs",
-              "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs"
+                ? "top-1/2 -translate-y-1/2 bg-transparent"
+                : "top-0 -translate-y-1/2 text-xs bg-card",
+              "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs group-focus-within:bg-card"
             )}
           >
             {label}
+            {required && <span className="text-destructive ml-0.5">*</span>}
           </label>
 
           <Input
             type={type}
             className={cn(
-              "h-12 pt-3 pb-2 px-3 placeholder-transparent",
+              "h-10 pt-2 pb-1 px-3 placeholder-transparent",
               "border border-input bg-background rounded-md",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               inputClassName
             )}
             disabled={disabled}
             onChange={(e) => {
-              const raw = e.target.value ?? "";
-              const next = type === "text" ? capitalizeFirst(raw) : raw;
+              let raw = e.target.value ?? "";
+              // Filter non-numeric characters if inputMode is numeric
+              if (rest.inputMode === "numeric") {
+                raw = raw.replace(/[^0-9]/g, "");
+              }
+              const next = type === "text" && rest.inputMode !== "numeric" ? capitalizeFirst(raw) : raw;
               onValueChange(next);
             }}
             value={value}
@@ -109,15 +115,15 @@ export function FormFloatingInput<
                 className={cn(
                   "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
                   "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
-                  "bg-background/0 group-focus-within:bg-background/100",
                   !hasValue
-                    ? "top-1/2 -translate-y-1/2"
-                    : "top-0 -translate-y-1/2 text-xs",
-                  "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs",
+                    ? "top-1/2 -translate-y-1/2 bg-transparent"
+                    : "top-0 -translate-y-1/2 text-xs bg-card",
+                  "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs group-focus-within:bg-card",
                   hasError && "text-destructive"
                 )}
               >
                 {label}
+                {required && <span className="text-destructive ml-0.5">*</span>}
               </label>
 
               <FormControl>
@@ -125,7 +131,7 @@ export function FormFloatingInput<
                   id={name as string}
                   type={type}
                   className={cn(
-                    "h-12 pt-3 pb-2 px-3 placeholder-transparent",
+                    "h-10 pt-2 pb-1 px-3 placeholder-transparent",
                     "border border-input bg-background rounded-md",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     hasError &&
@@ -134,8 +140,12 @@ export function FormFloatingInput<
                   )}
                   disabled={disabled}
                   onChange={(e) => {
-                    const raw = e.target.value ?? "";
-                    const next = type === "text" ? capitalizeFirst(raw) : raw;
+                    let raw = e.target.value ?? "";
+                    // Filter non-numeric characters if inputMode is numeric
+                    if (rest.inputMode === "numeric") {
+                      raw = raw.replace(/[^0-9]/g, "");
+                    }
+                    const next = type === "text" && rest.inputMode !== "numeric" ? capitalizeFirst(raw) : raw;
                     field.onChange(next);
                   }}
                   value={field.value ?? ""}
@@ -148,7 +158,7 @@ export function FormFloatingInput<
               </FormControl>
             </FormItem>
             {hasError && (
-              <p className="text-destructive text-sm -mt-2 px-1">
+              <p className="text-destructive text-xs -mt-1 px-1">
                 {fieldState.error?.message}
               </p>
             )}

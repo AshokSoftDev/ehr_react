@@ -29,7 +29,7 @@ export function AIChatWidget() {
   // Check auth status
   useEffect(() => {
     const checkAuth = () => {
-      const token = sessionStorage.getItem('access_token');
+      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
       const wasAuthenticated = isAuthenticated;
       const nowAuthenticated = !!token;
       

@@ -162,10 +162,10 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
           />
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             size="sm"
             onClick={handleReset}
-            className="gap-1 h-10 mb-1"
+            className="gap-1 h-10 mb-1 bg-muted hover:bg-muted/80 text-muted-foreground"
             disabled={activeFiltersCount === 0}
           >
             <RotateCcw className="h-3 w-3" />

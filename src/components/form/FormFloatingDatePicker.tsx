@@ -31,6 +31,7 @@ type FormFloatingDatePickerProps<
   // External controlled mode props
   value?: Date | string;
   onValueChange?: (date: Date | undefined) => void;
+  required?: boolean;
 } & Omit<React.ComponentPropsWithoutRef<"button">, "name" | "value">;
 
 export function FormFloatingDatePicker<
@@ -47,6 +48,7 @@ export function FormFloatingDatePicker<
     toDate,
     value,
     onValueChange,
+    required,
     ...rest
   } = props;
 
@@ -82,21 +84,25 @@ export function FormFloatingDatePicker<
             <label
               className={cn(
                 "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
-                "transition-all duration-300 bg-background/0 group-focus-within:bg-background/100",
+                "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
                 !hasValue
-                  ? "top-1/2 -translate-y-1/2"
-                  : "top-0 -translate-y-1/2 text-xs",
-                "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs"
+                  ? "top-1/2 -translate-y-1/2 bg-transparent"
+                  : "top-0 -translate-y-1/2 text-xs bg-card",
+                "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs group-focus-within:bg-card",
+                // Also float label when popover is open
+                open && "top-0 -translate-y-1/2 text-xs bg-card"
               )}
             >
               {label}
+              {required && <span className="text-destructive ml-0.5">*</span>}
             </label>
 
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full h-12 pt-3 pb-2 px-3 justify-start text-left font-normal bg-card",
+                  "w-full h-10 pt-2 pb-1 px-3 justify-start text-left font-normal",
+                  "border border-input bg-card rounded-md", // Use bg-card to match global Input style
                   !hasValue && "text-muted-foreground"
                 )}
                 disabled={disabled}
@@ -149,14 +155,18 @@ export function FormFloatingDatePicker<
                   htmlFor={name as string}
                   className={cn(
                     "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
-                    "transition-all duration-300",
+                    "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
                     !hasValue
-                      ? "top-1/2 -translate-y-1/2"
-                      : "top-0 -translate-y-1/2 text-xs",
+                      ? "top-1/2 -translate-y-1/2 bg-transparent"
+                      : "top-0 -translate-y-1/2 text-xs bg-card",
+                    "group-focus-within:top-0 group-focus-within:-translate-y-1/2 group-focus-within:text-xs group-focus-within:bg-card",
+                    // Also float label when popover is open
+                    open && "top-0 -translate-y-1/2 text-xs bg-card",
                     hasError && "text-destructive"
                   )}
                 >
                   {label}
+                  {required && <span className="text-destructive ml-0.5">*</span>}
                 </label>
 
                 <PopoverTrigger asChild>
@@ -164,7 +174,8 @@ export function FormFloatingDatePicker<
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full h-12 pt-3 pb-2 px-3 justify-start text-left font-normal bg-card",
+                        "w-full h-10 pt-2 pb-1 px-3 justify-start text-left font-normal",
+                        "border border-input bg-card rounded-md", // Use bg-card to match global Input style
                         !hasValue && "text-muted-foreground",
                         hasError &&
                           "border-destructive focus-visible:ring-destructive"
@@ -184,7 +195,7 @@ export function FormFloatingDatePicker<
               </FormItem>
 
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
+                <Calendar className="bg-card"
                   captionLayout="dropdown"
                   mode="single"
                   selected={selectedDate}
@@ -209,7 +220,7 @@ export function FormFloatingDatePicker<
             </Popover>
 
             {hasError && (
-              <p className="text-destructive text-sm -mt-2 px-1">
+              <p className="text-destructive text-xs -mt-1 px-1">
                 {fieldState.error?.message}
               </p>
             )}

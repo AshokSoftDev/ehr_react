@@ -114,7 +114,7 @@ export const DoctorForm: React.FC<DoctorFormProps> = ({
         onSubmit={form.handleSubmit(handleSubmit)}
         className="h-[80vh] flex flex-col"
       >
-        <ScrollArea className="flex-1 h-full px-6">
+        <ScrollArea className="flex-1 h-full px-4">
           <div className="space-y-6 pb-6">
             {/* Personal Information */}
             <Card>
@@ -139,13 +139,13 @@ export const DoctorForm: React.FC<DoctorFormProps> = ({
                   <FormFloatingInput
                     control={form.control}
                     name="firstName"
-                    label="First Name"
+                    label="First Name *"
                   />
 
                   <FormFloatingInput
                     control={form.control}
                     name="lastName"
-                    label="Last Name"
+                    label="Last Name *"
                   />
                 </div>
 
@@ -153,13 +153,13 @@ export const DoctorForm: React.FC<DoctorFormProps> = ({
                   <FormFloatingDatePicker
                     control={form.control}
                     name="dob"
-                    label="Date of Birth"
+                    label="Date of Birth *"
                   />
 
                   <FormFloatingInput
                     control={form.control}
                     name="email"
-                    label="Email Address"
+                    label="Email Address *"
                     type="email"
                   />
                 </div>
@@ -179,13 +179,13 @@ export const DoctorForm: React.FC<DoctorFormProps> = ({
                   <FormFloatingInput
                     control={form.control}
                     name="licenceNo"
-                    label="License Number"
+                    label="License Number *"
                   />
 
                   <FormFloatingInput
                     control={form.control}
                     name="degree"
-                    label="Degree"
+                    label="Degree *"
                   />
                 </div>
 
@@ -193,7 +193,7 @@ export const DoctorForm: React.FC<DoctorFormProps> = ({
                   <FormFloatingSelect
                     control={form.control}
                     name="specialty"
-                    label="Specialty"
+                    label="Specialty *"
                     options={specialties.map((specialty) => ({
                       label: specialty,
                       value: specialty,
@@ -279,7 +279,7 @@ export const DoctorForm: React.FC<DoctorFormProps> = ({
                 <FormFloatingInput
                   control={form.control}
                   name="displayName"
-                  label="Display Name"
+                  label="Display Name *"
                 />
 
                 <div className="space-y-2">
@@ -331,7 +331,7 @@ export const DoctorForm: React.FC<DoctorFormProps> = ({
           </div>
         </ScrollArea>
 
-        <div className="flex justify-end gap-2 px-3 py-2 border-t bg-background">
+        <div className="flex justify-end gap-2 px-5 py-3 border-t bg-background shrink-0">
           <Button
             type="button"
             variant="outline"
@@ -340,7 +340,7 @@ export const DoctorForm: React.FC<DoctorFormProps> = ({
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="bg-primary-gradient hover:opacity-90">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {doctor ? "Update Doctor" : "Create Doctor"}
           </Button>

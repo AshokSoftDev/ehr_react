@@ -15,8 +15,8 @@ interface PatientFormSheetProps {
 export const PatientFormSheet: React.FC<PatientFormSheetProps> = ({ open, onOpenChange, patient, onSubmit, isLoading }) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:w-[540px] lg:w-[720px] sm:max-w-none p-0">
-        <SheetHeader className="px-6 py-4 border-b">
+      <SheetContent side="right" preventClose className="gap-0 w-full sm:w-[500px] lg:w-[600px] sm:max-w-none p-0 flex flex-col h-full">
+        <SheetHeader className="px-2 border-b shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <SheetTitle>{patient ? 'Edit Patient' : 'Add New Patient'}</SheetTitle>
@@ -32,12 +32,14 @@ export const PatientFormSheet: React.FC<PatientFormSheetProps> = ({ open, onOpen
             </button> */}
           </div>
         </SheetHeader>
-        <PatientForm
-          patient={patient}
-          onSubmit={onSubmit}
-          onCancel={() => onOpenChange(false)}
-          isLoading={isLoading}
-        />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <PatientForm
+            patient={patient}
+            onSubmit={onSubmit}
+            onCancel={() => onOpenChange(false)}
+            isLoading={isLoading}
+          />
+        </div>
       </SheetContent>
     </Sheet>
   );

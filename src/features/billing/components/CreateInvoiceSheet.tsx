@@ -319,8 +319,8 @@ export function CreateInvoiceSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-4xl p-0 flex flex-col">
-        <SheetHeader className="px-4 py-3 border-b">
+      <SheetContent side="right" preventClose className="w-full sm:max-w-4xl p-0 flex flex-col">
+        <SheetHeader className="px-4 py-3 border-b shrink-0">
           <SheetTitle className="flex items-center gap-2 text-base">
             <FileText className="h-4 w-4 text-primary" />
             Create Invoice
@@ -345,7 +345,7 @@ export function CreateInvoiceSheet({
                   <table className="w-full text-xs">
                     <thead className="bg-muted/50">
                       <tr>
-                        <th className="w-8 p-2 text-left text-orange-500">Remove</th>
+                        <th className="w-8 p-2 text-left text-destructive">Remove</th>
                         <th className="p-2 text-left min-w-[180px]">Procedures/Packages</th>
                         <th className="w-10 p-2 text-center">Tax</th>
                         <th className="w-16 p-2 text-left">Notes</th>
@@ -354,7 +354,7 @@ export function CreateInvoiceSheet({
                         <th className="w-24 p-2 text-right">Unit Amount</th>
                         <th className="w-20 p-2 text-right">Premium</th>
                         <th className="w-28 p-2 text-right">Discount</th>
-                        <th className="w-24 p-2 text-right text-orange-500">Net Amount</th>
+                        <th className="w-24 p-2 text-right text-primary">Net Amount</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -495,7 +495,7 @@ export function CreateInvoiceSheet({
                                 </Select>
                               </div>
                             </td>
-                            <td className="p-2 text-right font-medium text-orange-500">
+                            <td className="p-2 text-right font-medium text-primary">
                               ₹{calculated.net_amount.toFixed(2)}
                             </td>
                           </tr>
@@ -618,19 +618,19 @@ export function CreateInvoiceSheet({
         </ScrollArea>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-center gap-2 px-4 py-3 border-t">
+        <div className="flex items-center justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button
             onClick={handleSave}
             disabled={createInvoiceMutation.isPending || items.length === 0}
-            className="bg-orange-500 hover:bg-orange-600"
+            className="bg-primary-gradient hover:opacity-90"
           >
             {createInvoiceMutation.isPending && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
             Save
-          </Button>
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            Cancel
           </Button>
         </div>
       </SheetContent>

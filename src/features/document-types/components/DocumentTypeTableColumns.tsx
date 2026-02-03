@@ -5,7 +5,7 @@ import type { DocumentType } from '@/features/masters/types/documentType.types';
 
 interface ColumnsProps {
   onEdit: (item: DocumentType) => void;
-  onDelete: (id: number) => void;
+  onDelete: (item: DocumentType) => void;
 }
 
 export function createDocumentTypeColumns({ onEdit, onDelete }: ColumnsProps): ColumnDef<DocumentType>[] {
@@ -41,7 +41,7 @@ export function createDocumentTypeColumns({ onEdit, onDelete }: ColumnsProps): C
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onDelete(row.original.document_type_id)}
+            onClick={() => onDelete(row.original)}
             className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
           >
             <Trash2 className="h-4 w-4 mr-1" />

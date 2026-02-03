@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { FormFloatingInput } from '@/components/form/form-floating-input';
-import { SheetForm } from '@/components/ui/sheet-form';
-import { Trash2, Pencil } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Trash2, Pencil, Loader2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { isAxiosError } from 'axios';
 
@@ -162,23 +163,35 @@ export function PatientEmergencyTab({ patientId }: Props) {
           </div>
         )}
 
-        <SheetForm open={open} onOpenChange={setOpen} title={editing ? 'Edit Emergency Contact' : 'Add Emergency Contact'}>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-2">
-              <FormFloatingInput control={form.control} name="name" label="Full Name" />
-              <FormFloatingInput control={form.control} name="relation" label="Relation" />
-              <FormFloatingInput control={form.control} name="contactNumber" label="Contact Number" inputMode="numeric" />
-              <div className="sticky bottom-0 flex items-center justify-end gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t p-3 -mx-2 -mb-2">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {(createMutation.isPending || updateMutation.isPending) ? 'Saving...' : 'Save'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </SheetForm>
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent side="right" preventClose className="w-full sm:max-w-lg p-0 flex flex-col">
+            <SheetHeader className="px-4 py-3 border-b shrink-0">
+              <SheetTitle>{editing ? 'Edit Emergency Contact' : 'Add Emergency Contact'}</SheetTitle>
+            </SheetHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+                <ScrollArea className="flex-1 p-4">
+                  <div className="space-y-4">
+                    <FormFloatingInput control={form.control} name="name" label="Full Name" />
+                    <FormFloatingInput control={form.control} name="relation" label="Relation" />
+                    <FormFloatingInput control={form.control} name="contactNumber" label="Contact Number" inputMode="numeric" />
+                  </div>
+                </ScrollArea>
+                <div className="flex justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={createMutation.isPending || updateMutation.isPending}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-primary-gradient hover:opacity-90" disabled={createMutation.isPending || updateMutation.isPending}>
+                    {(createMutation.isPending || updateMutation.isPending) && (
+                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {(createMutation.isPending || updateMutation.isPending) ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </SheetContent>
+        </Sheet>
       </CardContent>
     </Card>
   );

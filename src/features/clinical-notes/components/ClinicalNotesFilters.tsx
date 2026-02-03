@@ -61,7 +61,7 @@ export function ClinicalNotesFilters({
           value={patientSearch}
           onChange={(e) => onPatientSearchChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="pl-10 bg-background/50 border-primary/20 focus:border-primary/40 h-12"
+          className="pl-10 bg-background/50 border-primary/20 focus:border-primary/40 h-10"
         />
       </div>
 
@@ -72,18 +72,18 @@ export function ClinicalNotesFilters({
           value={doctorFilter || ""}
           onValueChange={onDoctorFilterChange}
           options={doctorOptions}
-          triggerClassName="bg-background/50 h-12"
+          triggerClassName="bg-background/50 h-10"
         />
       </div>
 
       {/* Search Button */}
-      <Button onClick={onSearch} className="h-12 px-6">
+      <Button onClick={onSearch} className="h-10 px-6">
         <Search className="h-4 w-4 mr-2" />
         Search
       </Button>
 
       {/* Clear Button */}
-      <Button variant="ghost" onClick={onReset} className="h-12 px-4">
+      <Button variant="ghost" onClick={onReset} className="h-10 px-4">
         <X className="h-4 w-4 mr-2" />
         Clear
       </Button>
