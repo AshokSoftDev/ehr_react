@@ -130,7 +130,7 @@ export const DoctorDetailsPage: React.FC = () => {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">
+              <h1 className="text-xl font-bold tracking-tight">
                 {doctor.displayName}
               </h1>
               <p className="text-muted-foreground">
@@ -364,7 +364,7 @@ export const DoctorDetailsPage: React.FC = () => {
               Are you sure you want to delete{" "}
               <span className="font-bold">{doctor.displayName}</span>?
               <br />
-              <span className="text-muted-foreground text-sm mt-1 block">
+              <span className="text-muted-foreground text-xs mt-0.5 block">
                 {doctor.specialty} • {doctor.degree}
               </span>
               <span className="block mt-2">This action cannot be undone.</span>

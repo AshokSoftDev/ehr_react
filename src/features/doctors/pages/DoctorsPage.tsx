@@ -62,10 +62,10 @@ export const DoctorsPage: React.FC = () => {
         <div className="">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 Doctors
               </h1>
-              <p className="text-muted-foreground text-sm mt-1">
+              <p className="text-muted-foreground text-xs mt-0.5">
                 Manage your medical staff and their information
               </p>
             </div>
@@ -125,7 +125,7 @@ export const DoctorsPage: React.FC = () => {
               Are you sure you want to delete{" "}
               <span className="font-bold">{selectedDoctor.displayName}</span>?
               <br />
-              <span className="text-muted-foreground text-sm mt-1 block">
+              <span className="text-muted-foreground text-xs mt-0.5 block">
                 {selectedDoctor.specialty} • {selectedDoctor.degree}
               </span>
               <span className="block mt-2">This action cannot be undone.</span>

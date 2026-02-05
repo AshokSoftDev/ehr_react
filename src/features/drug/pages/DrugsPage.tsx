@@ -121,10 +121,10 @@ export function DrugsPage() {
       <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center justify-between mb-2">
           <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               Drug Master
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="text-muted-foreground text-xs mt-0.5">
               Manage drug catalog and search by generic or name
             </p>
           </div>

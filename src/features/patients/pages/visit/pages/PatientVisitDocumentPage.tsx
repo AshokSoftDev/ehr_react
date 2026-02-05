@@ -483,7 +483,7 @@ export function PatientVisitDocumentPage() {
               Are you sure you want to delete{" "}
               <span className="font-bold">{documentToDelete.file_name}</span>?
               <br />
-              <span className="text-muted-foreground text-sm mt-1 block">
+              <span className="text-muted-foreground text-xs mt-0.5 block">
                 This action cannot be undone.
               </span>
             </span>

@@ -63,7 +63,7 @@ export function FormFloatingSelect<
       <FormItem className={cn("relative group", className)}>
         <label
           className={cn(
-            "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
+            "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground text-sm rounded-sm",
             "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
             !hasValue
               ? "top-1/2 -translate-y-1/2 bg-transparent"
@@ -78,7 +78,7 @@ export function FormFloatingSelect<
         <Select disabled={disabled} onValueChange={onValueChange} value={value}>
           <SelectTrigger
             className={cn(
-              "h-10 min-h-[40px] pt-2 pb-1 px-3 w-full",
+              "h-9 min-h-[36px] pt-2 pb-1 px-3 w-full",
               "border border-input bg-background rounded-md",
               "focus-visible:ring-2 focus-visible:ring-ring",
               "text-left",
@@ -117,7 +117,7 @@ export function FormFloatingSelect<
           <FormItem className={cn("relative group", className)}>
             <label
               className={cn(
-                "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
+                "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground text-sm rounded-sm",
                 "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
                 !hasValue
                   ? "top-1/2 -translate-y-1/2 bg-transparent"

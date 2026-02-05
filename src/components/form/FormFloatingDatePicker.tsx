@@ -83,7 +83,7 @@ export function FormFloatingDatePicker<
           <div className="relative group">
             <label
               className={cn(
-                "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
+                "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground text-sm rounded-sm",
                 "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
                 !hasValue
                   ? "top-1/2 -translate-y-1/2 bg-transparent"
@@ -154,7 +154,7 @@ export function FormFloatingDatePicker<
                 <label
                   htmlFor={name as string}
                   className={cn(
-                    "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
+                    "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground text-sm rounded-sm",
                     "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
                     !hasValue
                       ? "top-1/2 -translate-y-1/2 bg-transparent"
@@ -174,7 +174,7 @@ export function FormFloatingDatePicker<
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full h-10 pt-2 pb-1 px-3 justify-start text-left font-normal",
+                        "w-full h-9 pt-2 pb-1 px-3 justify-start text-left font-normal",
                         "border border-input bg-card rounded-md", // Use bg-card to match global Input style
                         !hasValue && "text-muted-foreground",
                         hasError &&

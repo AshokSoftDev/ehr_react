@@ -58,7 +58,7 @@ export function FormFloatingInput<
         <div className="relative group">
           <label
             className={cn(
-              "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
+              "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground text-sm rounded-sm",
               "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
               !hasValue
                 ? "top-1/2 -translate-y-1/2 bg-transparent"
@@ -73,7 +73,7 @@ export function FormFloatingInput<
           <Input
             type={type}
             className={cn(
-              "h-10 pt-2 pb-1 px-3 placeholder-transparent",
+              "h-9 pt-2 pb-1 px-3 placeholder-transparent",
               "border border-input bg-background rounded-md",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               inputClassName
@@ -113,7 +113,7 @@ export function FormFloatingInput<
               <label
                 htmlFor={name as string}
                 className={cn(
-                  "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground rounded-sm",
+                  "pointer-events-none absolute left-3 z-10 px-1 text-muted-foreground text-sm rounded-sm",
                   "transition-[background-color,color,transform,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change:transform,top,background-color,color",
                   !hasValue
                     ? "top-1/2 -translate-y-1/2 bg-transparent"

@@ -506,7 +506,7 @@ export function ReceiptPage() {
                 {/* Amount */}
                 <div className="amount text-center py-4 bg-green-50 rounded-lg mb-4">
                   <p className="text-xs text-muted-foreground mb-1">Amount Paid</p>
-                  <p className="text-3xl font-bold text-green-600">
+                  <p className="text-2xl font-bold text-green-600">
                     ₹{Number(selectedReceipt.amount).toFixed(2)}
                   </p>
                 </div>

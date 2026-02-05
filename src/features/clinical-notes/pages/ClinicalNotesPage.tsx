@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { startOfDay, endOfDay } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -328,7 +328,7 @@ function VisitAccordionContent({
               Are you sure you want to delete the clinical note from{" "}
               <span className="font-bold">{formatDate(noteToDelete.createdAt)}</span>?
               <br />
-              <span className="text-muted-foreground text-sm mt-1 block">
+              <span className="text-muted-foreground text-xs mt-0.5 block">
                 This action cannot be undone.
               </span>
             </span>
@@ -351,28 +351,7 @@ export function ClinicalNotesPage() {
   // Edit Prescription state - stores visit for bulk prescription editing
   const [editPrescriptionForVisit, setEditPrescriptionForVisit] = useState<VisitItem | null>(null);
 
-  // Accordion state and auto-scroll logic
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
-  const handleAccordionChange = (value: string[]) => {
-    // specific logic to find the newly added item to scroll to it
-    const newItems = value.filter((item) => !expandedItems.includes(item));
-    setExpandedItems(value);
-
-    // If an item was added (opened), scroll it into view
-    if (newItems.length > 0) {
-      const newItemId = newItems[0];
-      // Small timeout to allow the accordion to start opening/rendering
-      setTimeout(() => {
-        const element = document.getElementById(`visit-accordion-${newItemId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 100);
-    }
-  };
-
-  // Input filter state (what user is typing/selecting)
   const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(new Date());
   const [patientSearch, setPatientSearch] = useState("");
   const [doctorFilter, setDoctorFilter] = useState<string>("all");
@@ -425,6 +404,51 @@ export function ClinicalNotesPage() {
   // No client-side filtering needed - server handles it
   const filteredVisits = visits;
 
+  // Accordion state and auto-scroll logic
+  const [expandedItem, setExpandedItem] = useState<string>("");
+
+  // Effect to reset accordion when data changes (e.g. filters applied)
+  useEffect(() => {
+    // When visitsData changes (refetch), close accordions
+    setExpandedItem("");
+  }, [visitsData]);
+
+  const handleAccordionChange = (value: string) => {
+    setExpandedItem(value);
+
+    // If an item was opened (value is not empty string), scroll it into view
+    if (value) {
+      // Small timeout to allow the accordion to start opening/rendering (300ms)
+      setTimeout(() => {
+        const element = document.getElementById(`visit-accordion-${value}`);
+        
+        if (element) {
+          // Find the nearest scrollable parent
+          let parent = element.parentElement;
+          while (parent && parent.scrollHeight <= parent.clientHeight && parent !== document.body) {
+            parent = parent.parentElement;
+          }
+
+          if (parent && parent !== document.body) {
+             // Scroll the specific container
+             // We use getBoundingClientRect for accuracy with nested contexts
+             const elementRect = element.getBoundingClientRect();
+             const parentRect = parent.getBoundingClientRect();
+             const currentScroll = parent.scrollTop;
+             const targetTop = currentScroll + (elementRect.top - parentRect.top);
+             
+             parent.scrollTo({ top: targetTop, behavior: 'smooth' });
+          } else {
+             // Fallback to window scroll if no scrollable parent found
+             const elementRect = element.getBoundingClientRect();
+             const absoluteElementTop = elementRect.top + window.scrollY;
+             window.scrollTo({ top: absoluteElementTop, behavior: 'smooth' });
+          }
+        }
+      }, 300);
+    }
+  };
+
   // Apply current input filters to trigger API call
   const handleSearch = () => {
     setAppliedFilters({
@@ -447,8 +471,14 @@ export function ClinicalNotesPage() {
     });
   };
 
+  // State for appointment creation loading
+  const [isCreatingAppointment, setIsCreatingAppointment] = useState(false);
+
+  // ... (previous state definitions)
+
   const handleAppointmentSubmit = async (data: AppointmentFormValues) => {
     console.log("Submitting appointment:", data);
+    setIsCreatingAppointment(true);
     try {
       const payload: CreateAppointmentInput = {
         patient_id: data.patient_id,
@@ -468,6 +498,8 @@ export function ClinicalNotesPage() {
       refetchVisits();
     } catch (error) {
       console.error("Failed to create appointment", error);
+    } finally {
+      setIsCreatingAppointment(false);
     }
   };
 
@@ -541,14 +573,14 @@ export function ClinicalNotesPage() {
     <>
       <div className="h-full flex flex-col bg-background">
         {/* Header Section */}
-        <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="bg-card/50 backdrop-blur-sm z-10">
           <div className="">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                   Clinical Notes
                 </h1>
-                <p className="text-muted-foreground text-sm mt-1">
+                <p className="text-muted-foreground text-xs mt-0.5">
                   Manage clinical notes and prescriptions for patient visits
                 </p>
               </div>
@@ -601,9 +633,10 @@ export function ClinicalNotesPage() {
               </div>
             ) : (
               <Accordion 
-                type="multiple" 
+                type="single" 
+                collapsible
                 className="space-y-2"
-                value={expandedItems}
+                value={expandedItem}
                 onValueChange={handleAccordionChange}
               >
                 {filteredVisits.map((visit) => (
@@ -671,7 +704,6 @@ export function ClinicalNotesPage() {
         </ScrollArea>
       </div>
 
-      {/* Appointment Form Sheet */}
       <AppointmentFormSheet
         open={showAppointmentSheet}
         onOpenChange={setShowAppointmentSheet}
@@ -679,6 +711,7 @@ export function ClinicalNotesPage() {
         doctors={doctors}
         defaultStatus="WITH DOCTOR"
         hideStatus={true}
+        isLoading={isCreatingAppointment}
       />
       
     </>

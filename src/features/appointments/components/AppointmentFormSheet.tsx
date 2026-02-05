@@ -78,6 +78,14 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
       if (isSelecting) return;
       
       if (!searchText || searchText.length < 2) { setPatients([]); setHasSearched(false); return; }
+
+      // Skip search if the text matches the currently selected patient
+      // This prevents "No patients found" from showing immediately after selection
+      if (form.getValues('patient_id') && searchText === form.getValues('patient_mrn')) {
+         setPatients([]);
+         setHasSearched(false);
+         return;
+      }
       
       // If the search text exactly matches the currently selected patient's display format, likely don't search?
       // But user might type exactly that name. 
