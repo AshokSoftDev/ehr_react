@@ -426,8 +426,8 @@ const Login: React.FC = () => {
                         <canvas
                           ref={canvasRef}
                           width={140}
-                          height={45}
-                          className="w-[140px] h-[45px] rounded-md border border-input bg-background"
+                          height={36}
+                          className="w-[140px] h-[36px] rounded-md border border-input bg-background"
                           style={{ imageRendering: 'crisp-edges' }}
                         />
                       </div>
@@ -438,7 +438,7 @@ const Login: React.FC = () => {
                           {...form.register('captcha')}
                           placeholder="Enter code"
                           className={cn(
-                            "h-[45px] bg-background/50 backdrop-blur-sm",
+                            "h-[36px] bg-background/50 backdrop-blur-sm",
                             form.formState.errors.captcha && "border-destructive focus-visible:ring-destructive"
                           )}
                         />
@@ -451,7 +451,7 @@ const Login: React.FC = () => {
                         size="sm"
                         onClick={refreshCaptcha}
                         className={cn(
-                          "h-[45px] w-[45px] p-0 rounded-md",
+                          "h-[36px] w-[36px] p-0 rounded-md",
                           "bg-primary/10 hover:bg-primary/20",
                           "border border-primary/20 hover:border-primary/30",
                           "transition-all duration-300",
