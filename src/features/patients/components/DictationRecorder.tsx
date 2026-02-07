@@ -16,25 +16,71 @@ const DictationRecorder: React.FC<DictationRecorderProps> = ({ onRecorded }) => 
   const [elapsedMs, setElapsedMs] = useState(0);
   const timerRef = useRef<number | null>(null);
   const startedAtRef = useRef<number | null>(null);
-  const [levels, setLevels] = useState<number[]>([2, 8, 14, 10, 6, 12, 4]);
+  const [levels, setLevels] = useState<number[]>(new Array(16).fill(2));
+
+  // Web Audio API refs for real audio visualization
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       if (timerRef.current) window.clearInterval(timerRef.current);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
+      audioContextRef.current?.close();
     };
   }, [audioUrl]);
 
-  useEffect(() => {
-    if (status === 'recording') {
-      const id = window.setInterval(() => {
-        setLevels(prev => prev.map(() => Math.floor(Math.random() * 14) + 2));
-      }, 180);
-      return () => window.clearInterval(id);
+  // Real-time audio level visualization using Web Audio API
+  const startAudioVisualization = (stream: MediaStream) => {
+    try {
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaStreamSource(stream);
+
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.3;
+      source.connect(analyser);
+
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      const updateLevels = () => {
+        if (analyserRef.current) {
+          analyserRef.current.getByteFrequencyData(dataArray);
+
+          // Map frequency data to 16 bars for smoother waveform
+          const barCount = 16;
+          const step = Math.floor(dataArray.length / barCount);
+          const newLevels = Array.from({ length: barCount }, (_, i) => {
+            const value = dataArray[i * step] || 0;
+            // More sensitive scaling - min 3, max 40
+            return Math.max(3, Math.min(40, Math.floor((value / 255) * 45)));
+          });
+
+          setLevels(newLevels);
+          animationFrameRef.current = requestAnimationFrame(updateLevels);
+        }
+      };
+
+      updateLevels();
+    } catch (err) {
+      console.error('Audio visualization failed:', err);
     }
-    return;
-  }, [status]);
+  };
+
+  const stopAudioVisualization = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    analyserRef.current = null;
+    setLevels(new Array(16).fill(2));
+  };
 
   const fmt = useMemo(() => {
     const sec = Math.floor(elapsedMs / 1000);
@@ -48,6 +94,10 @@ const DictationRecorder: React.FC<DictationRecorderProps> = ({ onRecorded }) => 
       setError(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
+
+      // Start real-time audio visualization
+      startAudioVisualization(stream);
+
       let mr: MediaRecorder;
       try {
         mr = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
@@ -66,6 +116,9 @@ const DictationRecorder: React.FC<DictationRecorderProps> = ({ onRecorded }) => 
         onRecorded?.(blob);
         stream.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
+        stopAudioVisualization();
+        audioContextRef.current?.close();
+        audioContextRef.current = null;
       };
 
       mediaRecorderRef.current = mr;
@@ -126,54 +179,50 @@ const DictationRecorder: React.FC<DictationRecorderProps> = ({ onRecorded }) => 
   return (
     <div className="space-y-3">
       {/* Recording Status Card */}
-      <div className={`rounded-lg border p-3 transition-all ${
-        status === 'recording' 
-          ? 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-red-200 dark:border-red-800' 
-          : status === 'paused'
+      <div className={`rounded-lg border p-3 transition-all ${status === 'recording'
+        ? 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-red-200 dark:border-red-800'
+        : status === 'paused'
           ? 'bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30 border-yellow-200 dark:border-yellow-800'
           : 'bg-muted/30 border-border'
-      }`}>
+        }`}>
         {/* Status + Timer */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${
-              status === 'recording' ? 'bg-red-500 animate-pulse' : 
-              status === 'paused' ? 'bg-yellow-500 animate-[pulse_2s_ease-in-out_infinite]' : 
-              status === 'stopped' ? 'bg-green-500' :
-              'bg-muted-foreground/40'
-            }`} />
-            <span className={`text-xs font-medium ${
-              status === 'recording' ? 'text-red-600 dark:text-red-400' : 
-              status === 'paused' ? 'text-yellow-600 dark:text-yellow-400' : 
-              'text-muted-foreground'
-            }`}>
+            <span className={`h-2.5 w-2.5 rounded-full ${status === 'recording' ? 'bg-red-500 animate-pulse' :
+              status === 'paused' ? 'bg-yellow-500 animate-[pulse_2s_ease-in-out_infinite]' :
+                status === 'stopped' ? 'bg-green-500' :
+                  'bg-muted-foreground/40'
+              }`} />
+            <span className={`text-xs font-medium ${status === 'recording' ? 'text-red-600 dark:text-red-400' :
+              status === 'paused' ? 'text-yellow-600 dark:text-yellow-400' :
+                'text-muted-foreground'
+              }`}>
               {status === 'recording' && 'Recording...'}
               {status === 'paused' && 'Paused'}
               {status === 'idle' && 'Ready to record'}
               {status === 'stopped' && 'Recording complete'}
             </span>
           </div>
-          <div className={`font-mono text-sm font-semibold ${
-            status === 'recording' ? 'text-red-600 dark:text-red-400' : 'text-foreground'
-          }`}>{fmt}</div>
+          <div className={`font-mono text-sm font-semibold ${status === 'recording' ? 'text-red-600 dark:text-red-400' : 'text-foreground'
+            }`}>{fmt}</div>
         </div>
 
-        {/* Enhanced Equalizer Animation */}
-        <div className="h-12 flex items-center justify-center gap-[3px] px-2">
+        {/* Waveform Animation */}
+        <div className="h-14 flex items-center justify-center gap-[2px] px-2">
           {levels.map((h, idx) => (
-            <div 
-              key={idx} 
-              className={`w-1.5 rounded-full transition-all duration-150 ${
-                status === 'recording' 
-                  ? 'bg-gradient-to-t from-red-500 via-orange-400 to-yellow-300' 
-                  : status === 'paused'
-                  ? 'bg-gradient-to-t from-yellow-500 to-yellow-300'
+            <div
+              key={idx}
+              className={`w-[3px] rounded-full ${status === 'recording'
+                ? 'bg-gradient-to-t from-red-500 via-rose-400 to-pink-300'
+                : status === 'paused'
+                  ? 'bg-gradient-to-t from-amber-500 to-yellow-300'
                   : 'bg-muted-foreground/20'
-              }`} 
-              style={{ 
-                height: `${status === 'recording' || status === 'paused' ? h * 2.5 : 4}px`,
-                opacity: status === 'recording' ? 1 : 0.5
-              }} 
+                }`}
+              style={{
+                height: `${status === 'recording' ? h : status === 'paused' ? h * 0.6 : 4}px`,
+                opacity: status === 'recording' ? 0.9 + (h / 200) : 0.4,
+                transform: status === 'recording' ? `scaleY(${0.9 + (h / 300)})` : 'scaleY(1)',
+              }}
             />
           ))}
         </div>

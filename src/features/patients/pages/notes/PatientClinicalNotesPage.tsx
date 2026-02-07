@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import {
   FileText,
   Loader2,
   Mic,
+  Plus,
   Type,
   User,
 } from "lucide-react";
@@ -26,6 +27,8 @@ import { patientService } from "@/features/patients/services/patient.service";
 import { visitService } from "@/features/visits/services/visit.service";
 import type { VisitItem } from "@/features/visits/types/visit.types";
 import { useClinicalNotes } from "@/features/visits/hooks/useClinicalNotes";
+import { InlineClinicalNoteEditor } from "@/features/clinical-notes/components/InlineClinicalNoteEditor";
+import { InlinePrescriptionAccordion } from "@/features/clinical-notes/components/InlinePrescriptionAccordion";
 
 const formatDate = (dt?: string) => (dt ? new Date(dt).toLocaleDateString() : "");
 
@@ -41,7 +44,10 @@ export function PatientClinicalNotesPage() {
   const { id } = useParams<{ id: string }>();
   const patientId = Number(id);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [showPrescription, setShowPrescription] = useState(false);
 
   const { data: patient } = useQuery({
     queryKey: ["patient", patientId],
@@ -169,16 +175,39 @@ export function PatientClinicalNotesPage() {
           <div className="space-y-2">
             {[1, 2].map((i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
           </div>
-        ) : notes.length === 0 ? (
+        ) : notes.length === 0 && !isAddingNote && !showPrescription ? (
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
             <AudioLines className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
             <p className="text-sm font-medium">No clinical notes</p>
             <p className="text-xs text-muted-foreground mb-3">This visit has no notes yet</p>
-            <Button variant="outline" size="sm" onClick={handleGoToEdit} className="h-8">
-              <ExternalLink className="h-3.5 w-3.5 mr-1" />
-              Go to Visit to Add
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setIsAddingNote(true)}
+              className="h-8"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add Notes
             </Button>
           </div>
+        ) : isAddingNote ? (
+          <InlineClinicalNoteEditor
+            visitId={selectedVisitId!}
+            onNoteSaved={() => {
+              setIsAddingNote(false);
+              setShowPrescription(true);
+              queryClient.invalidateQueries({ queryKey: ["clinical-notes", selectedVisitId] });
+            }}
+            onCancel={() => setIsAddingNote(false)}
+          />
+        ) : showPrescription ? (
+          <InlinePrescriptionAccordion
+            visitId={selectedVisitId!}
+            onComplete={() => {
+              setShowPrescription(false);
+              queryClient.invalidateQueries({ queryKey: ["clinical-notes", selectedVisitId] });
+            }}
+          />
         ) : (
           <Accordion type="multiple" className="space-y-2">
             {notes.map((note) => {
@@ -193,22 +222,21 @@ export function PatientClinicalNotesPage() {
                   <AccordionTrigger className="hover:no-underline py-3">
                     <div className="flex items-center gap-3 w-full">
                       {/* Icon */}
-                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        isAudio 
-                          ? "bg-purple-100 dark:bg-purple-900/50" 
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isAudio
+                          ? "bg-purple-100 dark:bg-purple-900/50"
                           : "bg-blue-100 dark:bg-blue-900/50"
-                      }`}>
+                        }`}>
                         {isAudio ? (
                           <Mic className="h-4 w-4 text-purple-600" />
                         ) : (
                           <Type className="h-4 w-4 text-blue-600" />
                         )}
                       </div>
-                      
+
                       {/* Header Info */}
                       <div className="flex items-center gap-2 flex-1 text-left">
-                        <Badge 
-                          variant={isAudio ? "secondary" : "default"} 
+                        <Badge
+                          variant={isAudio ? "secondary" : "default"}
                           className="px-1.5 py-0 text-[10px]"
                         >
                           {isAudio ? "Dictation" : "Text"}
@@ -220,10 +248,10 @@ export function PatientClinicalNotesPage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pt-2 pb-4">
-                    <div 
+                    <div
                       className="prose prose-sm dark:prose-invert max-w-none text-sm [&>p]:my-1.5 [&>ul]:my-1.5 [&>ol]:my-1.5 [&>h1]:text-lg [&>h2]:text-base [&>h3]:text-sm"
-                      dangerouslySetInnerHTML={{ 
-                        __html: note.editor_notes || note.transcription || '<p class="text-muted-foreground">No content</p>' 
+                      dangerouslySetInnerHTML={{
+                        __html: note.editor_notes || note.transcription || '<p class="text-muted-foreground">No content</p>'
                       }}
                     />
                   </AccordionContent>

@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { startOfDay, endOfDay } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,9 +21,11 @@ import {
   Pill,
   Plus,
   Printer,
+  Save,
   Stethoscope,
   Trash2,
   Type,
+  X,
 } from "lucide-react";
 import { visitService } from "@/features/visits/services/visit.service";
 import { appointmentService } from "@/features/appointments/services/appointment.service";
@@ -32,7 +34,7 @@ import AppointmentFormSheet, {
   type AppointmentFormValues,
 } from "@/features/appointments/components/AppointmentFormSheet";
 import type { CreateAppointmentInput } from "@/features/appointments/types/appointment.types";
-import { useClinicalNotes, useDeleteClinicalNote } from "@/features/visits/hooks/useClinicalNotes";
+import { useClinicalNotes, useDeleteClinicalNote, useUpdateClinicalNote } from "@/features/visits/hooks/useClinicalNotes";
 import { usePrescriptions } from "@/features/visits/hooks/usePrescriptions";
 import { PrescriptionCard } from "@/features/patients/components/PrescriptionCard";
 import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
@@ -43,6 +45,9 @@ import { AddPrescriptionPanel } from "../components/AddPrescriptionPanel";
 import { EditClinicalNotePanel } from "../components/EditClinicalNotePanel";
 import { EditPrescriptionPanel } from "../components/EditPrescriptionPanel";
 import { StatusCountCards } from "../components/StatusCountCards";
+import { InlineClinicalNoteEditor } from "../components/InlineClinicalNoteEditor";
+import { InlinePrescriptionAccordion } from "../components/InlinePrescriptionAccordion";
+import MedicalNoteEditor from "@/features/patients/components/MedicalNoteEditor";
 
 const formatDate = (dt: string | Date) => new Date(dt).toLocaleDateString();
 
@@ -60,22 +65,68 @@ function VisitAccordionContent({
   onEditNote: (noteId: number) => void;
   onEditPrescription: () => void;
 }) {
+  const queryClient = useQueryClient();
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
+  const [showPrescription, setShowPrescription] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { data: notes = [], isLoading: notesLoading } = useClinicalNotes(visit.visit_id);
   const { data: prescriptions = [], isLoading: prescriptionsLoading } = usePrescriptions(visit.visit_id);
   const deleteNoteMutation = useDeleteClinicalNote(visit.visit_id);
+  const updateNoteMutation = useUpdateClinicalNote(visit.visit_id);
   const [noteToDelete, setNoteToDelete] = useState<{ id: number; createdAt: string } | null>(null);
+  const editorRef = React.useRef<{ getContent: () => string; setContent: (html: string) => void }>(null);
 
   const hasNotes = notes.length > 0;
   const hasPrescriptions = prescriptions.length > 0;
 
+  // Find the note being edited
+  const editingNote = editingNoteId ? notes.find((n) => n.cn_id === editingNoteId) : null;
+
+  // Set initial content when editing starts
+  React.useEffect(() => {
+    if (editingNote && editorRef.current) {
+      // Use setTimeout to ensure the editor is fully mounted
+      const timeoutId = setTimeout(() => {
+        if (editorRef.current) {
+          const content = editingNote.editor_notes || editingNote.transcription || "";
+          editorRef.current.setContent(content);
+        }
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [editingNoteId]); // Use editingNoteId as dependency not editingNote
+
   const handleEdit = (noteId: number) => {
-    onEditNote(noteId);
+    setEditingNoteId(noteId);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingNote) return;
+    setIsSaving(true);
+    try {
+      const content = editorRef.current?.getContent() || "";
+      if (!content.trim()) {
+        setIsSaving(false);
+        return;
+      }
+      await updateNoteMutation.mutateAsync({
+        noteId: editingNote.cn_id,
+        payload: { editor_notes: content },
+      });
+      setEditingNoteId(null);
+      queryClient.invalidateQueries({ queryKey: ["clinical-notes", visit.visit_id] });
+    } catch {
+      // Error handled by mutation
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handlePrint = (note: typeof notes[0]) => {
     const printContent = note.editor_notes || note.transcription || "No content";
     const noteDate = note.createdAt ? formatDate(note.createdAt) : "N/A";
-    
+
     // Create a hidden iframe for printing
     const iframe = document.createElement("iframe");
     iframe.style.position = "absolute";
@@ -84,7 +135,7 @@ function VisitAccordionContent({
     iframe.style.border = "none";
     iframe.style.left = "-9999px";
     document.body.appendChild(iframe);
-    
+
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     if (doc) {
       doc.open();
@@ -111,10 +162,10 @@ function VisitAccordionContent({
         </html>
       `);
       doc.close();
-      
+
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
-      
+
       // Remove iframe after printing
       setTimeout(() => {
         document.body.removeChild(iframe);
@@ -134,15 +185,115 @@ function VisitAccordionContent({
     );
   }
 
-  if (!hasNotes) {
+  if (!hasNotes && !isAddingNote && !showPrescription) {
     return (
       <div className="text-center py-6">
         <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
         <p className="text-sm text-muted-foreground mb-4">No clinical notes for this visit</p>
-        <Button onClick={onAddClinicalNotes} className="gap-2">
+        <Button onClick={() => setIsAddingNote(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Add Clinical Notes
         </Button>
+      </div>
+    );
+  }
+
+  // Show inline note editor
+  if (isAddingNote) {
+    return (
+      <InlineClinicalNoteEditor
+        visitId={visit.visit_id}
+        onNoteSaved={() => {
+          setIsAddingNote(false);
+          setShowPrescription(true);
+          queryClient.invalidateQueries({ queryKey: ["clinical-notes", visit.visit_id] });
+        }}
+        onCancel={() => setIsAddingNote(false)}
+      />
+    );
+  }
+
+  // Show inline edit form
+  if (editingNoteId && editingNote) {
+    return (
+      <div className="space-y-4">
+        {/* Edit Form */}
+        <div className="space-y-3 p-4 rounded-lg border bg-card">
+          <div className="flex items-center gap-3 pb-3 border-b">
+            <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+              <Edit className="h-4 w-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Edit Clinical Note</p>
+              <p className="text-[10px] text-muted-foreground">
+                {editingNote.notes_type === "audio" ? "Transcription from audio" : "Text note"} • {editingNote.createdAt ? formatDate(editingNote.createdAt) : ""}
+              </p>
+            </div>
+          </div>
+
+          {/* Editor */}
+          <div className="min-h-[200px]">
+            <MedicalNoteEditor key={`editor-${editingNoteId}`} ref={editorRef} />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-2 pt-3 border-t">
+            <Button variant="outline" size="sm" onClick={() => setEditingNoteId(null)}>
+              <X className="h-3.5 w-3.5 mr-1.5" />
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleSaveEdit} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Update
+            </Button>
+          </div>
+        </div>
+
+        {/* Prescription Accordion */}
+        <Accordion type="multiple" className="pt-4 border-t">
+          <AccordionItem value="prescriptions" className="border rounded-lg bg-card px-3">
+            <AccordionTrigger className="hover:no-underline py-2">
+              <div className="flex items-center gap-2 flex-1">
+                <div className="h-7 w-7 rounded-lg flex items-center justify-center bg-amber-100 dark:bg-amber-900/50">
+                  <Pill className="h-3.5 w-3.5 text-amber-600" />
+                </div>
+                <span className="font-medium text-sm">Prescriptions</span>
+                {hasPrescriptions && (
+                  <Badge variant="secondary" className="text-xs">{prescriptions.length}</Badge>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 pb-3">
+              {showPrescription ? (
+                <InlinePrescriptionAccordion
+                  visitId={visit.visit_id}
+                  onComplete={() => {
+                    setShowPrescription(false);
+                    queryClient.invalidateQueries({ queryKey: ["prescriptions", visit.visit_id] });
+                  }}
+                />
+              ) : hasPrescriptions ? (
+                <div className="space-y-2">
+                  {prescriptions.map((rx) => (
+                    <PrescriptionCard key={rx.prescription_id} prescription={rx} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-xs text-muted-foreground mb-2">No prescriptions added yet</p>
+                  <Button size="sm" className="gap-2" onClick={() => setShowPrescription(true)}>
+                    <Plus className="h-4 w-4" />
+                    Add Prescription
+                  </Button>
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     );
   }
@@ -169,11 +320,10 @@ function VisitAccordionContent({
                   <AccordionTrigger className="hover:no-underline py-2">
                     <div className="flex items-center gap-2 flex-1">
                       <div
-                        className={`h-7 w-7 rounded-lg flex items-center justify-center ${
-                          isAudio
-                            ? "bg-purple-100 dark:bg-purple-900/50"
-                            : "bg-blue-100 dark:bg-blue-900/50"
-                        }`}
+                        className={`h-7 w-7 rounded-lg flex items-center justify-center ${isAudio
+                          ? "bg-purple-100 dark:bg-purple-900/50"
+                          : "bg-blue-100 dark:bg-blue-900/50"
+                          }`}
                       >
                         {isAudio ? (
                           <Mic className="h-3.5 w-3.5 text-purple-600" />
@@ -257,7 +407,7 @@ function VisitAccordionContent({
         </div>
 
         {/* Prescriptions */}
-        <Accordion type="single" collapsible className="pt-4 border-t">
+        <Accordion type="multiple" className="pt-4 border-t">
           <AccordionItem value="prescriptions" className="border rounded-lg bg-card px-3">
             <AccordionTrigger className="hover:no-underline py-2">
               <div className="flex items-center gap-2 flex-1">
@@ -278,9 +428,9 @@ function VisitAccordionContent({
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        onEditPrescription();
+                        setShowPrescription(true);
                       }}
-                      onKeyDown={(e) => e.key === 'Enter' && onEditPrescription()}
+                      onKeyDown={(e) => e.key === 'Enter' && setShowPrescription(true)}
                       title="Edit Prescriptions"
                     >
                       <Edit className="h-3.5 w-3.5" />
@@ -290,7 +440,15 @@ function VisitAccordionContent({
               </div>
             </AccordionTrigger>
             <AccordionContent className="pt-2 pb-3">
-              {hasPrescriptions ? (
+              {showPrescription ? (
+                <InlinePrescriptionAccordion
+                  visitId={visit.visit_id}
+                  onComplete={() => {
+                    setShowPrescription(false);
+                    queryClient.invalidateQueries({ queryKey: ["prescriptions", visit.visit_id] });
+                  }}
+                />
+              ) : hasPrescriptions ? (
                 <div className="space-y-2">
                   {prescriptions.map((rx) => (
                     <PrescriptionCard key={rx.prescription_id} prescription={rx} />
@@ -299,7 +457,7 @@ function VisitAccordionContent({
               ) : (
                 <div className="text-center py-4">
                   <p className="text-xs text-muted-foreground mb-2">No prescriptions added yet</p>
-                  <Button size="sm" className="gap-2" onClick={onAddPrescription}>
+                  <Button size="sm" className="gap-2" onClick={() => setShowPrescription(true)}>
                     <Plus className="h-4 w-4" />
                     Add Prescription
                   </Button>
@@ -311,14 +469,14 @@ function VisitAccordionContent({
 
 
       </div>
-      
+
       <ConfirmDeleteDialog
         open={!!noteToDelete}
         onOpenChange={(open) => !open && setNoteToDelete(null)}
         onConfirm={() => {
           if (noteToDelete) {
-             deleteNoteMutation.mutateAsync(noteToDelete.id);
-             setNoteToDelete(null);
+            deleteNoteMutation.mutateAsync(noteToDelete.id);
+            setNoteToDelete(null);
           }
         }}
         title="Delete Clinical Note"
@@ -421,7 +579,7 @@ export function ClinicalNotesPage() {
       // Small timeout to allow the accordion to start opening/rendering (300ms)
       setTimeout(() => {
         const element = document.getElementById(`visit-accordion-${value}`);
-        
+
         if (element) {
           // Find the nearest scrollable parent
           let parent = element.parentElement;
@@ -430,19 +588,19 @@ export function ClinicalNotesPage() {
           }
 
           if (parent && parent !== document.body) {
-             // Scroll the specific container
-             // We use getBoundingClientRect for accuracy with nested contexts
-             const elementRect = element.getBoundingClientRect();
-             const parentRect = parent.getBoundingClientRect();
-             const currentScroll = parent.scrollTop;
-             const targetTop = currentScroll + (elementRect.top - parentRect.top);
-             
-             parent.scrollTo({ top: targetTop, behavior: 'smooth' });
+            // Scroll the specific container
+            // We use getBoundingClientRect for accuracy with nested contexts
+            const elementRect = element.getBoundingClientRect();
+            const parentRect = parent.getBoundingClientRect();
+            const currentScroll = parent.scrollTop;
+            const targetTop = currentScroll + (elementRect.top - parentRect.top);
+
+            parent.scrollTo({ top: targetTop, behavior: 'smooth' });
           } else {
-             // Fallback to window scroll if no scrollable parent found
-             const elementRect = element.getBoundingClientRect();
-             const absoluteElementTop = elementRect.top + window.scrollY;
-             window.scrollTo({ top: absoluteElementTop, behavior: 'smooth' });
+            // Fallback to window scroll if no scrollable parent found
+            const elementRect = element.getBoundingClientRect();
+            const absoluteElementTop = elementRect.top + window.scrollY;
+            window.scrollTo({ top: absoluteElementTop, behavior: 'smooth' });
           }
         }
       }, 300);
@@ -632,8 +790,8 @@ export function ClinicalNotesPage() {
                 </p>
               </div>
             ) : (
-              <Accordion 
-                type="single" 
+              <Accordion
+                type="single"
                 collapsible
                 className="space-y-2"
                 value={expandedItem}
@@ -681,9 +839,8 @@ export function ClinicalNotesPage() {
                           </div>
                         </div>
                         <div
-                          className={`h-2.5 w-2.5 rounded-full shrink-0 ${
-                            visit.status === 1 ? "bg-green-500" : "bg-muted"
-                          }`}
+                          className={`h-2.5 w-2.5 rounded-full shrink-0 ${visit.status === 1 ? "bg-green-500" : "bg-muted"
+                            }`}
                         />
                       </div>
                     </AccordionTrigger>
@@ -713,7 +870,7 @@ export function ClinicalNotesPage() {
         hideStatus={true}
         isLoading={isCreatingAppointment}
       />
-      
+
     </>
   );
 }

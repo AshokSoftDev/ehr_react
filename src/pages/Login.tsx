@@ -85,17 +85,17 @@ const Login: React.FC = () => {
   const drawCaptcha = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-  
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-  
+
     // Set canvas size
     const width = canvas.width;
     const height = canvas.height;
-  
+
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
-  
+
     // Create subtle gradient background
     const bgGradient = ctx.createLinearGradient(0, 0, width, 0);
     const isDark = document.documentElement.classList.contains('dark');
@@ -108,10 +108,10 @@ const Login: React.FC = () => {
     }
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
-  
+
     // Add decorative elements
     for (let i = 0; i < 3; i++) {
-      ctx.strokeStyle = isDark 
+      ctx.strokeStyle = isDark
         ? `rgba(147, 197, 253, ${0.1 + i * 0.05})`
         : `rgba(99, 102, 241, ${0.08 + i * 0.03})`;
       ctx.lineWidth = 0.5;
@@ -123,11 +123,11 @@ const Login: React.FC = () => {
       }
       ctx.stroke();
     }
-  
+
     // Draw captcha text with varied styles
     const text = captchaText;
     const letterSpacing = width / (text.length + 1);
-    
+
     // Different font styles to choose from
     const fontStyles = [
       { weight: '400', style: 'normal' },
@@ -136,7 +136,7 @@ const Login: React.FC = () => {
       { weight: '300', style: 'normal' },
       { weight: '700', style: 'normal' }
     ];
-  
+
     // Font families for variety
     const fontFamilies = [
       'Georgia, serif',
@@ -144,68 +144,68 @@ const Login: React.FC = () => {
       'Menlo, Monaco, monospace',
       'Helvetica Neue, Arial, sans-serif'
     ];
-  
+
     // Draw each character with unique style
     text.split('').forEach((char, i) => {
       ctx.save();
-      
+
       const x = letterSpacing * (i + 1);
       const y = height / 2;
-      
+
       // Random transformations
       ctx.translate(x, y);
-      
+
       // More subtle rotation
       const rotation = (Math.random() - 0.5) * 0.15;
       ctx.rotate(rotation);
-      
+
       // Vary the font size slightly
       const fontSize = 16 + Math.random() * 4;
-      
+
       // Pick random font style
       const fontStyle = fontStyles[Math.floor(Math.random() * fontStyles.length)];
       const fontFamily = fontFamilies[Math.floor(Math.random() * fontFamilies.length)];
-      
+
       ctx.font = `${fontStyle.style} ${fontStyle.weight} ${fontSize}px ${fontFamily}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      
+
       // Create gradient for each letter
-      const charGradient = ctx.createLinearGradient(0, -fontSize/2, 0, fontSize/2);
-      
+      const charGradient = ctx.createLinearGradient(0, -fontSize / 2, 0, fontSize / 2);
+
       charGradient.addColorStop(0, 'rgba(255,255,255,1)');
       charGradient.addColorStop(1, 'rgba(255,255,255,0.85)');
-      
+
       // Apply gradient fill
       ctx.fillStyle = charGradient;
-      
+
       // Add subtle shadow
       ctx.shadowColor = isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.15)';
       ctx.shadowBlur = 2;
       ctx.shadowOffsetX = 0.5;
       ctx.shadowOffsetY = 0.5;
-      
+
       // Add slight skew for some characters
       if (Math.random() > 0.5) {
         ctx.transform(1, 0, (Math.random() - 0.5) * 0.2, 1, 0, 0);
       }
-      
+
       // Draw character
       ctx.fillText(char, 0, 0);
-      
+
       // Add decorative underline for some characters
       if (Math.random() > 0.7) {
         ctx.strokeStyle = ctx.fillStyle;
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(-fontSize/3, fontSize/3);
-        ctx.lineTo(fontSize/3, fontSize/3);
+        ctx.moveTo(-fontSize / 3, fontSize / 3);
+        ctx.lineTo(fontSize / 3, fontSize / 3);
         ctx.stroke();
       }
-      
+
       ctx.restore();
     });
-  
+
     // Add artistic noise pattern
     ctx.globalAlpha = 0.1;
     for (let y = 0; y < height; y += 4) {
@@ -217,15 +217,15 @@ const Login: React.FC = () => {
       }
     }
     ctx.globalAlpha = 1;
-  
+
     // Add subtle vignette effect
-    const vignette = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width/2);
+    const vignette = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width / 2);
     vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
     vignette.addColorStop(1, isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.1)');
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, width, height);
   };
-  
+
 
   // Initialize captcha
   useEffect(() => {
@@ -282,9 +282,9 @@ const Login: React.FC = () => {
       toast.success('Login successful!');
       navigate(from, { replace: true });
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      const message = apiError.response?.data?.message || 'Login failed. Please try again.';
+      const message = 'Invalid email or password. Please try again.';
       setError(message);
+      toast.error(message);
       refreshCaptcha();
     } finally {
       setIsLoading(false);
@@ -309,11 +309,11 @@ const Login: React.FC = () => {
             <Heart className="h-12 w-12 text-primary-foreground mr-4" />
             <h1 className="text-4xl font-bold text-primary-foreground">EHR System</h1>
           </div>
-          
+
           <h2 className="text-3xl font-light text-primary-foreground mb-6">
             Advanced Healthcare Management Platform
           </h2>
-          
+
           <p className="text-primary-foreground/80 mb-8 text-lg">
             Streamline your healthcare operations with our comprehensive electronic health records system.
           </p>
@@ -363,11 +363,7 @@ const Login: React.FC = () => {
             <CardContent className="pb-6">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
-                  {error && (
-                    <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-1">
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
+
 
                   {/* Email Field */}
                   <div className="space-y-2">
@@ -418,7 +414,7 @@ const Login: React.FC = () => {
                       <Shield className="h-4 w-4 text-primary" />
                       <Label className="text-sm font-medium">Security Verification</Label>
                     </div>
-                    
+
                     {/* Single row for captcha, input, and refresh button - wraps on mobile */}
                     <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
                       {/* Captcha Canvas */}
@@ -502,6 +498,13 @@ const Login: React.FC = () => {
                       Forgot password?
                     </Link>
                   </div>
+
+                  {/* Error Message */}
+                  {error && (
+                    <p className="text-sm text-destructive text-center animate-in fade-in slide-in-from-top-1">
+                      {error}
+                    </p>
+                  )}
 
                   {/* Submit Button */}
                   <Button
