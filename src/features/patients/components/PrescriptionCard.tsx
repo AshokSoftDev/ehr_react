@@ -1,13 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Edit3, Loader2, Pill, Trash2 } from "lucide-react";
+import { Edit3, Loader2, Pill, Printer, Trash2 } from "lucide-react";
 import type { Prescription } from "@/features/visits/types/prescription.types";
 
 interface PrescriptionCardProps {
   prescription: Prescription;
   onEdit?: (prescription: Prescription) => void;
   onDelete?: (prescriptionId: number) => void;
+  onPrint?: (prescription: Prescription) => void;
   isDeleting?: boolean;
   selectable?: boolean;
   selected?: boolean;
@@ -31,6 +32,7 @@ export function PrescriptionCard({
   prescription,
   onEdit,
   onDelete,
+  onPrint,
   isDeleting,
   selectable,
   selected,
@@ -102,8 +104,19 @@ export function PrescriptionCard({
           )}
         </div>
 
-        {(onEdit || onDelete) && (
+        {(onEdit || onDelete || onPrint) && (
           <div className="flex items-center gap-1">
+            {onPrint && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 text-emerald-600"
+                onClick={() => onPrint(prescription)}
+                aria-label="Print prescription"
+              >
+                <Printer className="h-4 w-4" />
+              </Button>
+            )}
             {onEdit && (
               <Button
                 size="icon"

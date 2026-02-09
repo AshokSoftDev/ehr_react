@@ -10,7 +10,7 @@ import {
     Upload,
     X,
 } from "lucide-react";
-import { useCreateClinicalNote } from "@/features/visits/hooks/useClinicalNotes";
+import { useCreateClinicalNote, useCreateClinicalNoteWithSoap } from "@/features/visits/hooks/useClinicalNotes";
 import DictationRecorder from "@/features/patients/components/DictationRecorder";
 import MedicalNoteEditor from "@/features/patients/components/MedicalNoteEditor";
 import { toast } from "@/lib/toast";
@@ -35,9 +35,37 @@ export function InlineClinicalNoteEditor({
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [uploadFile, setUploadFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isGeneratingSoap, setIsGeneratingSoap] = useState(false);
 
     const editorRef = useRef<MedicalNoteEditorHandle>(null);
     const createNote = useCreateClinicalNote(visitId);
+    const createSoapNote = useCreateClinicalNoteWithSoap(visitId);
+
+    const handleGenerateSoapNotes = async () => {
+        const file = uploadFile
+            ? uploadFile
+            : audioBlob
+                ? new File([audioBlob], `clinical-${Date.now()}.webm`, {
+                    type: audioBlob.type || "audio/webm",
+                })
+                : null;
+
+        if (!file) {
+            toast.error("Record or upload audio first");
+            return;
+        }
+
+        setIsGeneratingSoap(true);
+        try {
+            await createSoapNote.mutateAsync(file);
+            toast.success("SOAP notes generated!");
+            onNoteSaved();
+        } catch {
+            toast.error("Failed to generate SOAP notes");
+        } finally {
+            setIsGeneratingSoap(false);
+        }
+    };
 
     const handleSaveNote = async () => {
         setIsSaving(true);
@@ -155,11 +183,26 @@ export function InlineClinicalNoteEditor({
                         `}>
                             <input
                                 type="file"
-                                accept="audio/*"
+                                accept="audio/*,.mp3,.wav,.m4a,.webm,.ogg,.aac,.flac"
                                 onChange={(e) => {
                                     const file = e.target.files?.[0] || null;
-                                    setUploadFile(file);
-                                    if (file) setAudioBlob(null);
+                                    if (file) {
+                                        // Check if file is audio type
+                                        if (!file.type.startsWith('audio/')) {
+                                            toast.error("Please upload an audio file only");
+                                            e.target.value = '';
+                                            return;
+                                        }
+                                        // Check file size (90MB max)
+                                        const maxSize = 90 * 1024 * 1024; // 90MB in bytes
+                                        if (file.size > maxSize) {
+                                            toast.error("File size must be less than 90MB");
+                                            e.target.value = '';
+                                            return;
+                                        }
+                                        setUploadFile(file);
+                                        setAudioBlob(null);
+                                    }
                                 }}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
@@ -170,7 +213,7 @@ export function InlineClinicalNoteEditor({
                                         <Upload className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                                     </div>
                                     <p className="text-sm font-medium text-foreground">Upload Audio</p>
-                                    <p className="text-[10px] text-muted-foreground mt-0.5">WAV, MP3, M4A, WebM, OGG</p>
+                                    <p className="text-[10px] text-muted-foreground mt-0.5">WAV, MP3, M4A, WebM, OGG (max 90MB)</p>
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-3">
@@ -220,9 +263,15 @@ export function InlineClinicalNoteEditor({
                         variant="secondary"
                         size="sm"
                         className="bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700"
+                        onClick={handleGenerateSoapNotes}
+                        disabled={isGeneratingSoap || isSaving || (!audioBlob && !uploadFile)}
                     >
-                        <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                        Generate SOAP Notes
+                        {isGeneratingSoap ? (
+                            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        {isGeneratingSoap ? "Generating..." : "Generate SOAP Notes"}
                     </Button>
                 )}
             </div>

@@ -33,9 +33,9 @@ import {
     Trash2,
     X,
 } from "lucide-react";
-import type { PrescriptionRow, CreatePrescriptionPayload, PrescriptionTemplate, CreatePrescriptionTemplatePayload } from "@/features/visits/types/prescription.types";
+import type { PrescriptionRow, PrescriptionTemplate, CreatePrescriptionTemplatePayload } from "@/features/visits/types/prescription.types";
 import type { Drug } from "@/features/visits/types/drug.types";
-import { useBulkCreatePrescription, usePrescriptions } from "@/features/visits/hooks/usePrescriptions";
+import { useBulkCreatePrescription, useBulkUpdatePrescription, useBulkDeletePrescription, usePrescriptions } from "@/features/visits/hooks/usePrescriptions";
 import { useDrugSearch } from "@/features/visits/hooks/useDrugs";
 import { usePrescriptionTemplates, useBulkCreatePrescriptionTemplate } from "@/features/visits/hooks/usePrescriptionTemplates";
 import { toast } from "@/lib/toast";
@@ -159,11 +159,13 @@ function DrugSearchCell({ onDrugSelect }: { onDrugSelect: (drug: Drug) => void }
 interface InlinePrescriptionAccordionProps {
     visitId: number;
     onComplete: () => void;
+    onCancel?: () => void;
 }
 
 export function InlinePrescriptionAccordion({
     visitId,
     onComplete,
+    onCancel,
 }: InlinePrescriptionAccordionProps) {
     const [rows, setRows] = useState<PrescriptionRow[]>([emptyRow()]);
     const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
@@ -171,12 +173,14 @@ export function InlinePrescriptionAccordion({
     const [templateSearchOpen, setTemplateSearchOpen] = useState(false);
     const [templateSearchQuery, setTemplateSearchQuery] = useState("");
     const [isInitialized, setIsInitialized] = useState(false);
+    const [deletedPrescriptionIds, setDeletedPrescriptionIds] = useState<number[]>([]);
 
     // Fetch existing prescriptions
     const { data: existingPrescriptions = [] } = usePrescriptions(visitId);
-    const isEditing = existingPrescriptions.length > 0;
 
     const bulkCreate = useBulkCreatePrescription(visitId);
+    const bulkUpdate = useBulkUpdatePrescription(visitId);
+    const bulkDelete = useBulkDeletePrescription(visitId);
 
     // Convert existing prescriptions to editable rows
     useEffect(() => {
@@ -220,6 +224,11 @@ export function InlinePrescriptionAccordion({
 
     const removeRow = useCallback((id: string) => {
         setRows((prev) => {
+            const rowToRemove = prev.find((r) => r.id === id);
+            // Track existing prescriptions that are deleted
+            if (rowToRemove?.prescription_id) {
+                setDeletedPrescriptionIds((prevIds) => [...prevIds, rowToRemove.prescription_id!]);
+            }
             const filtered = prev.filter((r) => r.id !== id);
             return filtered.length === 0 ? [emptyRow()] : filtered;
         });
@@ -247,7 +256,7 @@ export function InlinePrescriptionAccordion({
 
     const handleSave = async () => {
         const validRows = rows.filter((r) => r.drug_name.trim());
-        if (validRows.length === 0) {
+        if (validRows.length === 0 && deletedPrescriptionIds.length === 0) {
             toast.error("Please add at least one prescription");
             return;
         }
@@ -258,9 +267,32 @@ export function InlinePrescriptionAccordion({
         }
 
         try {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const createPayload: CreatePrescriptionPayload[] = validRows.map(({ id, prescription_id, ...rest }) => rest);
-            await bulkCreate.mutateAsync({ prescriptions: createPayload });
+            // Separate existing prescriptions (to update) from new ones (to create)
+            const existingRows = validRows.filter((r) => r.prescription_id);
+            const newRows = validRows.filter((r) => !r.prescription_id);
+
+            // 1. Delete removed prescriptions
+            if (deletedPrescriptionIds.length > 0) {
+                await bulkDelete.mutateAsync({ prescriptionIds: deletedPrescriptionIds });
+            }
+
+            // 2. Update existing prescriptions
+            if (existingRows.length > 0) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const updatePayload = existingRows.map(({ id, prescription_id, ...rest }) => ({
+                    prescription_id: prescription_id!,
+                    ...rest,
+                }));
+                await bulkUpdate.mutateAsync({ prescriptions: updatePayload });
+            }
+
+            // 3. Create new prescriptions
+            if (newRows.length > 0) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const createPayload = newRows.map(({ id, prescription_id, ...rest }) => rest);
+                await bulkCreate.mutateAsync({ prescriptions: createPayload });
+            }
+
             toast.success("Prescriptions saved!");
             onComplete();
         } catch {
@@ -451,15 +483,28 @@ export function InlinePrescriptionAccordion({
                     </>
                 )}
 
-                {/* Save Prescription */}
+                {/* Cancel Button */}
+                {onCancel && (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={onCancel}
+                        className="h-7 text-[10px] px-3"
+                    >
+                        <X className="h-3 w-3 mr-1" />
+                        Cancel
+                    </Button>
+                )}
+
+                {/* Save/Update Prescription */}
                 <Button
                     size="sm"
                     onClick={handleSave}
-                    disabled={!canSave || bulkCreate.isPending}
+                    disabled={!canSave || bulkCreate.isPending || bulkUpdate.isPending || bulkDelete.isPending}
                     className="h-7 text-[10px] px-3"
                 >
-                    {bulkCreate.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
-                    Save
+                    {(bulkCreate.isPending || bulkUpdate.isPending || bulkDelete.isPending) ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+                    {existingPrescriptions.length > 0 ? "Update" : "Save"}
                 </Button>
             </div>
 

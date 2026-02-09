@@ -66,3 +66,23 @@ export function useDeleteClinicalNote(visitId?: number) {
     },
   });
 }
+
+/**
+ * Hook for creating clinical note with AI-generated SOAP notes
+ */
+export function useCreateClinicalNoteWithSoap(visitId?: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => {
+      if (!visitId) throw new Error('visitId is required');
+      return clinicalNotesService.createWithSoapNotes(visitId, file);
+    },
+    onSuccess: () => {
+      if (visitId) qc.invalidateQueries({ queryKey: key(visitId) });
+      toast.success('SOAP notes generated successfully!');
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to generate SOAP notes');
+    },
+  });
+}

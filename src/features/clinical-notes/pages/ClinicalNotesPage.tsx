@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { startOfDay, endOfDay } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ import AppointmentFormSheet, {
 } from "@/features/appointments/components/AppointmentFormSheet";
 import type { CreateAppointmentInput } from "@/features/appointments/types/appointment.types";
 import { useClinicalNotes, useDeleteClinicalNote, useUpdateClinicalNote } from "@/features/visits/hooks/useClinicalNotes";
-import { usePrescriptions } from "@/features/visits/hooks/usePrescriptions";
+import { usePrescriptions, useDeletePrescription, useBulkDeletePrescription } from "@/features/visits/hooks/usePrescriptions";
 import { PrescriptionCard } from "@/features/patients/components/PrescriptionCard";
 import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 import { AudioPlayer } from "../components/AudioPlayer";
@@ -53,11 +53,7 @@ const formatDate = (dt: string | Date) => new Date(dt).toLocaleDateString();
 
 // Visit Accordion Content Component
 function VisitAccordionContent({
-  visit,
-  onAddClinicalNotes,
-  onAddPrescription,
-  onEditNote,
-  onEditPrescription,
+  visit
 }: {
   visit: VisitItem;
   onAddClinicalNotes: () => void;
@@ -69,12 +65,16 @@ function VisitAccordionContent({
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
   const [showPrescription, setShowPrescription] = useState(false);
+  const [prescriptionAccordionOpen, setPrescriptionAccordionOpen] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const { data: notes = [], isLoading: notesLoading } = useClinicalNotes(visit.visit_id);
   const { data: prescriptions = [], isLoading: prescriptionsLoading } = usePrescriptions(visit.visit_id);
   const deleteNoteMutation = useDeleteClinicalNote(visit.visit_id);
   const updateNoteMutation = useUpdateClinicalNote(visit.visit_id);
+  const deletePrescriptionMutation = useDeletePrescription(visit.visit_id);
+  const bulkDeletePrescriptionMutation = useBulkDeletePrescription(visit.visit_id);
   const [noteToDelete, setNoteToDelete] = useState<{ id: number; createdAt: string } | null>(null);
+  const [prescriptionToDelete, setPrescriptionToDelete] = useState<{ id: number; name: string } | null>(null);
   const editorRef = React.useRef<{ getContent: () => string; setContent: (html: string) => void }>(null);
 
   const hasNotes = notes.length > 0;
@@ -175,6 +175,12 @@ function VisitAccordionContent({
 
   const handleDelete = (noteId: number, createdAt: string) => {
     setNoteToDelete({ id: noteId, createdAt });
+  };
+
+  // Auto-open prescription accordion when in edit mode
+  const handleEditPrescription = () => {
+    setPrescriptionAccordionOpen(["prescriptions"]);
+    setShowPrescription(true);
   };
 
   if (notesLoading || prescriptionsLoading) {
@@ -339,20 +345,7 @@ function VisitAccordionContent({
                       </span>
                       {/* Action Buttons in Header - using divs to avoid nested button error */}
                       <div className="flex items-center gap-1 ml-auto mr-2">
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 cursor-pointer"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleEdit(note.cn_id);
-                          }}
-                          onKeyDown={(e) => e.key === 'Enter' && handleEdit(note.cn_id)}
-                          title="Edit"
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </div>
+                        {/* Print Button */}
                         <div
                           role="button"
                           tabIndex={0}
@@ -367,6 +360,22 @@ function VisitAccordionContent({
                         >
                           <Printer className="h-3.5 w-3.5" />
                         </div>
+                        {/* Edit Button */}
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleEdit(note.cn_id);
+                          }}
+                          onKeyDown={(e) => e.key === 'Enter' && handleEdit(note.cn_id)}
+                          title="Edit"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </div>
+                        {/* Delete Button */}
                         <div
                           role="button"
                           tabIndex={0}
@@ -407,7 +416,12 @@ function VisitAccordionContent({
         </div>
 
         {/* Prescriptions */}
-        <Accordion type="multiple" className="pt-4 border-t">
+        <Accordion 
+          type="multiple" 
+          className="pt-4 border-t"
+          value={prescriptionAccordionOpen}
+          onValueChange={setPrescriptionAccordionOpen}
+        >
           <AccordionItem value="prescriptions" className="border rounded-lg bg-card px-3">
             <AccordionTrigger className="hover:no-underline py-2">
               <div className="flex items-center gap-2 flex-1">
@@ -418,9 +432,91 @@ function VisitAccordionContent({
                 {hasPrescriptions && (
                   <Badge variant="secondary" className="text-xs">{prescriptions.length}</Badge>
                 )}
-                {/* Edit Button for Prescriptions */}
-                {hasPrescriptions && (
+                {/* Action Buttons for Prescriptions */}
+                {hasPrescriptions && !showPrescription && (
                   <div className="flex items-center gap-1 ml-auto mr-2">
+                    {/* Print Button */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-600 cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Print all prescriptions
+                        const iframe = document.createElement("iframe");
+                        iframe.style.position = "absolute";
+                        iframe.style.width = "0";
+                        iframe.style.height = "0";
+                        iframe.style.border = "none";
+                        iframe.style.left = "-9999px";
+                        document.body.appendChild(iframe);
+                        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                        if (doc) {
+                          const rxHtml = prescriptions.map((rx) => {
+                            const timings: string[] = [];
+                            if (rx.morning_bf) timings.push("Morning (BF)");
+                            if (rx.morning_af) timings.push("Morning (AF)");
+                            if (rx.noon_bf) timings.push("Noon (BF)");
+                            if (rx.noon_af) timings.push("Noon (AF)");
+                            if (rx.evening_bf) timings.push("Evening (BF)");
+                            if (rx.evening_af) timings.push("Evening (AF)");
+                            if (rx.night_bf) timings.push("Night (BF)");
+                            if (rx.night_af) timings.push("Night (AF)");
+                            return `
+                              <tr>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${rx.drug_name} ${rx.drug_generic ? `(${rx.drug_generic})` : ""}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${rx.drug_dosage || "-"} ${rx.drug_measure || ""}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${rx.duration || "-"} ${rx.duration_type || ""}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${rx.quantity || "-"}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${timings.length > 0 ? timings.join(", ") : "-"}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${rx.instruction || "-"}</td>
+                              </tr>
+                            `;
+                          }).join("");
+                          doc.open();
+                          doc.write(`
+                            <!DOCTYPE html>
+                            <html>
+                              <head>
+                                <title>Prescriptions</title>
+                                <style>
+                                  body { font-family: Arial, sans-serif; padding: 20px; }
+                                  h1 { font-size: 18px; margin-bottom: 15px; }
+                                  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                                  th { background: #f5f5f5; padding: 10px 8px; border: 1px solid #ddd; text-align: left; }
+                                </style>
+                              </head>
+                              <body>
+                                <h1>Prescriptions</h1>
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>Drug Name</th>
+                                      <th>Dosage</th>
+                                      <th>Duration</th>
+                                      <th>Qty</th>
+                                      <th>Schedule</th>
+                                      <th>Instructions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>${rxHtml}</tbody>
+                                </table>
+                              </body>
+                            </html>
+                          `);
+                          doc.close();
+                          iframe.contentWindow?.focus();
+                          iframe.contentWindow?.print();
+                          setTimeout(() => document.body.removeChild(iframe), 1000);
+                        }
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}
+                      title="Print All Prescriptions"
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                    </div>
+                    {/* Edit Button */}
                     <div
                       role="button"
                       tabIndex={0}
@@ -428,12 +524,28 @@ function VisitAccordionContent({
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        setShowPrescription(true);
+                        handleEditPrescription();
                       }}
-                      onKeyDown={(e) => e.key === 'Enter' && setShowPrescription(true)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleEditPrescription()}
                       title="Edit Prescriptions"
                     >
                       <Edit className="h-3.5 w-3.5" />
+                    </div>
+                    {/* Delete Button */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Show delete dialog for all prescriptions (or first one as prompt)
+                        setPrescriptionToDelete({ id: -1, name: "all prescriptions" });
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}
+                      title="Delete All Prescriptions"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
                     </div>
                   </div>
                 )}
@@ -447,11 +559,17 @@ function VisitAccordionContent({
                     setShowPrescription(false);
                     queryClient.invalidateQueries({ queryKey: ["prescriptions", visit.visit_id] });
                   }}
+                  onCancel={() => {
+                    setShowPrescription(false);
+                  }}
                 />
               ) : hasPrescriptions ? (
                 <div className="space-y-2">
                   {prescriptions.map((rx) => (
-                    <PrescriptionCard key={rx.prescription_id} prescription={rx} />
+                    <PrescriptionCard 
+                      key={rx.prescription_id} 
+                      prescription={rx}
+                    />
                   ))}
                 </div>
               ) : (
@@ -495,6 +613,40 @@ function VisitAccordionContent({
           )
         }
         isDeleting={deleteNoteMutation.isPending}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!prescriptionToDelete}
+        onOpenChange={(open) => !open && setPrescriptionToDelete(null)}
+        onConfirm={async () => {
+          if (prescriptionToDelete) {
+            if (prescriptionToDelete.id === -1) {
+              // Delete all prescriptions
+              const allIds = prescriptions.map((rx) => rx.prescription_id);
+              await bulkDeletePrescriptionMutation.mutateAsync({ prescriptionIds: allIds });
+            } else {
+              // Delete single prescription
+              await deletePrescriptionMutation.mutateAsync(prescriptionToDelete.id);
+            }
+            setPrescriptionToDelete(null);
+          }
+        }}
+        title="Delete Prescription"
+        description={
+          prescriptionToDelete ? (
+            <span>
+              Are you sure you want to delete{" "}
+              <span className="font-bold">{prescriptionToDelete.name}</span>?
+              <br />
+              <span className="text-muted-foreground text-xs mt-0.5 block">
+                This action cannot be undone.
+              </span>
+            </span>
+          ) : (
+            "Are you sure you want to delete this prescription?"
+          )
+        }
+        isDeleting={deletePrescriptionMutation.isPending || bulkDeletePrescriptionMutation.isPending}
       />
     </div>
   );
@@ -574,36 +726,23 @@ export function ClinicalNotesPage() {
   const handleAccordionChange = (value: string) => {
     setExpandedItem(value);
 
-    // If an item was opened (value is not empty string), scroll it into view
+    // If an item was opened (value is not empty string), scroll it to top
     if (value) {
-      // Small timeout to allow the accordion to start opening/rendering (300ms)
+      // Small timeout to allow the accordion to start opening
       setTimeout(() => {
         const element = document.getElementById(`visit-accordion-${value}`);
-
-        if (element) {
-          // Find the nearest scrollable parent
-          let parent = element.parentElement;
-          while (parent && parent.scrollHeight <= parent.clientHeight && parent !== document.body) {
-            parent = parent.parentElement;
-          }
-
-          if (parent && parent !== document.body) {
-            // Scroll the specific container
-            // We use getBoundingClientRect for accuracy with nested contexts
-            const elementRect = element.getBoundingClientRect();
-            const parentRect = parent.getBoundingClientRect();
-            const currentScroll = parent.scrollTop;
-            const targetTop = currentScroll + (elementRect.top - parentRect.top);
-
-            parent.scrollTo({ top: targetTop, behavior: 'smooth' });
-          } else {
-            // Fallback to window scroll if no scrollable parent found
-            const elementRect = element.getBoundingClientRect();
-            const absoluteElementTop = elementRect.top + window.scrollY;
-            window.scrollTo({ top: absoluteElementTop, behavior: 'smooth' });
-          }
+        const scrollArea = document.getElementById('visits-scroll-area');
+        // Find the viewport element within ScrollArea (Radix adds [data-radix-scroll-area-viewport])
+        const viewport = scrollArea?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+        
+        if (element && viewport) {
+          // Get the element's position relative to the viewport
+          const elementRect = element.getBoundingClientRect();
+          const viewportRect = viewport.getBoundingClientRect();
+          const scrollTop = viewport.scrollTop + (elementRect.top - viewportRect.top) - 8;
+          viewport.scrollTo({ top: scrollTop, behavior: 'smooth' });
         }
-      }, 300);
+      }, 150);
     }
   };
 
@@ -775,7 +914,7 @@ export function ClinicalNotesPage() {
         </div>
 
         {/* Visit Accordion List */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="h-[calc(100vh-200px)]" id="visits-scroll-area">
           <div className="space-y-2 pr-4 pt-4">
             {visitsLoading ? (
               Array.from({ length: 5 }).map((_, i) => (

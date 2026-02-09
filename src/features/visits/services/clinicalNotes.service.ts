@@ -57,6 +57,23 @@ class ClinicalNotesService {
     );
     return res.data.data;
   }
+
+  /**
+   * Create clinical note with AI-generated SOAP notes
+   * Saves audio, transcribes, generates SOAP notes via AI, and saves result
+   */
+  async createWithSoapNotes(visitId: number, file: File): Promise<ClinicalNote> {
+    const form = new FormData();
+    form.append('audio', file);
+    const res = await api.post<{ status: string; data: ClinicalNote }>(
+      `${this.baseUrl}/${visitId}/clinical-notes/soap`,
+      form,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+    return res.data.data;
+  }
 }
 
 export const clinicalNotesService = new ClinicalNotesService();
