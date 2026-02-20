@@ -1,12 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   FileText,
   CalendarDays,
-  User,
   ArrowLeft,
-  Search,
   Plus,
   X,
   Loader2,
@@ -23,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -53,33 +50,32 @@ import type { Drug } from "@/features/visits/types/drug.types";
 import { billingService } from "../services/billing.service";
 
 // Generate unique ID for rows
-const generateId = () => `row_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+const generateId = () => Math.random().toString(36).substr(2, 9);
 
 // Calculate item amounts
 const calculateItemAmounts = (item: InvoiceItemRow) => {
   const quantity = item.quantity ?? 1;
   const unitAmount = item.unit_amount ?? 0;
   const premium = item.premium ?? 0;
-  const discountType = item.discount_type ?? "percentage";
-  const discountValue = item.discount_value ?? 0;
+  const baseAmount = quantity * unitAmount;
+  const withPremium = baseAmount + premium;
 
-  const baseAmount = unitAmount * quantity + premium;
   let discountAmount = 0;
-
-  if (discountType === "percentage") {
-    discountAmount = baseAmount * (discountValue / 100);
+  if (item.discount_type === "percentage") {
+    discountAmount = withPremium * ((item.discount_value ?? 0) / 100);
   } else {
-    discountAmount = discountValue;
+    discountAmount = item.discount_value ?? 0;
   }
 
-  const netAmount = Math.max(0, baseAmount - discountAmount);
+  const netAmount = Math.max(0, withPremium - discountAmount);
 
   return {
+    base_amount: Math.round(baseAmount * 100) / 100,
+    premium_amount: Math.round(premium * 100) / 100,
     discount_amount: Math.round(discountAmount * 100) / 100,
     net_amount: Math.round(netAmount * 100) / 100,
   };
 };
-
 
 // Inline Drug Search Row Component
 function InlineDrugSearchRow({ 
@@ -89,96 +85,69 @@ function InlineDrugSearchRow({
   onDrugSelect: (drug: Drug) => void;
   disabled?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const { data: drugs, isLoading } = useDrugSearch(query);
 
   const handleSelect = (drug: Drug) => {
     onDrugSelect(drug);
     setQuery("");
-    setOpen(false);
   };
-
-  if (disabled) return null;
 
   return (
     <tr className="bg-muted/10">
-      <td className="p-2">
-        <Plus className="h-3 w-3 text-muted-foreground" />
+      <td className="p-2 text-muted-foreground">
+        <Plus className="h-3 w-3" />
       </td>
-      <td colSpan={6} className="p-2">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <div className="relative w-full max-w-md cursor-text" onClick={() => setOpen(true)}>
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-              <Input
-                placeholder="Search and add drug..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="h-7 text-xs pl-7 w-full"
-              />
-            </div>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="start" sideOffset={4}>
-            <div className="p-2 border-b">
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                <Input
-                  placeholder="Type to search..."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="h-8 text-xs pl-7"
-                  autoFocus
-                />
-              </div>
-            </div>
-            <ScrollArea className="max-h-52">
+      <td className="p-2">
+        <div className="relative">
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search drugs to add..."
+            className="h-7 text-xs"
+            disabled={disabled}
+          />
+          {query.length >= 2 && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-auto">
               {isLoading ? (
-                <div className="p-2 space-y-1">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-10 w-full" />
-                  ))}
+                <div className="p-3 text-xs text-muted-foreground text-center">
+                  Searching...
                 </div>
               ) : drugs && drugs.length > 0 ? (
-                <div className="p-1">
-                  {drugs.map((drug) => (
-                    <button
-                      key={drug.drug_id}
-                      onClick={() => handleSelect(drug)}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-accent text-xs flex items-center justify-between transition-colors"
-                    >
-                      <div>
-                        <div className="font-medium">{drug.drug_name}</div>
-                        <div className="text-muted-foreground text-[10px]">
-                          {drug.drug_generic} • {drug.drug_type}
-                        </div>
-                      </div>
-                      <span className="text-primary font-semibold">₹{drug.amount}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : query ? (
-                <div className="p-4 text-center text-xs text-muted-foreground">
-                  No drugs found for "{query}"
-                </div>
+                drugs.map((drug) => (
+                  <button
+                    key={drug.drug_id}
+                    onClick={() => handleSelect(drug)}
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center justify-between"
+                  >
+                    <span className="font-medium">{drug.drug_name}</span>
+                    <span className="text-muted-foreground">
+                      ₹{Number(drug.amount || 0).toFixed(2)}
+                    </span>
+                  </button>
+                ))
               ) : (
-                <div className="p-4 text-center text-xs text-muted-foreground">
-                  Type to search drugs
+                <div className="p-3 text-xs text-muted-foreground text-center">
+                  No drugs found
                 </div>
               )}
-            </ScrollArea>
-          </PopoverContent>
-        </Popover>
+            </div>
+          )}
+        </div>
       </td>
+      <td className="p-2" />
+      <td className="p-2" />
+      <td className="p-2" />
+      <td className="p-2" />
+      <td className="p-2" />
       <td className="p-2" />
     </tr>
   );
 }
 
-
 export function InvoicePage() {
-  // URL search params for persistence
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const visitIdFromUrl = searchParams.get("visitId");
 
   // State
@@ -190,7 +159,6 @@ export function InvoicePage() {
   const [discountValue, setDiscountValue] = useState(0);
   const [couponCode, setCouponCode] = useState("");
   const [discountReason, setDiscountReason] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -199,65 +167,30 @@ export function InvoicePage() {
     amount: number;
   } | null>(null);
 
-  // Filters for visits
+  // Fetch the specific visit by ID
   const visitFilters: VisitFilters = useMemo(() => ({
     status: "1",
     page: 1,
     limit: 50,
-    ...(searchQuery && { patient: searchQuery }),
-  }), [searchQuery]);
+  }), []);
 
-  // Fetch visits
   const { data: visitsData, isLoading: visitsLoading } = useQuery({
-    queryKey: ["billing-visits", visitFilters],
+    queryKey: ["invoice-visit", visitIdFromUrl],
     queryFn: () => visitService.list(visitFilters),
+    enabled: !!visitIdFromUrl,
   });
 
-  // Fetch all invoices to show status on visit cards
-  const { data: allInvoicesData } = useQuery({
-    queryKey: ["all-invoices-for-visits"],
-    queryFn: () => billingService.listInvoices({ limit: 20 }),
-  });
-
-
-  // Create map of visit_id -> invoice status for quick lookup
-  const visitInvoiceStatusMap = useMemo(() => {
-    const map = new Map<number, { status: string; invoiceNumber: string }>();
-    if (allInvoicesData?.invoices) {
-      for (const invoice of allInvoicesData.invoices) {
-        map.set(invoice.visit_id, {
-          status: invoice.status,
-          invoiceNumber: invoice.invoice_number,
-        });
-      }
-    }
-    return map;
-  }, [allInvoicesData]);
-
-  // Sync selectedVisit with URL param (load from URL or clear when URL changes)
+  // Auto-select visit from URL param
   useEffect(() => {
     if (visitIdFromUrl && visitsData?.visits) {
-      // URL has visitId - load the visit if not already selected or different visit
       const visitFromUrl = visitsData.visits.find(
         (v) => v.visit_id === Number(visitIdFromUrl)
       );
       if (visitFromUrl && selectedVisit?.visit_id !== visitFromUrl.visit_id) {
         setSelectedVisit(visitFromUrl);
       }
-    } else if (!visitIdFromUrl && selectedVisit) {
-      // URL param removed (e.g., browser back) - clear selection
-      setSelectedVisit(null);
-      setItems([]);
-      setSavedInvoice(null);
-      setReceiptGenerated(null);
     }
   }, [visitIdFromUrl, visitsData]);
-
-  // Update URL when visit is selected
-  const handleSelectVisit = useCallback((visit: VisitItem) => {
-    setSelectedVisit(visit);
-    setSearchParams({ visitId: String(visit.visit_id) }, { replace: true });
-  }, [setSearchParams]);
 
   // Fetch prescriptions for selected visit
   const { data: prescriptionItems, isLoading: prescriptionsLoading } =
@@ -269,7 +202,6 @@ export function InvoicePage() {
     queryFn: () => billingService.listInvoices({ visit_id: selectedVisit?.visit_id }),
     enabled: !!selectedVisit?.visit_id,
   });
-
 
   // Create/Update invoice mutations
   const createInvoiceMutation = useCreateInvoice();
@@ -302,7 +234,6 @@ export function InvoicePage() {
       setDiscountReason(existingInvoice.discount_reason || "");
       setInvoiceDate(new Date(existingInvoice.invoice_date));
 
-      
       if (existingInvoice.status === "paid") {
         billingService.listReceipts({ invoice_id: existingInvoice.invoice_id }).then((res) => {
           if (res.receipts.length > 0) {
@@ -335,20 +266,10 @@ export function InvoicePage() {
     }
   }, [selectedVisit, prescriptionItems, existingInvoicesData]);
 
-  // Reset form when going back
-  const handleBackToVisits = useCallback(() => {
-    setSelectedVisit(null);
-    setItems([]);
-    setSavedInvoice(null);
-    setInvoiceDate(new Date());
-    setDiscountType("percentage");
-    setDiscountValue(0);
-    setCouponCode("");
-    setDiscountReason("");
-    setReceiptGenerated(null);
-    // Clear URL param
-    setSearchParams({}, { replace: true });
-  }, [setSearchParams]);
+  // Navigate back to billing list
+  const handleBackToBilling = useCallback(() => {
+    navigate("/main/billing");
+  }, [navigate]);
 
   // Update item
   const updateItem = useCallback((id: string, updates: Partial<InvoiceItemRow>) => {
@@ -386,20 +307,13 @@ export function InvoicePage() {
       ...calculateItemAmounts(item),
     }));
 
-    // Base subtotal (quantity * rate)
     const baseSubtotal = items.reduce((sum, item) => 
       sum + (item.quantity ?? 1) * (item.unit_amount ?? 0), 0);
     
-    // Total premium
     const totalPremium = items.reduce((sum, item) => sum + (item.premium ?? 0), 0);
-    
-    // Total item discounts
     const totalItemDiscount = itemsWithAmounts.reduce((sum, item) => sum + (item.discount_amount || 0), 0);
-    
-    // Gross total after item-level discounts
     const grossTotal = itemsWithAmounts.reduce((sum, item) => sum + (item.net_amount || 0), 0);
 
-    // Overall invoice discount
     let invoiceDiscountAmount = 0;
     if (discountType === "percentage") {
       invoiceDiscountAmount = grossTotal * (discountValue / 100);
@@ -407,7 +321,6 @@ export function InvoicePage() {
       invoiceDiscountAmount = discountValue;
     }
 
-    // Coupon discount (validate and extract amount from coupon code like CC100, CC1500)
     let couponDiscountAmount = 0;
     const trimmedCoupon = couponCode.trim().toUpperCase();
     if (trimmedCoupon.startsWith("CC")) {
@@ -429,7 +342,6 @@ export function InvoicePage() {
       netTotal: Math.round(netTotal * 100) / 100,
     };
   }, [items, discountType, discountValue, couponCode]);
-
 
   // Handle Save Invoice
   const handleSave = async () => {
@@ -512,7 +424,6 @@ export function InvoicePage() {
       };
 
       const receipt = await billingService.createReceipt(receiptDto);
-      await billingService.updateInvoice(savedInvoice.invoice_id, { status: "paid" });
 
       setReceiptGenerated({
         receipt_number: receipt.receipt_number,
@@ -528,153 +439,37 @@ export function InvoicePage() {
     }
   };
 
-  const visits = visitsData?.visits ?? [];
   const isPaid = savedInvoice?.status === "paid" || !!receiptGenerated;
 
-  // Visit List View
-  if (!selectedVisit) {
+  // Loading state
+  if (visitsLoading || !selectedVisit) {
     return (
-      <div className="h-full flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+      <div className="h-full flex flex-col p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <Button variant="ghost" size="sm" onClick={handleBackToBilling} className="h-8 px-2">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
           <div>
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              Create Invoice
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Select a visit to create an invoice
-            </p>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Search patient..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-8 w-48 text-xs"
-            />
+            <h2 className="text-base font-semibold">Loading Invoice...</h2>
           </div>
         </div>
-
-        {/* Visit List */}
-        <div className="flex-1 overflow-auto">
-          {visitsLoading ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Skeleton key={i} className="h-28 rounded-lg" />
-              ))}
-            </div>
-          ) : visits.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
-              <CalendarDays className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-sm font-medium">No visits found</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {searchQuery ? "Try a different search term" : "No active visits available"}
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {visits.map((visit) => {
-                const date = new Date(visit.visit_date);
-                const invoiceInfo = visitInvoiceStatusMap.get(visit.visit_id);
-                const hasInvoice = !!invoiceInfo;
-                const isPaid = invoiceInfo?.status === "paid";
-                const isDraft = invoiceInfo?.status === "draft";
-                
-                return (
-                  <button
-                    key={visit.visit_id}
-                    onClick={() => handleSelectVisit(visit)}
-                    className={cn(
-                      "group relative rounded-lg border p-3 text-left transition-all hover:shadow-md",
-                      isPaid 
-                        ? "border-green-300 bg-green-50/50 hover:border-green-400"
-                        : isDraft
-                        ? "border-orange-300 bg-orange-50/50 hover:border-orange-400"
-                        : "border-border bg-card hover:border-primary/50"
-                    )}
-                  >
-                    <div className={cn(
-                      "absolute inset-x-0 top-0 h-0.5 rounded-t-lg opacity-0 group-hover:opacity-100 transition-opacity",
-                      isPaid ? "bg-green-500" : isDraft ? "bg-orange-500" : "bg-primary"
-                    )} />
-                    
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className={cn(
-                          "h-8 w-8 rounded-full flex items-center justify-center",
-                          isPaid ? "bg-green-100" : isDraft ? "bg-orange-100" : "bg-primary/10"
-                        )}>
-                          <User className={cn(
-                            "h-4 w-4",
-                            isPaid ? "text-green-600" : isDraft ? "text-orange-600" : "text-primary"
-                          )} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium group-hover:text-primary transition-colors">
-                            {visit.patient?.firstName} {visit.patient?.lastName}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            MRN: {visit.patient?.mrn}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <Badge variant="secondary" className="text-[9px]">
-                          #{visit.visit_id}
-                        </Badge>
-                        {hasInvoice && (
-                          <Badge 
-                            className={cn(
-                              "text-[9px]",
-                              isPaid 
-                                ? "bg-green-100 text-green-700 hover:bg-green-100" 
-                                : "bg-orange-100 text-orange-700 hover:bg-orange-100"
-                            )}
-                          >
-                            {isPaid ? "Receipt" : "Invoice"}
-                          </Badge>
-                        )}
-
-                      </div>
-                    </div>
-
-                    <div className="space-y-1 text-[11px]">
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <CalendarDays className="h-3 w-3" />
-                        <span>{format(date, "dd MMM yyyy, hh:mm a")}</span>
-                      </div>
-
-                      <p className="font-medium">{visit.visit_type}</p>
-                      {visit.doctor?.displayName && (
-                        <p className="text-muted-foreground">
-                          Dr. {visit.doctor.displayName}
-                        </p>
-                      )}
-                      {visit.appointment && (
-                        <Badge variant="outline" className="text-[9px] mt-1">
-                          {visit.appointment.appointment_type}
-                        </Badge>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
         </div>
       </div>
     );
   }
 
-  // Invoice Creation View
+  // Invoice Creation / View
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 shrink-0">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={handleBackToVisits} className="h-8 px-2">
+          <Button variant="ghost" size="sm" onClick={handleBackToBilling} className="h-8 px-2">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back
           </Button>
@@ -958,7 +753,6 @@ export function InvoicePage() {
                   </div>
                 )}
                 <div className="border-t border-orange-300 pt-2 mt-2 flex justify-between font-bold text-base">
-
                   <span>Net Total</span>
                   <span className="text-green-600">₹{totals.netTotal.toFixed(2)}</span>
                 </div>
@@ -966,10 +760,10 @@ export function InvoicePage() {
             </Card>
           </div>
 
-          {/* Action Buttons - Fixed Bottom */}
+          {/* Action Buttons */}
           {!isPaid && (
             <div className="shrink-0 flex items-center justify-end gap-3 pt-3 border-t mt-auto">
-              <Button variant="outline" onClick={handleBackToVisits} disabled={isSaving}>
+              <Button variant="outline" onClick={handleBackToBilling} disabled={isSaving}>
                 Cancel
               </Button>
               <Button
@@ -1018,7 +812,6 @@ export function InvoicePage() {
                         </div>
                       </SelectItem>
                     </SelectContent>
-
                   </Select>
                   <Button
                     onClick={handlePay}
@@ -1033,8 +826,6 @@ export function InvoicePage() {
               )}
             </div>
           )}
-
-
 
           {/* Receipt Generated Success */}
           {receiptGenerated && (
@@ -1051,8 +842,8 @@ export function InvoicePage() {
                     </p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleBackToVisits}>
-                  New Invoice
+                <Button variant="outline" size="sm" onClick={handleBackToBilling}>
+                  Back to Billing
                 </Button>
               </div>
             </Card>

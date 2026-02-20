@@ -10,11 +10,19 @@ import type {
   PaginatedInvoicesResponse,
   PaginatedReceiptsResponse,
   CreateInvoiceItemDto,
+  BillingVisitsFilters,
+  PaginatedBillingVisitsResponse,
 } from '../types/billing.types';
 
 const BASE_URL = '/billing';
 
 export const billingService = {
+  // Consolidated billing visits
+  listBillingVisits: async (filters?: BillingVisitsFilters): Promise<PaginatedBillingVisitsResponse> => {
+    const response = await api.get<PaginatedBillingVisitsResponse>(`${BASE_URL}/visits`, { params: filters });
+    return response.data;
+  },
+
   // Invoice APIs
   listInvoices: async (filters?: InvoiceFilters): Promise<PaginatedInvoicesResponse> => {
     const response = await api.get<PaginatedInvoicesResponse>(`${BASE_URL}/invoices`, { params: filters });

@@ -33,9 +33,8 @@ const DrugsPage = lazy(() => import('../features/drug/pages/DrugsPage').then(mod
 const DocumentTypesPage = lazy(() => import('../features/document-types/pages/DocumentTypesPage').then(module => ({ default: module.DocumentTypesPage })))
 const LocationsPage = lazy(() => import('../features/locations/pages/LocationsPage').then(module => ({ default: module.LocationsPage })))
 const ClinicalNotesPage = lazy(() => import('../features/clinical-notes/pages/ClinicalNotesPage').then(module => ({ default: module.ClinicalNotesPage })))
-const BillingLayout = lazy(() => import('../features/billing/pages/BillingLayout').then(module => ({ default: module.BillingLayout })))
-const InvoicePage = lazy(() => import('../features/billing/pages/InvoicePage').then(module => ({ default: module.InvoicePage })))
-const ReceiptPage = lazy(() => import('../features/billing/pages/ReceiptPage').then(module => ({ default: module.ReceiptPage })))
+const BillingPage = lazy(() => import('../features/billing/pages/BillingPage').then(module => ({ default: module.BillingPage })))
+const InvoicePage = lazy(() => import('../features/billing/pages/InvoicePage'))
 const AIChatPage = lazy(() => import('../features/ai-chat/pages/AIChatPage').then(module => ({ default: module.AIChatPage })))
 
 export const routes: RouteConfig[] = [
@@ -154,13 +153,30 @@ export const routes: RouteConfig[] = [
     path: '/main/billing',
     name: 'Billing',
     icon: Receipt,
-    component: BillingLayout,
     roles: [1],
     showInNav: true,
     module: 'Billing',
     children: [
-      { id: 'billing-invoice', path: '/main/billing/invoice', name: 'Invoice', icon: Receipt, component: InvoicePage, roles: [1], showInNav: false, module: 'Billing' },
-      { id: 'billing-receipt', path: '/main/billing/receipt', name: 'Receipt', icon: Receipt, component: ReceiptPage, roles: [1], showInNav: false, module: 'Billing' },
+      {
+        id: 'billing-index',
+        path: '/main/billing',
+        name: 'Billing',
+        icon: Receipt,
+        component: BillingPage,
+        roles: [1],
+        showInNav: false,
+        module: 'Billing',
+      },
+      {
+        id: 'billing-invoice',
+        path: '/main/billing/invoice',
+        name: 'Invoice',
+        icon: Receipt,
+        component: InvoicePage,
+        roles: [1],
+        showInNav: false,
+        module: 'Billing',
+      },
     ],
   },
   {

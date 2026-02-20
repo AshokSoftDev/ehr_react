@@ -162,3 +162,49 @@ export interface InvoiceItemRow extends CreateInvoiceItemDto {
   discount_amount?: number;
   net_amount?: number;
 }
+
+// Consolidated billing visit types
+export interface BillingVisitInvoice extends Invoice {
+  receipts: Receipt[];
+}
+
+export interface BillingVisit {
+  visit_id: number;
+  appointment_id?: number;
+  patient_id: number;
+  visit_date: string;
+  visit_type: string;
+  reason_for_visit?: string;
+  status: number;
+  patient: {
+    patient_id: number;
+    firstName: string;
+    lastName: string;
+    mrn: string;
+    mobileNumber: string;
+  };
+  doctor?: {
+    id: string;
+    displayName: string;
+  };
+  appointment?: {
+    appointment_id: number;
+    appointment_type: string;
+  };
+  invoices: BillingVisitInvoice[];
+}
+
+export interface BillingVisitsFilters {
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedBillingVisitsResponse {
+  visits: BillingVisit[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
