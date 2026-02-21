@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { Menu, X, Sun, Moon, Sparkles } from 'lucide-react';
 import { useTheme } from '@/hooks/themeHook';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -10,13 +10,17 @@ interface ToolbarProps {
   isSidebarExpanded: boolean;
   toggleSidebar: () => void;
   handleLogout: () => void;
+  onToggleAIChat: () => void;
+  isAIChatOpen: boolean;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
   isMobile,
   isSidebarExpanded,
   toggleSidebar,
-  handleLogout
+  handleLogout,
+  onToggleAIChat,
+  isAIChatOpen,
 }) => {
   const { theme, toggleTheme } = useTheme();
 
@@ -31,9 +35,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <h1 className="text-lg font-semibold ml-2">EHR System</h1>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" onClick={() => toggleTheme()} className="text-foreground">
           {theme === 'light' ? <Sun /> : <Moon />}
+        </Button>
+
+        {/* AI Chat Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleAIChat}
+          className="relative text-foreground hover:text-purple-600 dark:hover:text-purple-400"
+          title="AI Assistant"
+        >
+          <Sparkles className={`w-5 h-5 transition-colors ${isAIChatOpen ? 'text-purple-500' : ''}`} />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-green-500 rounded-full"></span>
         </Button>
 
         <DropdownMenu>

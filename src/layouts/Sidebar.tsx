@@ -30,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     () =>
       routes.filter(
         (route) => route.showInNav
-        // && (!route.module || hasModuleAccess(route.module))
+          && (!route.module || hasModuleAccess(route.module))
       ),
     [hasModuleAccess]
   );

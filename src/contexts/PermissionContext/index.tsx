@@ -48,18 +48,35 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
 
       const user = JSON.parse(userStr);
 
-      // If user doesn't have a groupId, they have no permissions
+      // Root users get full access to all modules — no group needed
+      if (user.accountType === "root") {
+        const modulesResponse = await api.get("/groups/modules");
+        const modules = modulesResponse.data.data;
+        const fullPermissions: Permission[] = modules.map((module: any) => ({
+          moduleId: module.id,
+          moduleName: module.name,
+          hasAccess: true,
+          subModules:
+            module.subModules?.map((sub: any) => ({
+              subModuleId: sub.id,
+              subModuleName: sub.name,
+              allowed: true,
+            })) || [],
+        }));
+        setPermissions(fullPermissions);
+        return;
+      }
+
+      // Non-root users without a group have no permissions
       if (!user.groupId) {
         setPermissions([]);
         return;
       }
 
-      // Since we already have the group info, we just need to get that group's details with permissions
+      // Fetch group-based permissions for child users
       const response = await api.get(`/groups/${user.groupId}`);
       const groupData = response.data.data;
-      console.log("groupData: ", groupData);
 
-      // If the group has permissions in the response, use them
       if (groupData.permissions) {
         const transformedPermissions: Permission[] = groupData.permissions.map(
           (perm: any) => ({
@@ -74,37 +91,12 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
               })) || [],
           })
         );
-        console.log("transformedPermissions: ", transformedPermissions);
-
         setPermissions(transformedPermissions);
       } else {
-        // For root/admin users without specific permissions, grant all access
-        if (user.accountType === "parent" && !user.parentId) {
-          // Fetch all modules and grant full access
-          const modulesResponse = await api.get("/groups/modules");
-          const modules = modulesResponse.data.data;
-
-          const fullPermissions: Permission[] = modules.map((module: any) => ({
-            moduleId: module.id,
-            moduleName: module.name,
-            hasAccess: true,
-            subModules:
-              module.subModules?.map((sub: any) => ({
-                subModuleId: sub.id,
-                subModuleName: sub.name,
-                allowed: true,
-              })) || [],
-          }));
-          alert("j");
-
-          setPermissions(fullPermissions);
-        } else {
-          setPermissions([]);
-        }
+        setPermissions([]);
       }
     } catch (error) {
       console.error("Failed to fetch permissions:", error);
-      // For development/testing, you might want to grant all permissions on error
       setPermissions([]);
     } finally {
       setLoading(false);

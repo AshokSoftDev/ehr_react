@@ -4,12 +4,12 @@ import { Sidebar } from "./Sidebar";
 import { Toolbar } from "./Toolbar";
 import { PageSkeleton } from "./PageSkeleton";
 import { Card } from "@/components/ui/card";
-// import { useAuth } from '@/hooks/authHook';
+import { AIChatWidget } from "@/components/ai-chat-widget";
 
 const Layout = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(!isMobile);
-  // const { user, logout } = useAuth();
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,8 +26,15 @@ const Layout = () => {
   }, []);
 
   const handleLogout = () => {
-    // logout();
-    navigate("/login");
+    // Clear all auth data from both storages
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("refresh_token");
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("refresh_token");
+    setIsAIChatOpen(false);
+    navigate("/login", { replace: true });
   };
 
   const toggleSidebar = () => {
@@ -42,6 +49,8 @@ const Layout = () => {
           isSidebarExpanded={isSidebarExpanded}
           toggleSidebar={toggleSidebar}
           handleLogout={handleLogout}
+          onToggleAIChat={() => setIsAIChatOpen((prev) => !prev)}
+          isAIChatOpen={isAIChatOpen}
         />
       </div>
       <div className="flex flex-1 overflow-hidden">
@@ -58,6 +67,12 @@ const Layout = () => {
           </Card>
         </div>
       </div>
+
+      {/* AI Chat Widget — controlled by toolbar button */}
+      <AIChatWidget
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+      />
     </div>
   );
 };
