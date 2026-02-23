@@ -1,15 +1,11 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Users,
   Calendar,
-  FileText,
   Clock,
   AlertCircle,
-  UserCheck,
-  Pill,
-  BedDouble,
-  Stethoscope,
   TrendingUp,
+  DollarSign
 } from "lucide-react";
 import {
   Card,
@@ -20,6 +16,7 @@ import {
 import { Progress } from "../components/ui/progress";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
+import { Skeleton } from "../components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -36,195 +33,219 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  Legend
 } from "recharts";
-
-// EHR Static Data
-const statsData = [
-  {
-    title: "Total Patients",
-    value: "2,847",
-    change: "+12.5%",
-    trend: "up",
-    icon: Users,
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
-  },
-  {
-    title: "Appointments Today",
-    value: "47",
-    change: "+8 from yesterday",
-    trend: "up",
-    icon: Calendar,
-    color: "text-green-600",
-    bgColor: "bg-green-50",
-  },
-  {
-    title: "Active Prescriptions",
-    value: "1,234",
-    change: "-2.3%",
-    trend: "down",
-    icon: Pill,
-    color: "text-orange-600",
-    bgColor: "bg-orange-50",
-  },
-  {
-    title: "Bed Occupancy",
-    value: "78%",
-    change: "Normal range",
-    trend: "neutral",
-    icon: BedDouble,
-    color: "text-purple-600",
-    bgColor: "bg-purple-50",
-  },
-];
-
-// Patient Visit Trends (Last 7 days)
-const visitTrendsData = [
-  { day: "Mon", visits: 145, emergency: 23 },
-  { day: "Tue", visits: 132, emergency: 19 },
-  { day: "Wed", visits: 165, emergency: 28 },
-  { day: "Thu", visits: 152, emergency: 25 },
-  { day: "Fri", visits: 178, emergency: 31 },
-  { day: "Sat", visits: 110, emergency: 35 },
-  { day: "Sun", visits: 95, emergency: 42 },
-];
-
-// Department Distribution
-const departmentData = [
-  { name: "General Medicine", value: 35, patients: 997 },
-  { name: "Pediatrics", value: 20, patients: 570 },
-  { name: "Cardiology", value: 15, patients: 428 },
-  { name: "Orthopedics", value: 12, patients: 342 },
-  { name: "Emergency", value: 10, patients: 285 },
-  { name: "Others", value: 8, patients: 225 },
-];
-
-// Recent Appointments
-const recentAppointments = [
-  {
-    id: "APT001",
-    patient: "John Doe",
-    doctor: "Dr. Sarah Wilson",
-    time: "09:00 AM",
-    type: "Check-up",
-    status: "completed",
-  },
-  {
-    id: "APT002",
-    patient: "Jane Smith",
-    doctor: "Dr. Michael Brown",
-    time: "10:30 AM",
-    type: "Follow-up",
-    status: "in-progress",
-  },
-  {
-    id: "APT003",
-    patient: "Robert Johnson",
-    doctor: "Dr. Emily Davis",
-    time: "11:00 AM",
-    type: "Consultation",
-    status: "scheduled",
-  },
-  {
-    id: "APT004",
-    patient: "Maria Garcia",
-    doctor: "Dr. James Taylor",
-    time: "02:00 PM",
-    type: "Emergency",
-    status: "scheduled",
-  },
-  {
-    id: "APT005",
-    patient: "David Lee",
-    doctor: "Dr. Sarah Wilson",
-    time: "03:30 PM",
-    type: "Check-up",
-    status: "scheduled",
-  },
-];
-
-// Critical Alerts
-const criticalAlerts = [
-  {
-    id: 1,
-    message: "Low inventory: Insulin (Type 1) - 15 units remaining",
-    severity: "high",
-    time: "5 mins ago",
-  },
-  {
-    id: 2,
-    message: "ICU Bed availability: Only 2 beds available",
-    severity: "medium",
-    time: "15 mins ago",
-  },
-  {
-    id: 3,
-    message: "Lab results pending for 8 patients (>24 hours)",
-    severity: "medium",
-    time: "1 hour ago",
-  },
-];
-
-// Chart colors
-const COLORS = [
-  "#3B82F6",
-  "#10B981",
-  "#F59E0B",
-  "#8B5CF6",
-  "#EF4444",
-  "#6B7280",
-];
+import { api } from "../lib/api";
 
 const Dashboard: React.FC = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [metrics, setMetrics] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [pipeline, setPipeline] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [schedule, setSchedule] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [revenueTrend, setRevenueTrend] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [metricsRes, pipelineRes, scheduleRes, trendRes] = await Promise.all([
+          api.get('/dashboard/metrics'),
+          api.get('/dashboard/pipeline'),
+          api.get('/dashboard/schedule?limit=5'),
+          api.get('/dashboard/revenue-trend?days=7')
+        ]);
+        
+        setMetrics(metricsRes.data.data);
+        setPipeline(pipelineRes.data.data);
+        setSchedule(scheduleRes.data.data);
+        setRevenueTrend(trendRes.data.data);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
+  }, []);
+
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+  };
+
   const getStatusBadge = (status: string) => {
+    status = (status || '').toLowerCase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const variants: Record<string, any> = {
-      completed: {
-        variant: "default",
-        className: "bg-green-100 text-green-800",
-      },
-      "in-progress": {
-        variant: "default",
-        className: "bg-blue-100 text-blue-800",
-      },
+      completed: { variant: "default", className: "bg-green-100 text-green-800" },
+      "checked-out": { variant: "default", className: "bg-green-100 text-green-800" },
+      "in-progress": { variant: "default", className: "bg-blue-100 text-blue-800" },
+      "with-doctor": { variant: "default", className: "bg-blue-100 text-blue-800" },
+      "checked-in": { variant: "default", className: "bg-purple-100 text-purple-800" },
+      "waiting": { variant: "default", className: "bg-purple-100 text-purple-800" },
       scheduled: { variant: "default", className: "bg-gray-100 text-gray-800" },
+      booked: { variant: "default", className: "bg-gray-100 text-gray-800" },
     };
     return variants[status] || variants.scheduled;
   };
 
-  const getSeverityBadge = (severity: string) => {
-    const variants: Record<string, any> = {
-      high: { variant: "destructive" },
-      medium: {
-        variant: "default",
-        className: "bg-yellow-100 text-yellow-800",
-      },
-      low: { variant: "secondary" },
-    };
-    return variants[severity] || variants.low;
-  };
+  // Dynamic Metrics Cards based on API data
+  const statsData = metrics ? [
+    {
+      title: "Today's Appointments",
+      value: metrics.appointmentsCount.toString(),
+      change: metrics.appointmentsTrend.startsWith('-') ? metrics.appointmentsTrend : `${metrics.appointmentsTrend} vs yesterday`,
+      trend: metrics.appointmentsTrend.startsWith('-') ? "down" : (metrics.appointmentsTrend === '0%' ? "neutral" : "up"),
+      icon: Calendar,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+    },
+    {
+      title: "New Patients Today",
+      value: metrics.newPatientsToday.toString(),
+      change: "Registered today",
+      trend: "up",
+      icon: Users,
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+    },
+    {
+      title: "Avg Wait Time",
+      value: `${metrics.avgWaitTimeMinutes} min`,
+      change: "Target < 20 min",
+      trend: metrics.avgWaitTimeMinutes > 20 ? "down" : "up", // 'down' for bad, 'up' for good in this context
+      icon: Clock,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50",
+    },
+    {
+      title: "Today's Revenue",
+      value: formatCurrency(metrics.dailyRevenue),
+      change: `Billed: ${formatCurrency(metrics.dailyBilled)}`,
+      trend: "up",
+      icon: DollarSign,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+    },
+  ] : [];
+
+  const DashboardSkeleton = () => (
+    <div className="space-y-6">
+      {/* Header Skeleton */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-8 w-[250px]" />
+          <Skeleton className="h-4 w-[350px]" />
+        </div>
+      </div>
+
+      {/* Stats Grid Skeleton */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Skeleton className="h-4 w-[120px]" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-[100px] mb-2" />
+              <Skeleton className="h-3 w-[140px]" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Charts Row Skeleton */}
+      <div className="grid gap-4 md:grid-cols-7">
+        <Card className="col-span-4 shadow-sm border-slate-100 dark:border-slate-800">
+          <CardHeader>
+            <Skeleton className="h-6 w-[200px]" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full rounded-md" />
+          </CardContent>
+        </Card>
+        <Card className="col-span-3 shadow-sm border-slate-100 dark:border-slate-800">
+          <CardHeader>
+            <Skeleton className="h-6 w-[200px]" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] flex flex-col justify-center space-y-7 px-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-[120px]" />
+                      <Skeleton className="h-4 w-[40px]" />
+                    </div>
+                    <Skeleton className="h-2 w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Table Row Skeleton */}
+      <div className="grid gap-4 md:grid-cols-7">
+        <Card className="col-span-4 shadow-sm border-slate-100 dark:border-slate-800">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-6 w-[200px]" />
+              <Skeleton className="h-9 w-[120px]" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Critical Alerts Skeleton */}
+        <Card className="col-span-3">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-6 w-[180px]" />
+              <Skeleton className="h-6 w-8 rounded-full" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Skeleton className="h-20 w-full rounded-lg" />
+              <Skeleton className="h-20 w-full rounded-lg" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">EHR Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back! Here's an overview of your healthcare facility.
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Dashboard Overview
+          </h1>
+          <p className="text-muted-foreground text-xs mt-0.5">
+            Clinic performance metrics, live schedule, and revenue tracking
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <FileText className="mr-2 h-4 w-4" />
-            Generate Report
-          </Button>
-          <Button size="sm">
-            <Clock className="mr-2 h-4 w-4" />
-            View Schedule
-          </Button>
         </div>
       </div>
 
@@ -268,36 +289,48 @@ const Dashboard: React.FC = () => {
 
       {/* Charts Row */}
       <div className="grid gap-4 md:grid-cols-7">
-        {/* Patient Visit Trends */}
-        <Card className="col-span-4">
+        {/* Revenue Trends */}
+        <Card className="col-span-4 shadow-sm border-slate-100 dark:border-slate-800">
           <CardHeader>
-            <CardTitle>Patient Visit Trends</CardTitle>
+            <CardTitle>Revenue Trends (Last 7 Days)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={visitTrendsData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
+                <AreaChart data={revenueTrend}>
+                  <defs>
+                    <linearGradient id="colorCollected" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorBilled" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="date" tickFormatter={(val) => val.split('-').slice(1).join('/')} />
+                  <YAxis tickFormatter={(val) => `₹${val/1000}k`} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Tooltip formatter={(value: any) => [formatCurrency(value), undefined]} labelFormatter={(val) => `Date: ${val}`} />
+                  <Legend />
                   <Area
                     type="monotone"
-                    dataKey="visits"
-                    stackId="1"
-                    stroke="#3B82F6"
-                    fill="#3B82F6"
-                    fillOpacity={0.6}
-                    name="Regular Visits"
+                    dataKey="collected"
+                    name="Collected (Receipts)"
+                    stroke="#10B981"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorCollected)"
                   />
                   <Area
                     type="monotone"
-                    dataKey="emergency"
-                    stackId="1"
-                    stroke="#EF4444"
-                    fill="#EF4444"
-                    fillOpacity={0.6}
-                    name="Emergency"
+                    dataKey="billed"
+                    name="Billed (Invoices)"
+                    stroke="#3B82F6"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorBilled)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -305,35 +338,30 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Department Distribution */}
-        <Card className="col-span-3">
+        {/* Pipeline / Patient Flow */}
+        <Card className="col-span-3 shadow-sm border-slate-100 dark:border-slate-800">
           <CardHeader>
-            <CardTitle>Department Distribution</CardTitle>
+            <CardTitle>Today's Patient Pipeline</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={departmentData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {departmentData.map((_, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="h-[300px] flex flex-col justify-center space-y-6 px-4">
+              {pipeline && [
+                { label: "Booked", value: pipeline.booked, color: "bg-slate-200 text-slate-700" },
+                { label: "Waiting / Checked-In", value: pipeline.checkedIn, color: "bg-purple-100 text-purple-700" },
+                { label: "With Doctor", value: pipeline.withDoctor, color: "bg-blue-100 text-blue-700" },
+                { label: "Payment Pending", value: pipeline.paymentPending, color: "bg-orange-100 text-orange-700" },
+                { label: "Completed", value: pipeline.completed, color: "bg-green-100 text-green-700" },
+              ].map((stage) => (
+                <div key={stage.label} className="flex items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-sm ${stage.color} z-10`}>
+                    {stage.value}
+                  </div>
+                  <div className="ml-4 flex-1">
+                    <p className="font-semibold text-sm">{stage.label}</p>
+                    <Progress value={Math.min((stage.value / Math.max(metrics?.appointmentsCount || 1, 1)) * 100, 100)} className="h-1.5 mt-2" />
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -363,21 +391,27 @@ const Dashboard: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentAppointments.map((appointment) => (
-                  <TableRow key={appointment.id}>
-                    <TableCell className="font-medium">
-                      {appointment.patient}
-                    </TableCell>
-                    <TableCell>{appointment.doctor}</TableCell>
-                    <TableCell>{appointment.time}</TableCell>
-                    <TableCell>{appointment.type}</TableCell>
-                    <TableCell>
-                      <Badge {...getStatusBadge(appointment.status)}>
-                        {appointment.status.replace("-", " ")}
-                      </Badge>
-                    </TableCell>
+                {schedule.length === 0 ? (
+                  <TableRow>
+                     <TableCell colSpan={5} className="text-center text-muted-foreground py-8">No specific upcoming appointments found for today</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  schedule.map((appointment) => (
+                    <TableRow key={appointment.id}>
+                      <TableCell className="font-medium">
+                        {appointment.patientName} <span className="text-xs text-muted-foreground ml-1">({appointment.patientMrn})</span>
+                      </TableCell>
+                      <TableCell>{appointment.doctorName}</TableCell>
+                      <TableCell>{new Date(appointment.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</TableCell>
+                      <TableCell>{appointment.type || 'Follow-up'}</TableCell>
+                      <TableCell>
+                        <Badge {...getStatusBadge(appointment.status)}>
+                          {appointment.status.replace("-", " ")}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -391,156 +425,29 @@ const Dashboard: React.FC = () => {
                 <AlertCircle className="h-5 w-5 text-red-600" />
                 Critical Alerts
               </CardTitle>
-              <Badge variant="destructive">{criticalAlerts.length}</Badge>
+              <Badge variant="destructive">2</Badge>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {criticalAlerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className="flex flex-col space-y-2 rounded-lg border p-3"
-                >
+              <div className="flex flex-col space-y-2 rounded-lg border p-3 border-orange-200 bg-orange-50 dark:bg-orange-950/20">
                   <div className="flex items-start justify-between">
-                    <p className="text-sm">{alert.message}</p>
+                    <p className="text-sm font-medium">Payment Outstanding Summary</p>
                   </div>
                   <div className="flex items-center justify-between">
-                    <Badge {...getSeverityBadge(alert.severity)}>
-                      {alert.severity}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {alert.time}
-                    </span>
+                    <Badge variant="secondary" className="bg-orange-100 text-orange-800">Review Required</Badge>
+                    <span className="text-xs text-muted-foreground">{pipeline?.paymentPending || 0} bills pending</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4">
-              <UserCheck className="h-6 w-6" />
-              <span>Register Patient</span>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4">
-              <Calendar className="h-6 w-6" />
-              <span>Schedule Appointment</span>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4">
-              <Stethoscope className="h-6 w-6" />
-              <span>Start Consultation</span>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4">
-              <FileText className="h-6 w-6" />
-              <span>View Reports</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Staff Performance */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Doctor Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Performing Doctors</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                {
-                  name: "Dr. Sarah Wilson",
-                  patients: 45,
-                  rating: 4.9,
-                  specialty: "Cardiologist",
-                },
-                {
-                  name: "Dr. Michael Brown",
-                  patients: 42,
-                  rating: 4.8,
-                  specialty: "Pediatrician",
-                },
-                {
-                  name: "Dr. Emily Davis",
-                  patients: 38,
-                  rating: 4.7,
-                  specialty: "General Medicine",
-                },
-                {
-                  name: "Dr. James Taylor",
-                  patients: 35,
-                  rating: 4.9,
-                  specialty: "Surgeon",
-                },
-              ].map((doctor, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-semibold">{index + 1}</span>
-                    </div>
-                    <div>
-                      <p className="font-medium">{doctor.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {doctor.specialty}
-                      </p>
-                    </div>
+                <div className="flex flex-col space-y-2 rounded-lg border p-3 border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+                  <div className="flex items-start justify-between">
+                    <p className="text-sm font-medium">Appointments Pipeline Alert</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">{doctor.patients} patients</p>
-                    <p className="text-sm text-muted-foreground">
-                      ⭐ {doctor.rating}
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">Check Waiting Room</Badge>
+                    <span className="text-xs text-muted-foreground">{pipeline?.checkedIn || 0} waiting</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Resource Utilization */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Resource Utilization</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                {
-                  resource: "Operating Rooms",
-                  used: 85,
-                  total: 100,
-                  unit: "%",
-                },
-                { resource: "ICU Beds", used: 18, total: 20, unit: "beds" },
-                { resource: "Ventilators", used: 12, total: 15, unit: "units" },
-                {
-                  resource: "Ambulances",
-                  used: 7,
-                  total: 10,
-                  unit: "vehicles",
-                },
-              ].map((item) => (
-                <div key={item.resource} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>{item.resource}</span>
-                    <span className="text-muted-foreground">
-                      {item.used}/{item.total} {item.unit}
-                    </span>
-                  </div>
-                  <Progress
-                    value={(item.used / item.total) * 100}
-                    className="h-2"
-                  />
-                </div>
-              ))}
             </div>
           </CardContent>
         </Card>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -517,7 +518,15 @@ input[type="number"] {
 }
 
 /* Standard Icon Colors */
-.icon-people { @apply text-blue-600 dark:text-blue-400; }
-.icon-contact { @apply text-indigo-500; }
-.icon-location { @apply text-muted-foreground; }
-.icon-date { @apply text-blue-500; }
+.icon-people {
+  @apply text-blue-600 dark:text-blue-400;
+}
+.icon-contact {
+  @apply text-indigo-500;
+}
+.icon-location {
+  @apply text-muted-foreground;
+}
+.icon-date {
+  @apply text-blue-500;
+}

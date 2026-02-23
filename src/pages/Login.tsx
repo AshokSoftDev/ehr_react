@@ -10,11 +10,11 @@ import { Form } from '../components/ui/form';
 import { FormFloatingInput } from '../components/form/form-floating-input';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Alert, AlertDescription } from '../components/ui/alert';
 import { Checkbox } from '../components/ui/checkbox';
 import { api } from '../lib/api';
 import { toast } from 'react-toastify';
 import { cn } from '../lib/utils';
+import { usePermissions } from '../contexts/PermissionContext';
 
 // Login validation schema
 const loginSchema = z.object({
@@ -41,14 +41,6 @@ interface LoginResponse {
   };
 }
 
-interface ApiError {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
-
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -58,6 +50,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { refreshPermissions } = usePermissions();
 
   const from = location.state?.from?.pathname || '/main/Dashboard';
 
@@ -280,6 +273,10 @@ const Login: React.FC = () => {
       }
 
       toast.success('Login successful!');
+
+      // Trigger permissions fetch now that token/user are stored
+      await refreshPermissions();
+
       navigate(from, { replace: true });
     } catch (error: unknown) {
       const message = 'Invalid email or password. Please try again.';

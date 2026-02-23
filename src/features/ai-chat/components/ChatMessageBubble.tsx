@@ -1,6 +1,8 @@
 import { cn } from '@/lib/utils';
 import { Bot, User, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { ChatMessage } from '../types/chat.types';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -81,9 +83,19 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
               : 'bg-muted rounded-tl-sm'
           )}
         >
-          {/* Message text with markdown-like formatting */}
-          <div className={cn('text-sm leading-relaxed whitespace-pre-wrap', !isUser && 'prose prose-sm dark:prose-invert max-w-none')}>
-            {formatMessage(message.content)}
+          {/* Message text with react-markdown formatting */}
+          <div className={cn(
+            "text-sm break-words", 
+            isUser ? "whitespace-pre-wrap leading-relaxed" 
+                   : "prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5 prose-headings:my-2"
+          )}>
+            {isUser ? (
+              <div>{message.content}</div>
+            ) : (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content}
+              </ReactMarkdown>
+            )}
           </div>
 
           {/* Copy button for AI messages */}
@@ -104,46 +116,4 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
       </div>
     </div>
   );
-}
-
-/**
- * Simple message formatting (basic markdown support)
- */
-function formatMessage(content: string): React.ReactNode {
-  // Split by code blocks
-  const parts = content.split(/```(\w+)?\n?([\s\S]*?)```/g);
-  
-  if (parts.length === 1) {
-    // No code blocks, just format inline
-    return formatInline(content);
-  }
-
-  return parts.map((part, index) => {
-    // Every 3rd element (1, 4, 7...) is code content
-    if (index % 3 === 2) {
-      return (
-        <pre
-          key={index}
-          className="my-2 p-3 rounded-lg bg-background/50 overflow-x-auto text-xs font-mono"
-        >
-          <code>{part}</code>
-        </pre>
-      );
-    }
-    // Skip language identifiers (every 3rd starting from 1)
-    if (index % 3 === 1) return null;
-    // Regular text
-    return <span key={index}>{formatInline(part)}</span>;
-  });
-}
-
-function formatInline(text: string): React.ReactNode {
-  // Bold: **text**
-  const parts = text.split(/\*\*(.*?)\*\*/g);
-  return parts.map((part, index) => {
-    if (index % 2 === 1) {
-      return <strong key={index}>{part}</strong>;
-    }
-    return part;
-  });
 }
