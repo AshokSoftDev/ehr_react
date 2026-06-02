@@ -61,7 +61,7 @@ export const AppRouter: React.FC = () => {
           </Suspense>
         }
       >
-      <Route path="/main/" element={<Navigate to="/main/dashboard" replace />} />
+        <Route path="/main/" element={<Navigate to="/main/dashboard" replace />} />
         <Route index element={<Dashboard />} />
 
         {/* Render the rest of the authorized routes from the config file */}

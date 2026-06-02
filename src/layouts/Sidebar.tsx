@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   );
 
   // console.log(accessibleRoutes);
-  
+
 
   useEffect(() => {
     if (isMobile) {
@@ -194,14 +194,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             "bg-sidebar border-r border-sidebar-border transition-all duration-300 overflow-y-auto overflow-x-hidden",
             isMobile
               ? [
-                  "fixed left-0 z-90 w-64 transform",
-                  "h-[calc(100vh-3.5rem)]",
-                  isExpanded ? "translate-x-0" : "-translate-x-full",
-                ]
+                "fixed left-0 z-90 w-64 transform",
+                "h-[calc(100vh-3.5rem)]",
+                isExpanded ? "translate-x-0" : "-translate-x-full",
+              ]
               : [
-                  "absolute left-0 top-0 z-50 h-full",
-                  isExpanded ? "w-64" : "w-14",
-                ]
+                "absolute left-0 top-0 z-50 h-full",
+                isExpanded ? "w-64" : "w-14",
+              ]
           )}
           style={{
             top: isMobile ? "3.5rem" : "0",
