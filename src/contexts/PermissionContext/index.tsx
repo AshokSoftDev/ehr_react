@@ -108,11 +108,13 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const hasModuleAccess = (moduleKey: string): boolean => {
-    const permission = permissions.find(
-      (p) =>
-        p.moduleId === moduleKey ||
-        p.moduleName.toLowerCase() === moduleKey.toLowerCase()
-    );
+    console.log(moduleKey);
+
+    // const permission = permissions.find(
+    //   (p) =>
+    //     p.moduleId === moduleKey ||
+    //     p.moduleName.toLowerCase() === moduleKey.toLowerCase()
+    // );
     // return permission?.hasAccess || false;
     return true;
   };
