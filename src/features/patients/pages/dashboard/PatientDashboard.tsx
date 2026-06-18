@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useParams, useSearchParams } from "react-router-dom";
 import PatientInfoTab from "./components/PatientInfoTab";
 import PatientEmergencyTab from "./components/PatientEmergencyTab";
+import PatientAppointmentTab from "./components/PatientAppointmentTab";
 import {
   User,
   Phone,
@@ -70,8 +71,9 @@ export function PatientDashboard() {
       <CardContent className="p-4">
         {currentTab === "info" && <PatientInfoTab patientId={patientId} />}
         {currentTab === "emergency" && <PatientEmergencyTab patientId={patientId} />}
+        {currentTab === "appointment" && <PatientAppointmentTab patientId={patientId} />}
 
-        {["appointment", "billing", "insurances", "occupation"].includes(currentTab) && (
+        {["billing", "insurances", "occupation"].includes(currentTab) && (
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
             <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
               {(() => {

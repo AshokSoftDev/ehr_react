@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { FormFloatingInput } from '@/components/form/form-floating-input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Trash2, Pencil, Loader2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { isAxiosError } from 'axios';
@@ -170,20 +169,28 @@ export function PatientEmergencyTab({ patientId }: Props) {
             </SheetHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
+                <div className="flex-1 overflow-y-auto px-2 py-4">
+                  <div className="space-y-5 px-1">
                     <FormFloatingInput control={form.control} name="name" label="Full Name" />
                     <FormFloatingInput control={form.control} name="relation" label="Relation" />
-                    <FormFloatingInput control={form.control} name="contactNumber" label="Contact Number" inputMode="numeric" />
+                    <FormFloatingInput 
+                      control={form.control} 
+                      name="contactNumber" 
+                      label="Contact Number" 
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={10}
+                    />
                   </div>
-                </ScrollArea>
+                </div>
                 <div className="flex justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">
                   <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={createMutation.isPending || updateMutation.isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" className="bg-primary-gradient hover:opacity-90" disabled={createMutation.isPending || updateMutation.isPending}>
                     {(createMutation.isPending || updateMutation.isPending) && (
-                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
                     {(createMutation.isPending || updateMutation.isPending) ? 'Saving...' : 'Save'}
                   </Button>
