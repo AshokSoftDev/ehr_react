@@ -416,8 +416,8 @@ function VisitAccordionContent({
         </div>
 
         {/* Prescriptions */}
-        <Accordion 
-          type="multiple" 
+        <Accordion
+          type="multiple"
           className="pt-4 border-t"
           value={prescriptionAccordionOpen}
           onValueChange={setPrescriptionAccordionOpen}
@@ -566,8 +566,8 @@ function VisitAccordionContent({
               ) : hasPrescriptions ? (
                 <div className="space-y-2">
                   {prescriptions.map((rx) => (
-                    <PrescriptionCard 
-                      key={rx.prescription_id} 
+                    <PrescriptionCard
+                      key={rx.prescription_id}
                       prescription={rx}
                     />
                   ))}
@@ -734,7 +734,7 @@ export function ClinicalNotesPage() {
         const scrollArea = document.getElementById('visits-scroll-area');
         // Find the viewport element within ScrollArea (Radix adds [data-radix-scroll-area-viewport])
         const viewport = scrollArea?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
-        
+
         if (element && viewport) {
           // Get the element's position relative to the viewport
           const elementRect = element.getBoundingClientRect();
@@ -967,7 +967,7 @@ export function ClinicalNotesPage() {
                             {visit.doctor?.displayName && (
                               <span className="flex items-center gap-1">
                                 <Stethoscope className="h-3.5 w-3.5" />
-                                Dr. {visit.doctor.displayName}
+                                {visit.doctor.displayName}
                               </span>
                             )}
                             {visit.visit_type && (
@@ -977,10 +977,7 @@ export function ClinicalNotesPage() {
                             )}
                           </div>
                         </div>
-                        <div
-                          className={`h-2.5 w-2.5 rounded-full shrink-0 ${visit.status === 1 ? "bg-green-500" : "bg-muted"
-                            }`}
-                        />
+
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="pt-2 pb-4">

@@ -15,7 +15,7 @@ import { FormFloatingSelect } from "@/components/form/FormFloatingSelect";
 import { FormFloatingDatePicker } from "@/components/form/FormFloatingDatePicker";
 import { FormSearchSelect } from "@/components/form/form-search-select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Loader2 } from "lucide-react";
 
 import {
@@ -29,8 +29,18 @@ import { isAxiosError } from "axios";
 
 type Props = Readonly<{ patientId: number }>;
 
+import { patientService } from "@/features/patients/services/patient.service";
+import type { Patient } from "@/features/patients/types/patient.types";
+
 export function PatientInfoTab({ patientId }: Props) {
   const queryClient = useQueryClient();
+
+  // Patient
+  const { data: patient } = useQuery<Patient>({
+    queryKey: ["patient", patientId],
+    queryFn: () => patientService.getPatient(patientId),
+    enabled: Number.isFinite(patientId) && patientId > 0,
+  });
 
   const coerceDate = (d: unknown): Date | null => {
     if (!d) return null;
@@ -276,7 +286,9 @@ export function PatientInfoTab({ patientId }: Props) {
   return (
     <Card className="bg-card">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle>Patient Information</CardTitle>
+        <CardTitle>
+          {patient ? `${patient.title} ${patient.firstName} ${patient.lastName}  Information` : "Patient Information"}
+        </CardTitle>
         <Button
           size="sm"
           variant="outline"
@@ -314,14 +326,14 @@ export function PatientInfoTab({ patientId }: Props) {
             <SheetHeader className="px-4 py-3 border-b shrink-0">
               <SheetTitle>{editing ? "Edit Patient Info" : "Add Patient Info"}</SheetTitle>
             </SheetHeader>
-            
+
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="flex flex-col flex-1 overflow-hidden"
               >
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
+                <div className="flex-1 overflow-y-auto px-2 py-4">
+                  <div className="space-y-5 px-1">
                     <FormFloatingSelect
                       control={control}
                       name="bloodGroup"
@@ -389,7 +401,7 @@ export function PatientInfoTab({ patientId }: Props) {
                       label="Employee Code"
                     />
                   </div>
-                </ScrollArea>
+                </div>
 
                 <div className="flex justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">
                   <Button
@@ -406,7 +418,7 @@ export function PatientInfoTab({ patientId }: Props) {
                     disabled={createMutation.isPending || updateMutation.isPending}
                   >
                     {(createMutation.isPending || updateMutation.isPending) && (
-                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
                     {createMutation.isPending || updateMutation.isPending
                       ? "Saving..."

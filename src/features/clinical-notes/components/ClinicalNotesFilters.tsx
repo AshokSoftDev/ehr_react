@@ -31,7 +31,7 @@ export function ClinicalNotesFilters({
   const doctorOptions = [
     { label: "All Doctors", value: "all" },
     ...doctors.map((doc) => ({
-      label: `Dr. ${doc.displayName}`,
+      label: `${doc.displayName}`,
       value: doc.id,
     })),
   ];

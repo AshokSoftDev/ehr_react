@@ -8,6 +8,8 @@ type MedicalNoteEditorHandle = {
   setContent: (html: string) => void;
 };
 
+export const MEDICAL_NOTE_PLACEHOLDER = '<p><em>Click into the editor and start typing...</em></p>';
+
 const SECTION_TEMPLATES: Record<string, string> = {
   CC: '<h3>Chief Complaint</h3><p></p>',
   HPI: '<h3>History of Present Illness</h3><ul><li>Onset:</li><li>Location:</li><li>Duration:</li><li>Characteristics:</li><li>Aggravating factors:</li><li>Relieving factors:</li><li>Timing:</li><li>Severity:</li></ul>',
@@ -24,7 +26,7 @@ function applyFormat(cmd: string, value?: string) {
 const MedicalNoteEditor = forwardRef<MedicalNoteEditorHandle, { className?: string }>((props, ref) => {
   const { className } = props;
   const editorRef = useRef<HTMLDivElement | null>(null);
-  const [html, setHtml] = useState<string>('<h2>Clinical Note</h2><p><em>Click into the editor and start typing...</em></p>');
+  const [html, setHtml] = useState<string>(MEDICAL_NOTE_PLACEHOLDER);
   const htmlRef = useRef<string>(html);
   const externalSetRef = useRef(false);
   const rangeRef = useRef<Range | null>(null);
@@ -176,6 +178,19 @@ const MedicalNoteEditor = forwardRef<MedicalNoteEditorHandle, { className?: stri
           }}
           onKeyUp={() => { saveSelection(); updateToolbarStates(); }}
           onMouseUp={() => { saveSelection(); updateToolbarStates(); }}
+          onFocus={(e) => {
+            if (e.target.innerHTML === MEDICAL_NOTE_PLACEHOLDER) {
+              e.target.innerHTML = '<p><br></p>';
+              htmlRef.current = '<p><br></p>';
+            }
+          }}
+          onBlur={(e) => {
+            const content = e.target.innerHTML.trim();
+            if (!content || content === '<p><br></p>' || content === '<p></p>') {
+              e.target.innerHTML = MEDICAL_NOTE_PLACEHOLDER;
+              htmlRef.current = MEDICAL_NOTE_PLACEHOLDER;
+            }
+          }}
         />
       </div>
     </div>

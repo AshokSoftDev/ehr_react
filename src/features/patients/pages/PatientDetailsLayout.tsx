@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { format, differenceInYears } from "date-fns";
 import {
   Outlet,
   useLocation,
@@ -86,11 +87,30 @@ export function PatientDetailsLayout() {
             <h3 className="mt-2 text-sm font-semibold text-foreground leading-tight">
               {patient ? `${patient.firstName} ${patient.lastName}` : "Patient"}
             </h3>
-            {patient?.mrn && (
-              <Badge variant="secondary" className="mt-1 text-[10px] px-1.5 py-0">
-                {patient.mrn}
-              </Badge>
-            )}
+            <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1.5">
+              {patient?.mrn && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {patient.mrn}
+                </Badge>
+              )}
+              {patient?.gender && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                  {patient.gender}
+                </Badge>
+              )}
+              {patient?.dateOfBirth && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                  {format(new Date(patient.dateOfBirth), 'dd/MM/yyyy')}
+                </Badge>
+              )}
+              {(patient?.age !== undefined || patient?.dateOfBirth) && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                  {patient.age !== undefined 
+                    ? `${patient.age} yrs` 
+                    : `${differenceInYears(new Date(), new Date(patient.dateOfBirth as string))} yrs`}
+                </Badge>
+              )}
+            </div>
           </div>
 
           {/* Navigation - Scrollable if needed */}

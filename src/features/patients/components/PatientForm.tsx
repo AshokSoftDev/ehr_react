@@ -33,8 +33,8 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onC
       title: 'Mr.',
       firstName: '',
       lastName: '',
-      dateOfBirth: '',
-      age: 20,
+      dateOfBirth: undefined,
+      age: undefined,
       gender: 'Male',
       mobileNumber: '',
       address: '',
@@ -145,19 +145,18 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onC
                   <p className="text-xs text-muted-foreground">Where the patient resides</p>
                 </div>
               </div>
-              <FormFloatingInput control={form.control} name="address" label="Street Address" required />
+              <FormFloatingInput control={form.control} name="address" label="Street Address" />
               <div className="grid grid-cols-2 gap-3">
-                <FormFloatingInput control={form.control} name="area" label="Area / Locality" required />
-                <FormFloatingInput control={form.control} name="city" label="City" required />
+                <FormFloatingInput control={form.control} name="area" label="Area / Locality" />
+                <FormFloatingInput control={form.control} name="city" label="City" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <FormFloatingInput control={form.control} name="state" label="State" required />
-                <FormFloatingInput control={form.control} name="country" label="Country" required />
+                <FormFloatingInput control={form.control} name="state" label="State" />
+                <FormFloatingInput control={form.control} name="country" label="Country" />
                 <FormFloatingInput 
                   control={form.control} 
                   name="pincode" 
                   label="Pincode" 
-                  required 
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"

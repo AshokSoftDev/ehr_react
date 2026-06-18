@@ -179,60 +179,50 @@ const DictationRecorder: React.FC<DictationRecorderProps> = ({ onRecorded }) => 
   return (
     <div className="space-y-3">
       {/* Recording Status Card */}
-      <div className={`rounded-lg border p-3 transition-all ${status === 'recording'
-        ? 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-red-200 dark:border-red-800'
-        : status === 'paused'
-          ? 'bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30 border-yellow-200 dark:border-yellow-800'
-          : 'bg-muted/30 border-border'
-        }`}>
-        {/* Status + Timer */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${status === 'recording' ? 'bg-red-500 animate-pulse' :
-              status === 'paused' ? 'bg-yellow-500 animate-[pulse_2s_ease-in-out_infinite]' :
-                status === 'stopped' ? 'bg-green-500' :
-                  'bg-muted-foreground/40'
-              }`} />
-            <span className={`text-xs font-medium ${status === 'recording' ? 'text-red-600 dark:text-red-400' :
-              status === 'paused' ? 'text-yellow-600 dark:text-yellow-400' :
-                'text-muted-foreground'
-              }`}>
-              {status === 'recording' && 'Recording...'}
-              {status === 'paused' && 'Paused'}
-              {status === 'idle' && 'Ready to record'}
-              {status === 'stopped' && 'Recording complete'}
-            </span>
+      {(status === 'recording' || status === 'paused') && (
+        <div className={`rounded-lg border p-3 transition-all ${status === 'recording'
+          ? 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-red-200 dark:border-red-800'
+          : 'bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30 border-yellow-200 dark:border-yellow-800'
+          }`}>
+          {/* Status + Timer */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className={`h-2.5 w-2.5 rounded-full ${status === 'recording' ? 'bg-red-500 animate-pulse' : 'bg-yellow-500 animate-[pulse_2s_ease-in-out_infinite]'}`} />
+              <span className={`text-xs font-medium ${status === 'recording' ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                {status === 'recording' && 'Recording...'}
+                {status === 'paused' && 'Paused'}
+              </span>
+            </div>
+            <div className={`font-mono text-sm font-semibold ${status === 'recording' ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>{fmt}</div>
           </div>
-          <div className={`font-mono text-sm font-semibold ${status === 'recording' ? 'text-red-600 dark:text-red-400' : 'text-foreground'
-            }`}>{fmt}</div>
-        </div>
 
-        {/* Waveform Animation */}
-        <div className="h-14 flex items-center justify-center gap-[2px] px-2">
-          {levels.map((h, idx) => (
-            <div
-              key={idx}
-              className={`w-[3px] rounded-full ${status === 'recording'
-                ? 'bg-gradient-to-t from-red-500 via-rose-400 to-pink-300'
-                : status === 'paused'
-                  ? 'bg-gradient-to-t from-amber-500 to-yellow-300'
-                  : 'bg-muted-foreground/20'
-                }`}
-              style={{
-                height: `${status === 'recording' ? h : status === 'paused' ? h * 0.6 : 4}px`,
-                opacity: status === 'recording' ? 0.9 + (h / 200) : 0.4,
-                transform: status === 'recording' ? `scaleY(${0.9 + (h / 300)})` : 'scaleY(1)',
-              }}
-            />
-          ))}
+          {/* Waveform Animation */}
+          <div className="h-14 flex items-center justify-center gap-[2px] px-2">
+            {levels.map((h, idx) => (
+              <div
+                key={idx}
+                className={`w-[3px] rounded-full ${status === 'recording'
+                  ? 'bg-gradient-to-t from-red-500 via-rose-400 to-pink-300'
+                  : status === 'paused'
+                    ? 'bg-gradient-to-t from-amber-500 to-yellow-300'
+                    : 'bg-muted-foreground/20'
+                  }`}
+                style={{
+                  height: `${status === 'recording' ? h : status === 'paused' ? h * 0.6 : 4}px`,
+                  opacity: status === 'recording' ? 0.9 + (h / 200) : 0.4,
+                  transform: status === 'recording' ? `scaleY(${0.9 + (h / 300)})` : 'scaleY(1)',
+                }}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         {status === 'idle' && (
           <Button onClick={startRecording} size="sm" className="gap-1.5 h-8">
-            <Mic className="h-3.5 w-3.5" /> Start Recording
+            <Mic className="h-3.5 w-3.5" /> Click here to Start Recording
           </Button>
         )}
         {status === 'recording' && (
@@ -255,17 +245,15 @@ const DictationRecorder: React.FC<DictationRecorderProps> = ({ onRecorded }) => 
             </Button>
           </>
         )}
-        {(status === 'stopped' || audioUrl) && (
-          <Button variant="ghost" size="sm" onClick={resetRecording} className="gap-1.5 h-8 text-destructive hover:text-destructive">
-            <Trash2 className="h-3.5 w-3.5" /> Discard
-          </Button>
-        )}
       </div>
 
       {/* Audio Preview */}
       {audioUrl && (
-        <div className="rounded-lg border bg-card p-2">
-          <audio controls src={audioUrl} className="w-full h-8" />
+        <div className="flex items-center gap-2 rounded-lg border bg-card p-2">
+          <audio controls controlsList="nodownload noplaybackrate" src={audioUrl} className="flex-1 h-8" />
+          <Button variant="ghost" size="icon" onClick={resetRecording} className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0" title="Discard">
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       )}
 

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useCreateClinicalNote, useCreateClinicalNoteWithSoap } from "@/features/visits/hooks/useClinicalNotes";
 import DictationRecorder from "@/features/patients/components/DictationRecorder";
-import MedicalNoteEditor from "@/features/patients/components/MedicalNoteEditor";
+import MedicalNoteEditor, { MEDICAL_NOTE_PLACEHOLDER } from "@/features/patients/components/MedicalNoteEditor";
 import { toast } from "@/lib/toast";
 
 interface InlineClinicalNoteEditorProps {
@@ -71,8 +71,8 @@ export function InlineClinicalNoteEditor({
         setIsSaving(true);
         try {
             if (activeTab === "text") {
-                const content = editorRef.current?.getContent() || "";
-                if (!content || content === "<h2>Clinical Note</h2><p><em>Click into the editor and start typing...</em></p>") {
+                const content = editorRef.current?.getContent()?.trim() || "";
+                if (!content || content === MEDICAL_NOTE_PLACEHOLDER || content === '<p><br></p>' || content === '<p></p>') {
                     toast.error("Please enter clinical notes");
                     setIsSaving(false);
                     return;
@@ -106,12 +106,12 @@ export function InlineClinicalNoteEditor({
     return (
         <div className="space-y-4">
             {/* Header with tabs */}
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-blue-500" />
                     <span className="text-sm font-medium">Add Clinical Note</span>
                 </div>
-            </div>
+            </div> */}
 
             {/* Tabs */}
             <nav className="flex items-center gap-0 border-b border-border">
@@ -250,14 +250,16 @@ export function InlineClinicalNoteEditor({
                     <X className="h-3.5 w-3.5 mr-1" />
                     Cancel
                 </Button>
-                <Button onClick={handleSaveNote} disabled={isSaving} size="sm">
-                    {isSaving ? (
-                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                    ) : (
-                        <Save className="h-3.5 w-3.5 mr-1.5" />
-                    )}
-                    Save Note
-                </Button>
+                {activeTab === "text" && (
+                    <Button onClick={handleSaveNote} disabled={isSaving} size="sm">
+                        {isSaving ? (
+                            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                            <Save className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        Save Note
+                    </Button>
+                )}
                 {activeTab === "audio" && (
                     <Button
                         variant="secondary"
