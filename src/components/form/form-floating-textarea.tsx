@@ -22,7 +22,7 @@ type FormFloatingTextareaProps<
   rows?: number;
   value?: string;
   onValueChange?: (value: string) => void;
-  control?: Control<TFieldValues, unknown, TFieldValues>;
+  control?: Control<TFieldValues, any>;
   name?: TName;
   autoCapitalize?: boolean;
 };

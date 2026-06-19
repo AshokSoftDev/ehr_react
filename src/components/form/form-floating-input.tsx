@@ -22,7 +22,7 @@ type FormFloatingInputProps<
   placeholder?: string;
   value?: string;
   onValueChange?: (value: string) => void;
-  control?: Control<TFieldValues, unknown, TFieldValues>;
+  control?: Control<TFieldValues, any>;
   name?: TName;
   required?: boolean;
 } & Omit<

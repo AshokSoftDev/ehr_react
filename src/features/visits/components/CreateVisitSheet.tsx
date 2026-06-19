@@ -30,7 +30,7 @@ import type { PatientFormData } from '@/features/patients/schemas/patient.schema
 import type { AppointmentPatientLite } from '@/features/appointments/types/appointment.types';
 
 const formSchema = z.object({
-  patient_id: z.coerce.number().int().min(1, "Please select a patient"),
+  patient_id: z.number().int().min(1, "Please select a patient"),
   patient_mrn: z.string().optional(),
   doctor_id: z.string().min(1, 'Doctor is required'),
   visit_date: z.union([z.string(), z.date()]),
@@ -88,7 +88,7 @@ export function CreateVisitSheet({ open, onOpenChange, patientId }: Props) {
   useEffect(() => {
     if (open && patientId && !form.getValues('patient_mrn')) {
       patientService.getPatient(patientId).then((p) => {
-        form.setValue('patient_id', p.patient_id);
+        form.setValue('patient_id', p.patient_id as number);
         form.setValue('patient_mrn', `${p.firstName} ${p.lastName} (${p.mrn})`);
       });
     }
@@ -121,7 +121,7 @@ export function CreateVisitSheet({ open, onOpenChange, patientId }: Props) {
     try {
       const newPatient = await patientService.createPatient(data);
       setIsSelecting(true);
-      form.setValue('patient_id', newPatient.patient_id);
+      form.setValue('patient_id', newPatient.patient_id as number);
       form.setValue('patient_mrn', `${newPatient.firstName} ${newPatient.lastName} (${newPatient.mrn})`);
       setShowPatientSheet(false);
       setPatients([]);
@@ -160,7 +160,7 @@ export function CreateVisitSheet({ open, onOpenChange, patientId }: Props) {
 
   const handleSelectPatient = (p: AppointmentPatientLite) => {
       setIsSelecting(true);
-      form.setValue('patient_id', p.patient_id);
+      form.setValue('patient_id', p.patient_id as number);
       form.setValue('patient_mrn', `${p.firstName} ${p.lastName} (${p.mrn})`, { shouldValidate: true });
       setPatients([]);
       setHasSearched(false);

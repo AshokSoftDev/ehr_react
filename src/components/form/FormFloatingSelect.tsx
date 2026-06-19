@@ -24,7 +24,7 @@ type FormFloatingSelectProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 > = {
-  control?: Control<TFieldValues, unknown, TFieldValues>;
+  control?: Control<TFieldValues, any>;
   name?: TName;
   label: string;
   options: SelectOption[];

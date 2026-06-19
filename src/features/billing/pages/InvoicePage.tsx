@@ -5,17 +5,15 @@ import {
   FileText,
   CalendarDays,
   ArrowLeft,
-  Plus,
-  X,
-  Loader2,
   CreditCard,
-  Banknote,
-  Smartphone,
-  Building,
+  Loader2,
+  Plus,
   CheckCircle,
   Save,
-  ChevronsUpDown,
-  Check,
+  X,
+  Smartphone,
+  Banknote,
+  Building,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +39,6 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
