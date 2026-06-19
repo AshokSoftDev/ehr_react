@@ -106,7 +106,7 @@ export function FormSearchSelect<
                       "border border-input bg-background rounded-md",
                       "focus-visible:ring-2 focus-visible:ring-ring bg-card",
                       hasError &&
-                        "border-destructive focus-visible:ring-destructive",
+                      "border-destructive focus-visible:ring-destructive",
                       buttonClassName
                     )}
                   >

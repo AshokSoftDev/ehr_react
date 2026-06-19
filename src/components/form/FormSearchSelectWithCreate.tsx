@@ -110,8 +110,8 @@ export function FormSearchSelectWithCreate<
                       "border border-input bg-background rounded-md",
                       "focus-visible:ring-2 focus-visible:ring-ring",
                       hasError &&
-                        "border-destructive focus-visible:ring-destructive",
-                        "!bg-card",
+                      "border-destructive focus-visible:ring-destructive",
+                      "!bg-card",
                       buttonClassName
                     )}
                   >

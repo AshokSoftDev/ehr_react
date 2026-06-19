@@ -125,7 +125,7 @@ export function FormFloatingTextarea<
                     "border border-input bg-background rounded-md",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     hasError &&
-                      "border-destructive focus-visible:ring-destructive",
+                    "border-destructive focus-visible:ring-destructive",
                     textareaClassName
                   )}
                   disabled={disabled}

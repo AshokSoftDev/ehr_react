@@ -6,6 +6,7 @@ export type PatientEmergency = {
   name: string;
   relation: string;
   contactNumber: string;
+  isPrimary: boolean;
   status: number;
   createdAt?: string;
   createdBy?: string | null;
@@ -19,6 +20,7 @@ export type CreatePatientEmergencyDto = {
   name: string;
   relation: string;
   contactNumber: string;
+  isPrimary?: boolean;
   status?: number;
 };
 

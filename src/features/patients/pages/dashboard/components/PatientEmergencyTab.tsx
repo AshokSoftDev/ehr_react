@@ -9,6 +9,20 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { FormFloatingInput } from '@/components/form/form-floating-input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Trash2, Pencil, Loader2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { isAxiosError } from 'axios';
@@ -21,6 +35,7 @@ const schema = z.object({
   name: z.string().min(1, 'Name is required'),
   relation: z.string().min(1, 'Relation is required'),
   contactNumber: z.string().regex(/^\d{10}$/i, 'Enter 10 digit number'),
+  isPrimary: z.boolean().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -42,10 +57,10 @@ export function PatientEmergencyTab({ patientId }: Props) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', relation: '', contactNumber: '' },
+    defaultValues: { name: '', relation: '', contactNumber: '', isPrimary: false },
   });
 
-  const resetForm = (data?: FormValues) => form.reset(data ?? { name: '', relation: '', contactNumber: '' });
+  const resetForm = (data?: FormValues) => form.reset(data ?? { name: '', relation: '', contactNumber: '', isPrimary: false });
 
   const createMutation = useMutation({
     mutationFn: (payload: FormValues) => patientEmergencyService.create(patientId, payload),
@@ -133,29 +148,57 @@ export function PatientEmergencyTab({ patientId }: Props) {
             {listQuery.data!.map((item) => (
               <div key={item.pe_id} className="flex items-center justify-between rounded-md border p-3">
                 <div className="space-y-0.5">
-                  <div className="font-medium text-foreground">{item.name}</div>
+                  <div className="font-medium text-foreground flex items-center gap-2">
+                    {item.name}
+                    {item.isPrimary && (
+                      <Badge variant="default" className="text-[10px] px-1.5 py-0">Primary</Badge>
+                    )}
+                  </div>
                   <div className="text-xs text-muted-foreground">{item.relation} • {item.contactNumber}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
                     size="icon"
-                    variant="outline"
+                    variant="ghost"
+                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
                     onClick={() => {
                       setEditing(item);
-                      resetForm({ name: item.name, relation: item.relation, contactNumber: item.contactNumber });
+                      resetForm({ name: item.name, relation: item.relation, contactNumber: item.contactNumber, isPrimary: item.isPrimary ?? false });
                       setOpen(true);
                     }}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => deleteMutation.mutate(item.pe_id)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete this emergency contact.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteMutation.mutate(item.pe_id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             ))}
@@ -171,17 +214,31 @@ export function PatientEmergencyTab({ patientId }: Props) {
               <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
                 <div className="flex-1 overflow-y-auto px-2 py-4">
                   <div className="space-y-5 px-1">
-                    <FormFloatingInput control={form.control} name="name" label="Full Name" />
-                    <FormFloatingInput control={form.control} name="relation" label="Relation" />
-                    <FormFloatingInput 
-                      control={form.control} 
-                      name="contactNumber" 
-                      label="Contact Number" 
+                    <FormFloatingInput control={form.control} name="name" label="Full Name" required />
+                    <FormFloatingInput control={form.control} name="relation" label="Relation" required />
+                    <FormFloatingInput
+                      control={form.control}
+                      name="contactNumber"
+                      label="Contact Number"
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
                       maxLength={10}
+                      required
                     />
+
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">Primary Contact</Label>
+                        <div className="text-xs text-muted-foreground">
+                          Set this as the primary emergency contact
+                        </div>
+                      </div>
+                      <Switch
+                        checked={form.watch('isPrimary')}
+                        onCheckedChange={(checked) => form.setValue('isPrimary', checked, { shouldDirty: true })}
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">

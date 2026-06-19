@@ -16,7 +16,7 @@ import { FormFloatingDatePicker } from "@/components/form/FormFloatingDatePicker
 import { FormSearchSelect } from "@/components/form/form-search-select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, Pencil, Plus } from "lucide-react";
 
 import {
   patientInfoService,
@@ -31,6 +31,7 @@ type Props = Readonly<{ patientId: number }>;
 
 import { patientService } from "@/features/patients/services/patient.service";
 import type { Patient } from "@/features/patients/types/patient.types";
+import { cn } from "@/lib/utils";
 
 export function PatientInfoTab({ patientId }: Props) {
   const queryClient = useQueryClient();
@@ -84,8 +85,8 @@ export function PatientInfoTab({ patientId }: Props) {
   const bloodGroupOptions = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
   const schema = z
     .object({
-      bloodGroup: z.string().min(1, "Select blood group"),
-      overseas: z.boolean(),
+      bloodGroup: z.string().optional(),
+      overseas: z.boolean().optional(),
       passportNumber: z.string().optional().nullable(),
       validityDate: z.date().nullable(),
       occupation: z.string().optional().nullable(),
@@ -174,8 +175,24 @@ export function PatientInfoTab({ patientId }: Props) {
   });
 
   const onSubmit = (values: FormValues) => {
-    if (info) updateMutation.mutate(values);
-    else createMutation.mutate(values);
+    // Sanitize empty strings to null
+    const payload = {
+      ...values,
+      bloodGroup: values.bloodGroup || null,
+      passportNumber: values.passportNumber || null,
+      occupation: values.occupation || null,
+      department: values.department || null,
+      companyName: values.companyName || null,
+      designation: values.designation || null,
+      employeeCode: values.employeeCode || null,
+      primaryDoctorId: values.primaryDoctorId || null,
+    };
+
+    if (info) {
+      updateMutation.mutate(payload as any);
+    } else {
+      createMutation.mutate(payload as any);
+    }
   };
 
   // Avoid potential Control type identity issues across modules
@@ -292,6 +309,7 @@ export function PatientInfoTab({ patientId }: Props) {
         <Button
           size="sm"
           variant="outline"
+          className={cn(info ? "text-blue-500 hover:text-blue-700 hover:bg-blue-50" : "")}
           disabled={infoQuery.isLoading}
           onClick={() => {
             if (info) {
@@ -315,7 +333,17 @@ export function PatientInfoTab({ patientId }: Props) {
             setOpen(true);
           }}
         >
-          {info ? "Edit" : "Add Info"}
+          {info ? (
+            <>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </>
+          ) : (
+            <>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Info
+            </>
+          )}
         </Button>
       </CardHeader>
       <CardContent>

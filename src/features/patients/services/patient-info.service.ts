@@ -4,8 +4,8 @@ import { isAxiosError } from 'axios';
 export type PatientInfo = {
   pi_id?: number;
   patient_id?: number;
-  bloodGroup: string;
-  overseas: boolean;
+  bloodGroup?: string;
+  overseas?: boolean;
   passportNumber?: string | null;
   validityDate?: string | Date | null;
   occupation?: string | null;
