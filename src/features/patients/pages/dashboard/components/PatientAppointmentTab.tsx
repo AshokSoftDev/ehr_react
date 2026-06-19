@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar as CalendarIcon, Clock, Edit2 } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { isAxiosError } from 'axios';
 
@@ -14,8 +14,9 @@ import { patientService } from '@/features/patients/services/patient.service';
 import { AppointmentFormSheet, type AppointmentFormValues } from '@/features/appointments/components/AppointmentFormSheet';
 import type { AppointmentItem } from '@/features/appointments/types/appointment.types';
 import type { Patient } from '@/features/patients/types/patient.types';
+import { cn } from '@/lib/utils';
 
-type Props = { 
+type Props = {
   patientId: number;
 };
 
@@ -55,7 +56,7 @@ export function PatientAppointmentTab({ patientId }: Props) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { id: number; data: Partial<AppointmentFormValues> }) => 
+    mutationFn: (payload: { id: number; data: Partial<AppointmentFormValues> }) =>
       appointmentService.update(payload.id, payload.data as any),
     onSuccess: () => {
       toast.success('Appointment updated successfully');
@@ -103,7 +104,12 @@ export function PatientAppointmentTab({ patientId }: Props) {
   return (
     <Card className="bg-card h-full flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 shrink-0 border-b">
-        <CardTitle>Appointments</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          Appointments
+          <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs font-semibold">
+            {appointments.length}
+          </Badge>
+        </CardTitle>
         <Button
           size="sm"
           onClick={() => {
@@ -126,50 +132,38 @@ export function PatientAppointmentTab({ patientId }: Props) {
             {appointments.map((item: AppointmentItem) => (
               <div key={item.appointment_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border p-4 hover:bg-accent/50 transition-colors">
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">
-                      {item.appointment_type}
-                    </span>
-                    <Badge variant="outline" className={getStatusColor(item.appointment_status)}>
-                      {item.appointment_status}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium text-foreground">
                     <div className="flex items-center gap-1.5">
-                      <CalendarIcon className="h-3.5 w-3.5" />
+                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                       {format(new Date(item.appointment_date), 'MMM d, yyyy')}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" />
+                      <Clock className="h-4 w-4 text-muted-foreground" />
                       {format(new Date(item.start_time), 'h:mm a')} - {format(new Date(item.end_time), 'h:mm a')} ({item.duration}m)
                     </div>
                   </div>
-                  
-                  <div className="text-sm">
-                    <span className="font-medium text-foreground">Doctor:</span> {item.doctor_title} {item.doctor_firstName} {item.doctor_lastName}
-                    {item.doctor_specialty && <span className="text-muted-foreground"> • {item.doctor_specialty}</span>}
+
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-sm text-muted-foreground">
+                      {item.appointment_type}
+                    </span>
+                    <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", getStatusColor(item.appointment_status))}>
+                      {item.appointment_status}
+                    </Badge>
                   </div>
-                  
+
+                  <div className="text-sm">
+                    {item.doctor_title} {item.doctor_firstName} {item.doctor_lastName}
+                    {item.doctor_specialty && <span className="text-muted-foreground"> | {item.doctor_specialty}</span>}
+                  </div>
+
                   {item.reason_for_visit && (
                     <div className="text-sm text-muted-foreground line-clamp-1">
                       <span className="font-medium text-foreground">Reason:</span> {item.reason_for_visit}
                     </div>
                   )}
                 </div>
-                
-                <div className="flex items-center sm:self-start">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setEditing(item);
-                      setOpen(true);
-                    }}
-                  >
-                    <Edit2 className="mr-2 h-3.5 w-3.5" /> Edit
-                  </Button>
-                </div>
+
               </div>
             ))}
           </div>

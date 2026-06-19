@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import type {
   VisitFilters as VisitFiltersType,
   VisitItem,
@@ -20,6 +20,7 @@ import { createVisitColumns } from "./visitColumns";
 import { FormFloatingSelect } from "@/components/form/FormFloatingSelect";
 import { useNavigate } from "react-router-dom";
 import { appointmentService } from "../../appointments/services/appointment.service";
+import { CreateVisitSheet } from "../components/CreateVisitSheet";
 
 const filterSchema = z.object({
   dateFrom: z.union([z.string(), z.date()]).optional(),
@@ -34,6 +35,7 @@ type FilterValues = z.infer<typeof filterSchema>;
 export function VisitsPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [showCreateSheet, setShowCreateSheet] = useState(false);
   const navigate = useNavigate();
 
   const filterForm = useForm<FilterValues>({
@@ -118,7 +120,10 @@ export function VisitsPage() {
               View and filter patient visits history
             </p>
           </div>
-          {/* Add Visit button could go here if functionality existed, for now just empty or could link to patient list */}
+          <Button size="sm" onClick={() => setShowCreateSheet(true)} className="h-8">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Visit
+          </Button>
         </div>
 
         {/* Filters */}
@@ -210,6 +215,11 @@ export function VisitsPage() {
           />
         </div>
       </ScrollArea>
+
+      <CreateVisitSheet
+        open={showCreateSheet}
+        onOpenChange={setShowCreateSheet}
+      />
     </div>
   );
 }

@@ -14,6 +14,8 @@ import {
   Building,
   CheckCircle,
   Save,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +28,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  PopoverAnchor,
 } from "@/components/ui/popover";
 import {
   Select,
@@ -34,6 +37,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
@@ -78,19 +89,21 @@ const calculateItemAmounts = (item: InvoiceItemRow) => {
 };
 
 // Inline Drug Search Row Component
-function InlineDrugSearchRow({ 
-  onDrugSelect, 
-  disabled 
-}: { 
+function InlineDrugSearchRow({
+  onDrugSelect,
+  disabled
+}: {
   onDrugSelect: (drug: Drug) => void;
   disabled?: boolean;
 }) {
   const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
   const { data: drugs, isLoading } = useDrugSearch(query);
 
   const handleSelect = (drug: Drug) => {
     onDrugSelect(drug);
     setQuery("");
+    setOpen(false);
   };
 
   return (
@@ -99,41 +112,62 @@ function InlineDrugSearchRow({
         <Plus className="h-3 w-3" />
       </td>
       <td className="p-2">
-        <div className="relative">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search drugs to add..."
-            className="h-7 text-xs"
-            disabled={disabled}
-          />
-          {query.length >= 2 && (
-            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-auto">
-              {isLoading ? (
-                <div className="p-3 text-xs text-muted-foreground text-center">
-                  Searching...
-                </div>
-              ) : drugs && drugs.length > 0 ? (
-                drugs.map((drug) => (
-                  <button
-                    key={drug.drug_id}
-                    onClick={() => handleSelect(drug)}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center justify-between"
-                  >
-                    <span className="font-medium">{drug.drug_name}</span>
-                    <span className="text-muted-foreground">
-                      ₹{Number(drug.amount || 0).toFixed(2)}
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <div className="p-3 text-xs text-muted-foreground text-center">
-                  No drugs found
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverAnchor asChild>
+            <Input
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                if (e.target.value.length >= 2) setOpen(true);
+                else setOpen(false);
+              }}
+              onFocus={() => {
+                if (query.length >= 2) setOpen(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setOpen(false);
+              }}
+              placeholder="Search drugs to add..."
+              className="h-7 text-xs w-full min-w-[200px]"
+              disabled={disabled}
+            />
+          </PopoverAnchor>
+          <PopoverContent
+            className="w-[300px] p-0"
+            align="start"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <Command shouldFilter={false}>
+              <CommandList>
+                {isLoading ? (
+                  <div className="p-3 text-xs text-muted-foreground text-center">
+                    Searching...
+                  </div>
+                ) : drugs && drugs.length > 0 ? (
+                  <CommandGroup>
+                    {drugs.map((drug) => (
+                      <CommandItem
+                        key={drug.drug_id}
+                        value={`${drug.drug_generic} ${drug.drug_name}`}
+                        onSelect={() => handleSelect(drug)}
+                        className="flex items-center justify-between text-xs"
+                      >
+                        <span className="font-medium">
+                          {drug.drug_generic} <span className="text-muted-foreground font-normal">({drug.drug_name})</span>
+                        </span>
+                        <span className="text-muted-foreground">
+                          ₹{Number(drug.amount || 0).toFixed(2)}
+                        </span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ) : (
+                  <CommandEmpty className="py-2 text-xs">No drugs found.</CommandEmpty>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </td>
       <td className="p-2" />
       <td className="p-2" />
@@ -162,8 +196,8 @@ export function InvoicePage() {
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [receiptGenerated, setReceiptGenerated] = useState<{ 
-    receipt_number: string; 
+  const [receiptGenerated, setReceiptGenerated] = useState<{
+    receipt_number: string;
     amount: number;
   } | null>(null);
 
@@ -212,7 +246,7 @@ export function InvoicePage() {
     if (selectedVisit && existingInvoicesData?.invoices && existingInvoicesData.invoices.length > 0) {
       const existingInvoice = existingInvoicesData.invoices[0];
       setSavedInvoice(existingInvoice);
-      
+
       const existingItems: InvoiceItemRow[] = existingInvoice.items.map((item) => ({
         _id: generateId(),
         item_type: item.item_type,
@@ -288,7 +322,7 @@ export function InvoicePage() {
     const newItem: InvoiceItemRow = {
       _id: generateId(),
       item_type: "drug",
-      item_name: drug.drug_name,
+      item_name: `${drug.drug_generic} (${drug.drug_name})`,
       reference_id: drug.drug_id,
       quantity: 1,
       unit_amount: Number(drug.amount) || 0,
@@ -307,9 +341,9 @@ export function InvoicePage() {
       ...calculateItemAmounts(item),
     }));
 
-    const baseSubtotal = items.reduce((sum, item) => 
+    const baseSubtotal = items.reduce((sum, item) =>
       sum + (item.quantity ?? 1) * (item.unit_amount ?? 0), 0);
-    
+
     const totalPremium = items.reduce((sum, item) => sum + (item.premium ?? 0), 0);
     const totalItemDiscount = itemsWithAmounts.reduce((sum, item) => sum + (item.discount_amount || 0), 0);
     const grossTotal = itemsWithAmounts.reduce((sum, item) => sum + (item.net_amount || 0), 0);
@@ -399,7 +433,7 @@ export function InvoicePage() {
       }
 
       setSavedInvoice(invoice);
-    } catch{
+    } catch {
       toast.error("Failed to save invoice");
     } finally {
       setIsSaving(false);
@@ -432,7 +466,7 @@ export function InvoicePage() {
 
       setSavedInvoice((prev) => prev ? { ...prev, status: "paid" } : null);
       toast.success("Payment successful! Receipt generated.");
-    } catch{
+    } catch {
       toast.error("Payment failed. Please try again.");
     } finally {
       setIsProcessingPayment(false);
@@ -531,9 +565,6 @@ export function InvoicePage() {
                         <td className="p-2 text-muted-foreground">{index + 1}</td>
                         <td className="p-2">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-[9px] px-1 py-0 shrink-0">
-                              {item.item_type}
-                            </Badge>
                             <Input
                               value={item.item_name}
                               onChange={(e) => updateItem(item._id, { item_name: e.target.value })}
@@ -541,6 +572,9 @@ export function InvoicePage() {
                               placeholder="Item name"
                               disabled={isPaid}
                             />
+                            {/* <Badge variant="outline" className="text-[9px] px-1 py-0 shrink-0">
+                              {item.item_type}
+                            </Badge> */}
                           </div>
                         </td>
                         <td className="p-2">

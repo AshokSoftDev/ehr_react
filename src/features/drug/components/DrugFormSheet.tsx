@@ -56,7 +56,7 @@ export function DrugFormSheet({
       drug_measure: (initial?.drug_measure as "mg" | "g" | "mcg" | "ml" | "l" | "capsule" | "tablet") ?? "mg",
       amount: initial?.amount ?? 1,
       instruction: initial?.instruction ?? "",
-      status: initial?.status === 1,
+      status: initial?.status !== undefined ? initial?.status === 1 : true,
     },
   });
 
@@ -70,7 +70,7 @@ export function DrugFormSheet({
         drug_measure: (initial?.drug_measure as "mg" | "g" | "mcg" | "ml" | "l" | "capsule" | "tablet") ?? "mg",
         amount: initial?.amount ?? 1,
         instruction: initial?.instruction ?? "",
-        status: initial?.status === 1,
+        status: initial?.status !== undefined ? initial?.status === 1 : true,
       });
     }
   }, [open, initial, form]);

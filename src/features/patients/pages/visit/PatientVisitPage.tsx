@@ -15,6 +15,7 @@ import {
   Receipt,
   Stethoscope,
   User,
+  Plus,
 } from "lucide-react";
 import { patientService } from "@/features/patients/services/patient.service";
 import { visitService } from "@/features/visits/services/visit.service";
@@ -24,6 +25,7 @@ import { PatientVisitPrescriptionPage } from "./pages/PatientVisitPrescriptionPa
 import { PatientVisitClinicalNotesPage } from "./pages/PatientVisitClinicalNotesPage";
 import { PatientVisitDocumentPage } from "./pages/PatientVisitDocumentPage";
 import { CreateInvoiceSheet } from "@/features/billing/components/CreateInvoiceSheet";
+import { CreateVisitSheet } from "@/features/visits/components/CreateVisitSheet";
 
 const tabs = [
   { id: "overview", label: "Overview", icon: ClipboardList },
@@ -40,13 +42,14 @@ export function PatientVisitPage() {
   const { id } = useParams<{ id: string }>();
   const patientId = Number(id);
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   const initialVisitId = searchParams.get("visitId");
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(
     initialVisitId ? Number(initialVisitId) : null
   );
   const currentTab = (searchParams.get("tab") as TabId) || "overview";
   const [showInvoiceSheet, setShowInvoiceSheet] = useState(false);
+  const [showCreateSheet, setShowCreateSheet] = useState(false);
 
   const { data: patient } = useQuery({
     queryKey: ["patient", patientId],
@@ -103,8 +106,16 @@ export function PatientVisitPage() {
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-primary" />
             <h2 className="text-sm font-semibold">Patient Visits</h2>
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 ml-2">
+              {visits.length}
+            </Badge>
           </div>
-          <span className="text-xs text-muted-foreground">{visits.length} visits</span>
+          <div className="flex items-center gap-3">
+            <Button size="sm" onClick={() => setShowCreateSheet(true)} className="h-7 px-2 text-xs">
+              <Plus className="h-3 w-3 mr-1" />
+              Create Visit
+            </Button>
+          </div>
         </div>
         <CardContent className="p-3">
           {visitsLoading ? (
@@ -117,7 +128,10 @@ export function PatientVisitPage() {
             <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
               <CalendarDays className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm font-medium">No visits yet</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Create a visit to start</p>
+              <Button variant="outline" size="sm" onClick={() => setShowCreateSheet(true)} className="mt-3 text-xs h-8">
+                <Plus className="h-3 w-3 mr-1.5" />
+                Create a visit to start
+              </Button>
             </div>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -131,30 +145,36 @@ export function PatientVisitPage() {
                   >
                     <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-lg bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="flex items-center justify-between mb-1.5">
-                      <Badge variant={visit.status === 1 ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
+                      {/* <Badge variant={visit.status === 1 ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
                         {visit.status === 1 ? "Active" : "Done"}
-                      </Badge>
-                      <span className="text-[10px] text-muted-foreground">#{visit.visit_id}</span>
+                      </Badge> */}
+                      {/* <span className="text-[10px] text-muted-foreground">#{visit.visit_id}</span> */}
                     </div>
-                    <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {visit.visit_type}
+                    <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      {date.toLocaleDateString()}
                     </h3>
-                    <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
-                      <CalendarDays className="h-3 w-3" />
-                      <span>{date.toLocaleDateString()}</span>
-                    </div>
                     {visit.doctor?.displayName && (
-                      <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
+                      <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
                         <User className="h-3 w-3" />
-                        <span>Dr. {visit.doctor.displayName}</span>
+                        <span>{visit.doctor.displayName}</span>
                       </div>
                     )}
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
+                      <ClipboardList className="h-3 w-3" />
+                      <span>{visit.visit_type}</span>
+                    </div>
                   </button>
                 );
               })}
             </div>
           )}
         </CardContent>
+        <CreateVisitSheet
+          open={showCreateSheet}
+          onOpenChange={setShowCreateSheet}
+          patientId={patientId}
+        />
       </Card>
     );
   }
@@ -198,7 +218,7 @@ export function PatientVisitPage() {
 
       {/* Tabs */}
       <div className="px-1 border-b border-border">
-        <nav 
+        <nav
           className="flex items-center overflow-x-auto"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >

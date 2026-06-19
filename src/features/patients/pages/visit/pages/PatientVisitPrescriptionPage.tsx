@@ -57,7 +57,7 @@ const emptyRow = (): PrescriptionRow => ({
   drug_type: "",
   drug_dosage: "",
   drug_measure: "mg",
-  duration: 3,
+  duration: 1,
   duration_type: "Days",
   quantity: 1,
   instruction: "",
@@ -203,7 +203,7 @@ export function PatientVisitPrescriptionPage() {
           drug_type: p.drug_type || "",
           drug_dosage: p.drug_dosage || "",
           drug_measure: p.drug_measure || "mg",
-          duration: p.duration ?? 3,
+          duration: p.duration ?? 1,
           duration_type: p.duration_type || "Days",
           quantity: p.quantity ?? 1,
           instruction: p.instruction || "",
@@ -360,7 +360,7 @@ export function PatientVisitPrescriptionPage() {
       drug_type: t.drug_type || "",
       drug_dosage: t.drug_dosage || "",
       drug_measure: t.drug_measure || "mg",
-      duration: t.duration ?? 3,
+      duration: t.duration ?? 1,
       duration_type: t.duration_type || "Days",
       quantity: t.quantity ?? 1,
       instruction: t.instruction || "",
@@ -616,7 +616,7 @@ export function PatientVisitPrescriptionPage() {
                               type="number"
                               value={row.duration || ""}
                               onChange={(e) => updateRow(row.id, { duration: e.target.value ? Number(e.target.value) : undefined })}
-                              placeholder="3"
+                              placeholder="1"
                               className="h-7 text-xs w-12"
                             />
                             <Select

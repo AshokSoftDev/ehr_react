@@ -52,3 +52,12 @@ export interface PaginatedVisits {
   page: number;
   totalPages: number;
 }
+
+export interface CreateVisitPayload {
+  patient_id: number;
+  doctor_id: string;
+  visit_date: Date | string;
+  visit_type: string;
+  reason_for_visit?: string;
+  location_id?: number;
+}

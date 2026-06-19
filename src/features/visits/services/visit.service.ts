@@ -21,6 +21,11 @@ export class VisitService {
     const res = await api.get<{ status: string; data: StatusCounts }>(`${this.baseUrl}/status-counts`, { params: filters });
     return res.data.data;
   }
+
+  async create(payload: import('../types/visit.types').CreateVisitPayload): Promise<import('../types/visit.types').VisitItem> {
+    const res = await api.post<{ status: string; data: import('../types/visit.types').VisitItem }>(this.baseUrl, payload);
+    return res.data.data;
+  }
 }
 
 export const visitService = new VisitService();

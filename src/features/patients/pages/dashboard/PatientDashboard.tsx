@@ -3,13 +3,14 @@ import { useParams, useSearchParams } from "react-router-dom";
 import PatientInfoTab from "./components/PatientInfoTab";
 import PatientEmergencyTab from "./components/PatientEmergencyTab";
 import PatientAppointmentTab from "./components/PatientAppointmentTab";
+import PatientBillingTab from "./components/PatientBillingTab";
 import {
   User,
   Phone,
   Calendar,
   CreditCard,
-  Shield,
-  Briefcase,
+  // Shield,
+  // Briefcase,
 } from "lucide-react";
 
 const tabs = [
@@ -17,8 +18,8 @@ const tabs = [
   { id: "emergency", label: "Emergency", icon: Phone },
   { id: "appointment", label: "Appointment", icon: Calendar },
   { id: "billing", label: "Billing", icon: CreditCard },
-  { id: "insurances", label: "Insurances", icon: Shield },
-  { id: "occupation", label: "Occupation", icon: Briefcase },
+  // { id: "insurances", label: "Insurances", icon: Shield },
+  // { id: "occupation", label: "Occupation", icon: Briefcase },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -39,7 +40,7 @@ export function PatientDashboard() {
     <Card className="border-border shadow-sm overflow-hidden">
       {/* Compact Tabs */}
       <div className="px-1 border-b border-border">
-        <nav 
+        <nav
           className="flex items-center overflow-x-auto"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
@@ -51,8 +52,8 @@ export function PatientDashboard() {
                 onClick={() => handleTabChange(id)}
                 className={`
                   group relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all duration-150 whitespace-nowrap
-                  ${isActive 
-                    ? "text-primary" 
+                  ${isActive
+                    ? "text-primary"
                     : "text-muted-foreground hover:text-primary hover:bg-primary/5"
                   }
                 `}
@@ -72,8 +73,9 @@ export function PatientDashboard() {
         {currentTab === "info" && <PatientInfoTab patientId={patientId} />}
         {currentTab === "emergency" && <PatientEmergencyTab patientId={patientId} />}
         {currentTab === "appointment" && <PatientAppointmentTab patientId={patientId} />}
+        {currentTab === "billing" && <PatientBillingTab patientId={patientId} />}
 
-        {["billing", "insurances", "occupation"].includes(currentTab) && (
+        {["insurances", "occupation"].includes(currentTab) && (
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
             <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
               {(() => {

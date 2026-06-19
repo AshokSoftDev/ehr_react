@@ -8,16 +8,7 @@ import { Eye, Calendar, User } from 'lucide-react';
 export const createVisitColumns = (
   onView: (item: VisitItem) => void
 ): ColumnDef<VisitItem, unknown>[] => [
-  {
-    accessorKey: 'patient_mrn',
-    header: 'MRN',
-    cell: ({ row }) => {
-      const mrn = row.original.patient?.mrn;
-      return mrn ? (
-        <Badge variant="secondary" className="font-mono">{mrn}</Badge>
-      ) : null;
-    },
-  },
+
   {
     accessorKey: 'patient_name',
     header: 'Patient',
@@ -35,7 +26,7 @@ export const createVisitColumns = (
                 {p.title ? `${p.title} ` : ''}{p.firstName} {p.lastName}
               </div>
               <div className="text-xs text-muted-foreground">
-                MRN: {p.mrn}
+                {p.mrn}
               </div>
             </div>
           </div>
@@ -59,6 +50,18 @@ export const createVisitColumns = (
             {isToday && <Badge variant="default" className="text-xs px-1 py-0">Today</Badge>}
           </div>
         </div>
+      );
+    },
+  },
+  {
+    header: 'Type',
+    accessorKey: 'visit_type',
+    cell: ({ row }) => {
+      const type = row.original.visit_type;
+      return type ? (
+        <Badge variant="outline" className="font-normal text-xs">{type}</Badge>
+      ) : (
+        <span className="text-muted-foreground text-xs">-</span>
       );
     },
   },

@@ -105,8 +105,8 @@ export function PatientDetailsLayout() {
               )}
               {(patient?.age !== undefined || patient?.dateOfBirth) && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
-                  {patient.age !== undefined 
-                    ? `${patient.age} yrs` 
+                  {patient.age !== undefined
+                    ? `${patient.age} yrs`
                     : `${differenceInYears(new Date(), new Date(patient.dateOfBirth as string))} yrs`}
                 </Badge>
               )}
@@ -120,10 +120,9 @@ export function PatientDetailsLayout() {
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `group relative flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-xs font-medium transition-all duration-150 ${
-                    isActive
-                      ? "text-primary bg-primary/5"
-                      : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+                  `group relative flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-xs font-medium transition-all duration-150 ${isActive
+                    ? "text-primary bg-primary/5"
+                    : "text-muted-foreground hover:text-primary hover:bg-primary/5"
                   }`
                 }
               >
@@ -149,7 +148,7 @@ export function PatientDetailsLayout() {
               <AlertTriangle className="h-3.5 w-3.5" />
               <span className="text-xs font-medium">No Drug Allergies</span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted ml-auto">
               <Wallet className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs font-medium">Balance: <span className="text-foreground">$0.00</span></span>
             </div>
