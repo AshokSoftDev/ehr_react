@@ -57,7 +57,7 @@ export function InlineClinicalNoteEditor({
 
         setIsGeneratingSoap(true);
         try {
-            await createSoapNote.mutateAsync(file);
+            await createSoapNote.mutateAsync({ file });
             toast.success("SOAP notes generated!");
             onNoteSaved();
         } catch {
