@@ -1,6 +1,7 @@
 export type ClinicalNoteType = 'text' | 'audio';
 
 export interface ClinicalNote {
+  doctor?: { id: string; displayName: string; specialty: string | null };
   cn_id: number;
   patient_id: number;
   appointment_id?: number | null;
@@ -24,9 +25,11 @@ export interface ClinicalNote {
 export interface CreateClinicalNotePayload {
   notes_type: ClinicalNoteType;
   editor_notes?: string;
+  doctor_id?: string;
   file?: File;
 }
 
 export interface UpdateClinicalNotePayload {
   editor_notes: string;
+  doctor_id?: string;
 }

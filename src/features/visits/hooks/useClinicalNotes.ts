@@ -73,9 +73,9 @@ export function useDeleteClinicalNote(visitId?: number) {
 export function useCreateClinicalNoteWithSoap(visitId?: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (file: File) => {
+    mutationFn: ({ file, doctor_id }: { file: File; doctor_id?: string }) => {
       if (!visitId) throw new Error('visitId is required');
-      return clinicalNotesService.createWithSoapNotes(visitId, file);
+      return clinicalNotesService.createWithSoapNotes(visitId, file, doctor_id);
     },
     onSuccess: () => {
       if (visitId) qc.invalidateQueries({ queryKey: key(visitId) });

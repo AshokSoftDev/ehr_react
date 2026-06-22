@@ -39,7 +39,7 @@ export function PrescriptionCard({
   onSelectChange,
 }: PrescriptionCardProps) {
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500/60 via-teal-500/60 to-emerald-500/60 opacity-70" />
       
       <div className="flex items-start gap-3">
@@ -67,41 +67,47 @@ export function PrescriptionCard({
             )}
           </div>
 
-          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-            {prescription.drug_dosage && (
-              <div className="text-muted-foreground">
-                <span className="font-medium text-foreground">Dosage:</span> {prescription.drug_dosage}
-                {prescription.drug_measure && ` ${prescription.drug_measure}`}
+          <div className="mt-1.5 flex flex-col gap-y-1 text-[11px] text-muted-foreground">
+            {/* Row 1 */}
+            <div className="flex items-center gap-x-3 overflow-hidden whitespace-nowrap">
+              {prescription.drug_dosage && (
+                <div className="truncate">
+                  <span className="font-medium text-foreground">Dosage:</span> {prescription.drug_dosage}
+                  {prescription.drug_measure && ` ${prescription.drug_measure}`}
+                </div>
+              )}
+              {prescription.duration && (
+                <div className="truncate">
+                  <span className="font-medium text-foreground">Duration:</span> {prescription.duration}
+                  {prescription.duration_type && ` ${prescription.duration_type}`}
+                </div>
+              )}
+              {prescription.quantity && (
+                <div className="truncate">
+                  <span className="font-medium text-foreground">Qty:</span> {prescription.quantity}
+                </div>
+              )}
+              <div className="truncate flex-1">
+                <span className="font-medium text-foreground">Schedule:</span> {formatDosage(prescription)}
               </div>
-            )}
-            {prescription.duration && (
-              <div className="text-muted-foreground">
-                <span className="font-medium text-foreground">Duration:</span> {prescription.duration}
-                {prescription.duration_type && ` ${prescription.duration_type}`}
-              </div>
-            )}
-            {prescription.quantity && (
-              <div className="text-muted-foreground">
-                <span className="font-medium text-foreground">Qty:</span> {prescription.quantity}
+            </div>
+
+            {/* Row 2 */}
+            {(prescription.instruction || prescription.notes) && (
+              <div className="flex items-center gap-x-3 overflow-hidden whitespace-nowrap">
+                {prescription.instruction && (
+                  <div className="truncate">
+                    <span className="font-medium text-foreground">Instructions:</span> {prescription.instruction}
+                  </div>
+                )}
+                {prescription.notes && (
+                  <div className="truncate flex-1">
+                    <span className="font-medium text-foreground">Notes:</span> {prescription.notes}
+                  </div>
+                )}
               </div>
             )}
           </div>
-
-          <div className="mt-2 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Schedule:</span> {formatDosage(prescription)}
-          </div>
-
-          {prescription.instruction && (
-            <div className="mt-1 text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">Instructions:</span> {prescription.instruction}
-            </div>
-          )}
-
-          {prescription.notes && (
-            <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
-              <span className="font-medium text-foreground">Notes:</span> {prescription.notes}
-            </div>
-          )}
         </div>
 
         {(onEdit || onDelete || onPrint) && (

@@ -138,7 +138,7 @@ export function PatientVisitDocumentPage() {
 
   const handleUpload = async (values: UploadFormValues) => {
     if (!selectedFile || !selectedDocType) return;
-    
+
     await uploadMutation.mutateAsync({
       file: selectedFile,
       documentTypeId: selectedDocType.id,
@@ -235,8 +235,8 @@ export function PatientVisitDocumentPage() {
                 >
                   Document Type *
                 </label>
-                <Select 
-                  value={selectedDocType ? String(selectedDocType.id) : ""} 
+                <Select
+                  value={selectedDocType ? String(selectedDocType.id) : ""}
                   onValueChange={handleDocTypeChange}
                   open={docTypeSelectOpen}
                   onOpenChange={setDocTypeSelectOpen}
@@ -365,21 +365,17 @@ export function PatientVisitDocumentPage() {
               {/* File Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-xs font-medium truncate">{doc.file_name}</p>
+                  <p className="text-xs font-medium truncate">{doc.description || doc.file_name}</p>
                   <span className="px-1.5 py-0.5 text-[9px] font-medium rounded bg-primary/10 text-primary shrink-0">
                     {doc.documentType?.type_name || 'Unknown'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
                   <span>{formatFileSize(doc.file_size)}</span>
-                  <span>•</span>
+                  <span>|</span>
                   <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
-                  {doc.description && (
-                    <>
-                      <span>•</span>
-                      <span className="truncate">{doc.description}</span>
-                    </>
-                  )}
+                  <span>|</span>
+                  <span className="truncate">{doc.file_name}</span>
                 </div>
               </div>
 
@@ -466,7 +462,7 @@ export function PatientVisitDocumentPage() {
           </div>
         </DialogContent>
       </Dialog>
-      
+
       <ConfirmDeleteDialog
         open={!!documentToDelete}
         onOpenChange={(open) => !open && setDocumentToDelete(null)}
@@ -488,7 +484,7 @@ export function PatientVisitDocumentPage() {
               </span>
             </span>
           ) : (
-             "Are you sure you want to delete this document?"
+            "Are you sure you want to delete this document?"
           )
         }
         isDeleting={deleteMutation.isPending}

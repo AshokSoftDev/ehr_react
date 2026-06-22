@@ -212,8 +212,7 @@ export function InlinePrescriptionAccordion({
     }, [existingPrescriptions, isInitialized]);
 
     // Template hooks
-    const shouldFetchTemplates = templateSearchQuery.length >= 2;
-    const { data: templates = [], isLoading: templatesLoading } = usePrescriptionTemplates(undefined, shouldFetchTemplates ? templateSearchQuery : undefined, shouldFetchTemplates);
+    const { data: templates = [], isLoading: templatesLoading } = usePrescriptionTemplates(undefined, templateSearchQuery.length >= 2 ? templateSearchQuery : undefined);
     const bulkCreateTemplate = useBulkCreatePrescriptionTemplate();
 
     const groupedTemplates = useMemo(() => groupTemplates(templates), [templates]);
@@ -421,21 +420,16 @@ export function InlinePrescriptionAccordion({
                                 onValueChange={setTemplateSearchQuery}
                             />
                             <CommandList>
-                                {templatesLoading && templateSearchQuery.length >= 2 && (
+                                {templatesLoading && (
                                     <div className="p-3 text-center">
                                         <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                                     </div>
                                 )}
-                                {!templatesLoading && templateSearchQuery.length >= 2 && groupedTemplates.length === 0 && (
+                                {!templatesLoading && groupedTemplates.length === 0 && (
                                     <CommandEmpty>No templates found</CommandEmpty>
                                 )}
-                                {templateSearchQuery.length < 2 && (
-                                    <div className="p-3 text-center text-[10px] text-muted-foreground">
-                                        Type at least 2 characters
-                                    </div>
-                                )}
                                 {groupedTemplates.length > 0 && (
-                                    <CommandGroup heading="Templates">
+                                    <CommandGroup>
                                         {groupedTemplates.map((group) => (
                                             <CommandItem
                                                 key={group.template_id}

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { config as environments } from "@/config/environments";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -53,7 +54,7 @@ export function AudioPlayer({ src, className }: AudioPlayerProps) {
     if (isPlaying) {
       audio.pause();
     } else {
-      audio.play().catch(() => {});
+      audio.play().catch(() => { });
     }
     setIsPlaying(!isPlaying);
   }, [isPlaying]);
@@ -144,19 +145,19 @@ export function AudioPlayer({ src, className }: AudioPlayerProps) {
       className
     )}>
       <div className="rounded-xl bg-background/95 backdrop-blur-sm p-3">
-        <audio ref={audioRef} src={src} preload="metadata" />
-        
+        <audio ref={audioRef} src={src?.startsWith('http') || src?.startsWith('blob:') ? src : `${environments.API_BASE_URL.replace('/api/v1', '')}/audios/${src}`} preload="metadata" />
+
         {/* Progress Bar */}
-        <div 
+        <div
           ref={progressRef}
           className="relative h-1.5 bg-violet-200 dark:bg-violet-900/50 rounded-full cursor-pointer mb-2 group"
           onClick={handleSeek}
         >
-          <div 
+          <div
             className="absolute inset-y-0 left-0 bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
             style={{ width: `${progress}%` }}
           />
-          <div 
+          <div
             className={cn(
               "absolute top-1/2 -translate-y-1/2 h-3 w-3 rounded-full shadow-md",
               "bg-gradient-to-br from-violet-400 to-fuchsia-500 border-2 border-white",

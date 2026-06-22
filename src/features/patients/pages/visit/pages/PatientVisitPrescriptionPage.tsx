@@ -484,21 +484,16 @@ export function PatientVisitPrescriptionPage() {
                     onValueChange={setTemplateSearchQuery}
                   />
                   <CommandList>
-                    {templatesLoading && templateSearchQuery.length >= 2 && (
+                    {templatesLoading && (
                       <div className="p-4 text-center">
                         <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                       </div>
                     )}
-                    {!templatesLoading && templateSearchQuery.length >= 2 && groupedTemplates.length === 0 && (
+                    {!templatesLoading && groupedTemplates.length === 0 && (
                       <CommandEmpty>No templates found</CommandEmpty>
                     )}
-                    {templateSearchQuery.length < 2 && (
-                      <div className="p-4 text-center text-xs text-muted-foreground">
-                        Type at least 2 characters to search
-                      </div>
-                    )}
                     {groupedTemplates.length > 0 && (
-                      <CommandGroup heading="Templates">
+                      <CommandGroup>
                         {groupedTemplates.map((group) => (
                           <CommandItem
                             key={group.template_id}

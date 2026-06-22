@@ -23,6 +23,7 @@ class ClinicalNotesService {
       const form = new FormData();
       form.append('notes_type', 'audio');
       form.append('audio', payload.file);
+      if (payload.doctor_id) form.append('doctor_id', payload.doctor_id);
       const res = await api.post<{ status: string; data: ClinicalNote }>(
         `${this.baseUrl}/${visitId}/clinical-notes`,
         form,
@@ -38,6 +39,7 @@ class ClinicalNotesService {
       {
         notes_type: 'text',
         editor_notes: payload.editor_notes ?? '',
+        ...(payload.doctor_id && { doctor_id: payload.doctor_id }),
       }
     );
     return res.data.data;
@@ -62,9 +64,10 @@ class ClinicalNotesService {
    * Create clinical note with AI-generated SOAP notes
    * Saves audio, transcribes, generates SOAP notes via AI, and saves result
    */
-  async createWithSoapNotes(visitId: number, file: File): Promise<ClinicalNote> {
+  async createWithSoapNotes(visitId: number, file: File, doctorId?: string): Promise<ClinicalNote> {
     const form = new FormData();
     form.append('audio', file);
+    if (doctorId) form.append('doctor_id', doctorId);
     const res = await api.post<{ status: string; data: ClinicalNote }>(
       `${this.baseUrl}/${visitId}/clinical-notes/soap`,
       form,

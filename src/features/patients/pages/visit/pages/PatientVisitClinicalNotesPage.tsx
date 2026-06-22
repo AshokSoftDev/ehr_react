@@ -1,10 +1,11 @@
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FormFloatingSelect } from "@/components/form/FormFloatingSelect";
 import {
   AudioLines,
   Edit3,
@@ -12,11 +13,14 @@ import {
   Loader2,
   Mic,
   Plus,
+  Printer,
   Save,
   Trash2,
   Type,
+  Upload,
   X,
 } from "lucide-react";
+import { AudioPlayer } from "@/features/clinical-notes/components/AudioPlayer";
 import MedicalNoteEditor from "@/features/patients/components/MedicalNoteEditor";
 import DictationRecorder from "@/features/patients/components/DictationRecorder";
 import {
@@ -25,26 +29,44 @@ import {
   useDeleteClinicalNote,
   useUpdateClinicalNote,
 } from "@/features/visits/hooks/useClinicalNotes";
+import { appointmentService } from "@/features/appointments/services/appointment.service";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/lib/toast";
 
-const stripHtml = (html?: string | null) =>
-  (html || "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
 
-const formatDate = (dt?: string) => (dt ? new Date(dt).toLocaleDateString() : "");
+const formatDate = (dt?: string) => (dt ? new Date(dt).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : "");
 
 export function PatientVisitClinicalNotesPage() {
   const [searchParams] = useSearchParams();
   const visitId = searchParams.get("visitId") ? Number(searchParams.get("visitId")) : null;
-  
+
   const editorRef = useRef<{ getContent: () => string; setContent: (html: string) => void } | null>(null);
   const [mode, setMode] = useState<"text" | "dictate">("text");
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+  const queryClient = useQueryClient();
+  const currentVisit = useMemo(() => {
+    if (!visitId) return null;
+    const queries = queryClient.getQueriesData({ queryKey: ["patient-visits"] });
+    for (const [, data] of queries) {
+      const visits = (data as any)?.visits;
+      if (visits) {
+        const found = visits.find((v: any) => v.visit_id === visitId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }, [queryClient, visitId]);
+
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string>("");
+
+  const { data: doctors = [] } = useQuery({
+    queryKey: ["appointment-doctors"],
+    queryFn: () => appointmentService.getDoctors(),
+  });
 
   const { data: notes = [], isLoading: notesLoading } = useClinicalNotes(visitId || undefined);
   const createNote = useCreateClinicalNote(visitId || undefined);
@@ -60,14 +82,15 @@ export function PatientVisitClinicalNotesPage() {
   useEffect(() => {
     if (activeNote) {
       setMode("text");
+      setSelectedDoctorId(activeNote.doctor_id || currentVisit?.doctor_id || "");
       setIsEditorOpen(true);
-      
+
       // Use setTimeout to ensure editor is mounted before setting content
       const timer = setTimeout(() => {
         const seed = activeNote.editor_notes || activeNote.transcription || "<p></p>";
         editorRef.current?.setContent(seed);
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
   }, [activeNote]);
@@ -91,9 +114,19 @@ export function PatientVisitClinicalNotesPage() {
         return;
       }
       if (editingId) {
-        await updateNote.mutateAsync({ noteId: editingId, payload: { editor_notes: html } });
+        await updateNote.mutateAsync({
+          noteId: editingId,
+          payload: {
+            editor_notes: html,
+            ...(selectedDoctorId && selectedDoctorId !== "none" && { doctor_id: selectedDoctorId })
+          }
+        });
       } else {
-        await createNote.mutateAsync({ notes_type: "text", editor_notes: html });
+        await createNote.mutateAsync({
+          notes_type: "text",
+          editor_notes: html,
+          ...(selectedDoctorId && selectedDoctorId !== "none" && { doctor_id: selectedDoctorId })
+        });
       }
       setEditingId(null);
       setIsEditorOpen(false);
@@ -102,15 +135,19 @@ export function PatientVisitClinicalNotesPage() {
       const file = uploadFile
         ? uploadFile
         : audioBlob
-        ? new File([audioBlob], `clinical-${Date.now()}.webm`, {
+          ? new File([audioBlob], `clinical-${Date.now()}.webm`, {
             type: audioBlob.type || "audio/webm",
           })
-        : null;
+          : null;
       if (!file) {
         toast.error("Record or upload audio before saving");
         return;
       }
-      await createNote.mutateAsync({ notes_type: "audio", file });
+      await createNote.mutateAsync({
+        notes_type: "audio",
+        file,
+        ...(selectedDoctorId && selectedDoctorId !== "none" && { doctor_id: selectedDoctorId })
+      });
       setAudioBlob(null);
       setUploadFile(null);
       setIsEditorOpen(false);
@@ -125,6 +162,7 @@ export function PatientVisitClinicalNotesPage() {
     }
     setEditingId(null);
     setMode("text");
+    setSelectedDoctorId(currentVisit?.doctor_id || "");
     setIsEditorOpen(true);
     editorRef.current?.setContent("<p></p>");
     setAudioBlob(null);
@@ -133,14 +171,62 @@ export function PatientVisitClinicalNotesPage() {
 
   const cancelEdit = () => {
     setEditingId(null);
+    setSelectedDoctorId("");
     setIsEditorOpen(false);
     editorRef.current?.setContent("<p></p>");
     setAudioBlob(null);
     setUploadFile(null);
   };
 
+  const handlePrint = (note: typeof notes[0]) => {
+    const printContent = note.editor_notes || note.transcription || "No content";
+    const noteDate = note.createdAt ? formatDate(note.createdAt) : "N/A";
+
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "absolute";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "none";
+    iframe.style.left = "-9999px";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Clinical Note - ${noteDate}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+              .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+              .header h1 { margin: 0 0 5px 0; font-size: 18px; }
+              .header p { margin: 0; color: #666; font-size: 12px; }
+              .content { font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>Clinical Note</h1>
+              <p>Date: ${noteDate} | Type: ${note.notes_type === "audio" ? "Audio" : "Text"}</p>
+            </div>
+            <div class="content">${printContent}</div>
+          </body>
+        </html>
+      `);
+      doc.close();
+
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    }
+  };
+
   const isSaving = createNote.isPending || updateNote.isPending;
-  const isDeleting = deleteNote.isPending;
 
   if (!visitId) {
     return (
@@ -169,9 +255,9 @@ export function PatientVisitClinicalNotesPage() {
           </div>
           <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Clinical Notes</span>
         </div>
-        
+
         <div className="flex-1" />
-        
+
         {/* Add New Note Button */}
         {!isEditorOpen && (
           <Button
@@ -190,15 +276,28 @@ export function PatientVisitClinicalNotesPage() {
         <div className="border rounded-lg overflow-hidden">
           <div className="bg-muted/50 px-3 py-2 flex items-center justify-between border-b">
             <div className="flex items-center gap-2">
-              <Badge variant={editingId ? "secondary" : "default"} className="text-xs">
-                {editingId ? "Editing" : "New Note"}
-              </Badge>
+              {editingId && (
+                <Badge variant="secondary" className="text-xs">
+                  Editing
+                </Badge>
+              )}
+              <FormFloatingSelect
+                value={selectedDoctorId}
+                onValueChange={setSelectedDoctorId}
+                label="Doctor"
+                options={doctors.map(d => ({
+                  label: `${d.displayName} ${d.specialty ? `(${d.specialty})` : ''}`,
+                  value: d.id
+                }))}
+                className="w-[200px]"
+                triggerClassName="h-8 min-h-[32px] text-xs pt-2 pb-1 bg-background"
+              />
             </div>
             <Button variant="ghost" size="sm" onClick={cancelEdit} className="h-7 w-7 p-0">
               <X className="h-4 w-4" />
             </Button>
           </div>
-          
+
           <div className="p-3 space-y-3">
             <Tabs value={mode} onValueChange={(v) => setMode(v as "text" | "dictate")}>
               <TabsList className="grid grid-cols-2 h-8">
@@ -206,40 +305,57 @@ export function PatientVisitClinicalNotesPage() {
                   <Type className="h-3.5 w-3.5" /> Text
                 </TabsTrigger>
                 <TabsTrigger value="dictate" className="text-xs gap-1 h-7" disabled={!!activeNote}>
-                  <Mic className="h-3.5 w-3.5" /> Dictate
+                  <Mic className="h-3.5 w-3.5" /> Audio
                 </TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="text" className="mt-3">
                 <MedicalNoteEditor ref={editorRef} />
               </TabsContent>
-              
-              <TabsContent value="dictate" className="mt-3 space-y-3">
+
+              <TabsContent value="dictate" className="mt-4 space-y-6 py-4 px-6 md:px-12">
                 <DictationRecorder
                   onRecorded={(blob) => {
                     setAudioBlob(blob);
                     setUploadFile(null);
                   }}
                 />
-                <Separator />
-                <div className="space-y-2 rounded-lg border border-dashed border-border bg-muted/30 p-3">
-                  <p className="text-xs font-medium">Or upload audio</p>
-                  <p className="text-[10px] text-muted-foreground">Supported: wav, mp3, m4a, webm, ogg</p>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      accept="audio/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        setUploadFile(file);
-                        if (file) setAudioBlob(null);
-                      }}
-                      className="text-xs"
-                    />
-                    {uploadFile && (
-                      <Badge variant="secondary" className="text-xs">{uploadFile.name}</Badge>
-                    )}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border" />
                   </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-background px-3 text-muted-foreground">or upload file</span>
+                  </div>
+                </div>
+
+                <div className="group relative rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors p-8 text-center cursor-pointer">
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setUploadFile(file);
+                      if (file) setAudioBlob(null);
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  {!uploadFile ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                        <Upload className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Drop audio file here</p>
+                        <p className="text-[10px] text-muted-foreground">Supports WAV, MP3, M4A, WebM, OGG</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                      <FileText className="h-3.5 w-3.5 text-blue-600" />
+                      <span className="text-xs font-medium text-blue-700 dark:text-blue-300 truncate max-w-[200px]">{uploadFile.name}</span>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
@@ -277,77 +393,121 @@ export function PatientVisitClinicalNotesPage() {
             <div className="text-[11px] font-medium text-muted-foreground">
               {notes.length} note{notes.length !== 1 ? "s" : ""}
             </div>
-            {notes.map((note) => {
-              const snippet = stripHtml(note.editor_notes) || stripHtml(note.transcription) || "No content";
-              const isAudio = note.notes_type === "audio";
-              const isActive = editingId === note.cn_id;
+            <Accordion type="multiple" className="space-y-2">
+              {notes.map((note) => {
+                const isAudio = note.notes_type === "audio";
+                const isActive = editingId === note.cn_id;
+                const doctorName = note.doctor ? note.doctor.displayName : "Unknown Doctor";
 
-              return (
-                <div
-                  key={note.cn_id}
-                  className={`flex items-center gap-2.5 p-2.5 rounded-lg border transition-colors ${
-                    isActive 
-                      ? "border-primary bg-primary/5" 
+                return (
+                  <AccordionItem
+                    key={note.cn_id}
+                    value={String(note.cn_id)}
+                    className={`border rounded-lg px-3 transition-colors ${isActive
+                      ? "border-primary bg-primary/5"
                       : "border-border bg-card hover:bg-muted/30"
-                  }`}
-                >
-                  {/* Icon */}
-                  <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
-                    isAudio 
-                      ? "bg-purple-100 dark:bg-purple-900/50" 
-                      : "bg-blue-100 dark:bg-blue-900/50"
-                  }`}>
-                    {isAudio ? (
-                      <Mic className="h-4 w-4 text-purple-600" />
-                    ) : (
-                      <Type className="h-4 w-4 text-blue-600" />
-                    )}
-                  </div>
+                      }`}
+                  >
+                    <AccordionTrigger className="hover:no-underline py-2">
+                      <div className="flex items-center gap-2 flex-1">
+                        <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${isAudio
+                          ? "bg-purple-100 dark:bg-purple-900/50"
+                          : "bg-blue-100 dark:bg-blue-900/50"
+                          }`}>
+                          {isAudio ? (
+                            <Mic className="h-3.5 w-3.5 text-purple-600" />
+                          ) : (
+                            <Type className="h-3.5 w-3.5 text-blue-600" />
+                          )}
+                        </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Badge 
-                        variant={isAudio ? "secondary" : "default"} 
-                        className="px-1.5 py-0 text-[9px]"
-                      >
-                        {isAudio ? "Dictation" : "Text"}
-                      </Badge>
-                      <span className="text-[10px] text-muted-foreground">
-                        {formatDate(note.createdAt)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-foreground line-clamp-1 mt-0.5">{snippet}</p>
-                  </div>
+                        <span className="text-xs font-medium text-foreground ml-1">
+                          {doctorName}
+                        </span>
+                        <span className="text-muted-foreground/40 text-[10px] mx-1.5">|</span>
+                        <Badge
+                          variant={isAudio ? "secondary" : "default"}
+                          className="px-1.5 py-0 text-[9px]"
+                        >
+                          {isAudio ? "Audio" : "Text"}
+                        </Badge>
+                        <span className="text-muted-foreground/40 text-[10px] mx-1.5">|</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatDate(note.createdAt)}
+                        </span>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingId(note.cn_id)}
-                      className="h-7 w-7 p-0"
-                      title="Edit"
-                    >
-                      <Edit3 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteNote.mutate(note.cn_id)}
-                      disabled={isDeleting}
-                      className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-1 ml-auto mr-2 shrink-0">
+                          {/* Print Button */}
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-600 cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handlePrint(note);
+                            }}
+                            onKeyDown={(e) => e.key === 'Enter' && handlePrint(note)}
+                            title="Print"
+                          >
+                            <Printer className="h-3.5 w-3.5" />
+                          </div>
+                          {/* Edit Button */}
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setEditingId(note.cn_id);
+                            }}
+                            onKeyDown={(e) => e.key === 'Enter' && setEditingId(note.cn_id)}
+                            title="Edit"
+                          >
+                            <Edit3 className="h-3.5 w-3.5" />
+                          </div>
+                          {/* Delete Button */}
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-red-100 dark:hover:bg-red-900/50 text-destructive cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              deleteNote.mutate(note.cn_id);
+                            }}
+                            onKeyDown={(e) => e.key === 'Enter' && deleteNote.mutate(note.cn_id)}
+                            title="Delete"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-3">
+                      {note.audio_url && (
+                        <div className="mb-3">
+                          <AudioPlayer src={note.audio_url} />
+                        </div>
+                      )}
+                      <div
+                        className="prose prose-sm dark:prose-invert max-w-none text-sm"
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            note.editor_notes ||
+                            note.transcription ||
+                            '<p class="text-muted-foreground">No content</p>',
+                        }}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
           </div>
-        )
-      )}
+        ))}
     </div>
   );
 }

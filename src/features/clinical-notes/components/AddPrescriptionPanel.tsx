@@ -191,9 +191,8 @@ export function AddPrescriptionPanel({
 
   const bulkCreate = useBulkCreatePrescription(visit.visit_id);
 
-  // Template hooks - only fetch when search query is >= 2 characters
-  const shouldFetchTemplates = templateSearchQuery.length >= 2;
-  const { data: templates = [], isLoading: templatesLoading } = usePrescriptionTemplates(undefined, shouldFetchTemplates ? templateSearchQuery : undefined, shouldFetchTemplates);
+  // Template hooks
+  const { data: templates = [], isLoading: templatesLoading } = usePrescriptionTemplates(undefined, templateSearchQuery.length >= 2 ? templateSearchQuery : undefined);
   const bulkCreateTemplate = useBulkCreatePrescriptionTemplate();
 
   // Group templates for display
@@ -442,21 +441,16 @@ export function AddPrescriptionPanel({
                     onValueChange={setTemplateSearchQuery}
                   />
                   <CommandList>
-                    {templatesLoading && templateSearchQuery.length >= 2 && (
+                    {templatesLoading && (
                       <div className="p-4 text-center">
                         <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                       </div>
                     )}
-                    {!templatesLoading && templateSearchQuery.length >= 2 && groupedTemplates.length === 0 && (
+                    {!templatesLoading && groupedTemplates.length === 0 && (
                       <CommandEmpty>No templates found</CommandEmpty>
                     )}
-                    {templateSearchQuery.length < 2 && (
-                      <div className="p-4 text-center text-xs text-muted-foreground">
-                        Type at least 2 characters to search
-                      </div>
-                    )}
                     {groupedTemplates.length > 0 && (
-                      <CommandGroup heading="Templates">
+                      <CommandGroup>
                         {groupedTemplates.map((group) => (
                           <CommandItem
                             key={group.template_id}
