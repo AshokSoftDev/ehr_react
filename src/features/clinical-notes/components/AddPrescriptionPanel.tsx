@@ -95,7 +95,7 @@ function groupTemplates(templates: PrescriptionTemplate[]): { template_id: numbe
 function DrugSearchCell({ onDrugSelect }: { onDrugSelect: (drug: Drug) => void }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  
+
   const { data: drugs = [], isLoading } = useDrugSearch(query);
 
   const handleSelect = (drug: Drug) => {
@@ -107,9 +107,9 @@ function DrugSearchCell({ onDrugSelect }: { onDrugSelect: (drug: Drug) => void }
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="h-8 w-full justify-start gap-2 text-muted-foreground border-dashed hover:border-primary/50 hover:bg-primary/5"
         >
           <Search className="h-3.5 w-3.5" />
@@ -180,22 +180,22 @@ export function AddPrescriptionPanel({
   onComplete,
 }: AddPrescriptionPanelProps) {
   const [rows, setRows] = useState<PrescriptionRow[]>([emptyRow()]);
-  
+
   // Selection state
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
-  
+
   // Template state
   const [templateName, setTemplateName] = useState("");
   const [templateSearchOpen, setTemplateSearchOpen] = useState(false);
   const [templateSearchQuery, setTemplateSearchQuery] = useState("");
 
   const bulkCreate = useBulkCreatePrescription(visit.visit_id);
-  
+
   // Template hooks - only fetch when search query is >= 2 characters
   const shouldFetchTemplates = templateSearchQuery.length >= 2;
   const { data: templates = [], isLoading: templatesLoading } = usePrescriptionTemplates(undefined, shouldFetchTemplates ? templateSearchQuery : undefined, shouldFetchTemplates);
   const bulkCreateTemplate = useBulkCreatePrescriptionTemplate();
-  
+
   // Group templates for display
   const groupedTemplates = useMemo(() => groupTemplates(templates), [templates]);
 
@@ -279,7 +279,7 @@ export function AddPrescriptionPanel({
   // Save template handler
   const handleSaveTemplate = async () => {
     if (!templateName.trim()) return;
-    
+
     const selectedRows = rows.filter((r) => selectedRowIds.has(r.id) && r.drug_name.trim());
     if (selectedRows.length === 0) return;
 
@@ -398,7 +398,7 @@ export function AddPrescriptionPanel({
                 <div className="flex items-center gap-2 text-xs">
                   <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-muted-foreground">Doctor:</span>
-                  <span className="font-medium truncate">Dr. {visit.doctor.displayName}</span>
+                  <span className="font-medium truncate">{visit.doctor.displayName}</span>
                 </div>
               )}
 
@@ -425,9 +425,9 @@ export function AddPrescriptionPanel({
             </div>
             <Popover open={templateSearchOpen} onOpenChange={setTemplateSearchOpen}>
               <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="h-8 flex-1 max-w-xs justify-start gap-2 border-amber-300 dark:border-amber-700 bg-white dark:bg-background hover:bg-amber-50 dark:hover:bg-amber-950/50"
                 >
                   <Search className="h-3.5 w-3.5 text-amber-600" />
@@ -483,9 +483,9 @@ export function AddPrescriptionPanel({
                 </Command>
               </PopoverContent>
             </Popover>
-            
+
             <div className="flex-1" />
-            
+
             {/* Save Template Section (shown when rows selected) */}
             {hasSelectedRows && (
               <>
@@ -511,7 +511,7 @@ export function AddPrescriptionPanel({
                 <div className="h-6 w-px bg-amber-300/50 dark:bg-amber-700/50" />
               </>
             )}
-            
+
             {/* Main Save Button */}
             <Button
               size="sm"
@@ -599,7 +599,7 @@ export function AddPrescriptionPanel({
                               </p>
                             </div>
                           ) : (
-                            <DrugSearchCell 
+                            <DrugSearchCell
                               onDrugSelect={(drug) => {
                                 updateRow(row.id, {
                                   drug_id: drug.drug_id,
@@ -707,10 +707,10 @@ export function AddPrescriptionPanel({
 
             {/* Add Row Button */}
             <div className="border-t p-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={addRow} 
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addRow}
                 disabled={!lastRowHasDrug}
                 className="h-7 text-xs"
               >

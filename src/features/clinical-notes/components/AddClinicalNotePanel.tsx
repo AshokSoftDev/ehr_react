@@ -71,10 +71,10 @@ export function AddClinicalNotePanel({
         const file = uploadFile
           ? uploadFile
           : audioBlob
-          ? new File([audioBlob], `clinical-${Date.now()}.webm`, {
+            ? new File([audioBlob], `clinical-${Date.now()}.webm`, {
               type: audioBlob.type || "audio/webm",
             })
-          : null;
+            : null;
 
         if (!file) {
           toast.error("Record or upload audio first");
@@ -155,7 +155,7 @@ export function AddClinicalNotePanel({
                 <div className="flex items-center gap-2 text-xs">
                   <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-muted-foreground">Doctor:</span>
-                  <span className="font-medium truncate">Dr. {visit.doctor.displayName}</span>
+                  <span className="font-medium truncate">{visit.doctor.displayName}</span>
                 </div>
               )}
 
@@ -315,13 +315,13 @@ export function AddClinicalNotePanel({
                       <p className="text-[10px] text-amber-600 dark:text-amber-400">Clinical note saved successfully</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex-1" />
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleSkipPrescription} 
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSkipPrescription}
                     className="h-8 text-xs border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50"
                   >
                     Skip & Finish

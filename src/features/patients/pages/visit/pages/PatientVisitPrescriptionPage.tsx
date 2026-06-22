@@ -34,6 +34,7 @@ import {
   Search,
   Trash2,
   X,
+  Edit2,
 } from "lucide-react";
 import type { PrescriptionRow, CreatePrescriptionPayload, PrescriptionTemplate, CreatePrescriptionTemplatePayload } from "@/features/visits/types/prescription.types";
 import type { Drug } from "@/features/visits/types/drug.types";
@@ -45,6 +46,7 @@ import {
 } from "@/features/visits/hooks/usePrescriptions";
 import { useDrugSearch } from "@/features/visits/hooks/useDrugs";
 import { usePrescriptionTemplates, useBulkCreatePrescriptionTemplate } from "@/features/visits/hooks/usePrescriptionTemplates";
+import { PrescriptionCard } from "@/features/patients/components/PrescriptionCard";
 
 // Generate unique ID for new rows
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -165,13 +167,12 @@ function DrugSearchCell({ onDrugSelect }: { onDrugSelect: (drug: Drug) => void }
 export function PatientVisitPrescriptionPage() {
   const [searchParams] = useSearchParams();
   const visitId = searchParams.get("visitId") ? Number(searchParams.get("visitId")) : null;
+  const editMode = searchParams.get("edit") === "true";
 
   const [rows, setRows] = useState<PrescriptionRow[]>([emptyRow()]);
   const [initialized, setInitialized] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [deletedPrescriptionIds, setDeletedPrescriptionIds] = useState<number[]>([]);
-  
-  // Selection state
-  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   
   // Template state
   const [templateName, setTemplateName] = useState("");
@@ -217,10 +218,13 @@ export function PatientVisitPrescriptionPage() {
           night_af: p.night_af,
         }));
         setRows(editRows);
+        setIsEditing(editMode ? true : false);
+      } else {
+        setIsEditing(true);
       }
       setInitialized(true);
     }
-  }, [prescriptions, prescriptionsLoading, initialized]);
+  }, [prescriptions, prescriptionsLoading, initialized, editMode]);
 
   const updateRow = useCallback((id: string, updates: Partial<PrescriptionRow>) => {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
@@ -235,11 +239,6 @@ export function PatientVisitPrescriptionPage() {
       }
       const filtered = prev.filter((r) => r.id !== id);
       return filtered.length === 0 ? [emptyRow()] : filtered;
-    });
-    setSelectedRowIds((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
     });
   }, []);
 
@@ -288,40 +287,20 @@ export function PatientVisitPrescriptionPage() {
       const createPayload: CreatePrescriptionPayload[] = toCreate.map(({ id, prescription_id, ...rest }) => rest);
       await bulkCreate.mutateAsync({ prescriptions: createPayload });
     }
+
+    setIsEditing(false);
   };
-
-  // Selection handlers
-  const toggleRowSelection = useCallback((id: string, checked: boolean) => {
-    setSelectedRowIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(id);
-      } else {
-        next.delete(id);
-      }
-      return next;
-    });
-  }, []);
-
-  const toggleAllSelection = useCallback(() => {
-    const validRows = rows.filter((r) => r.drug_name.trim());
-    if (selectedRowIds.size === validRows.length && validRows.length > 0) {
-      setSelectedRowIds(new Set());
-    } else {
-      setSelectedRowIds(new Set(validRows.map((r) => r.id)));
-    }
-  }, [rows, selectedRowIds.size]);
 
   // Save template handler
   const handleSaveTemplate = async () => {
     if (!templateName.trim()) return;
     
-    const selectedRows = rows.filter((r) => selectedRowIds.has(r.id) && r.drug_name.trim());
-    if (selectedRows.length === 0) return;
+    const validRows = rows.filter((r) => r.drug_name.trim());
+    if (validRows.length === 0) return;
 
     // Generate a smaller template ID that fits in INT4 (max 2,147,483,647)
     const templateId = Math.floor(Math.random() * 2000000000);
-    const templatesPayload: CreatePrescriptionTemplatePayload[] = selectedRows.map((row) => ({
+    const templatesPayload: CreatePrescriptionTemplatePayload[] = validRows.map((row) => ({
       template_id: templateId,
       template_name: templateName.trim(),
       drug_id: row.drug_id,
@@ -347,7 +326,6 @@ export function PatientVisitPrescriptionPage() {
 
     await bulkCreateTemplate.mutateAsync({ templates: templatesPayload });
     setTemplateName("");
-    setSelectedRowIds(new Set());
   };
 
   // Load template handler
@@ -392,9 +370,6 @@ export function PatientVisitPrescriptionPage() {
   }
 
   const hasValidRows = rows.some((r) => r.drug_name.trim());
-  const validRowsCount = rows.filter((r) => r.drug_name.trim()).length;
-  const allSelected = selectedRowIds.size === validRowsCount && validRowsCount > 0;
-  const hasSelectedRows = selectedRowIds.size > 0;
   const lastRowHasDrug = rows.length > 0 && rows[rows.length - 1].drug_name.trim() !== "";
   const hasEmptyRows = rows.some((r) => !r.drug_name.trim());
   const canSave = hasValidRows && !hasEmptyRows;
@@ -408,8 +383,80 @@ export function PatientVisitPrescriptionPage() {
     );
   }
 
+  if (!isEditing) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center bg-muted/20 p-3 rounded-lg border border-border">
+          <div>
+            <h3 className="text-sm font-medium">Prescriptions</h3>
+            <p className="text-xs text-muted-foreground">{prescriptions.length} prescription(s) saved</p>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
+            <Edit2 className="h-4 w-4 mr-2" />
+            Edit Prescriptions
+          </Button>
+        </div>
+        
+        {prescriptions.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
+            <Pill className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+            <p className="text-sm font-medium">No prescriptions</p>
+            <p className="text-xs text-muted-foreground mb-3">This visit has no prescriptions yet</p>
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="h-8">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add Prescription
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {prescriptions.map((prescription) => (
+              <PrescriptionCard
+                key={prescription.prescription_id}
+                prescription={prescription}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-sm font-medium">Edit Prescriptions</h3>
+        {prescriptions.length > 0 && (
+          <Button variant="ghost" size="sm" onClick={() => {
+            const editRows: PrescriptionRow[] = prescriptions.map((p) => ({
+              id: generateId(),
+              prescription_id: p.prescription_id,
+              drug_id: p.drug_id ?? undefined,
+              drug_name: p.drug_name,
+              drug_generic: p.drug_generic || "",
+              drug_type: p.drug_type || "",
+              drug_dosage: p.drug_dosage || "",
+              drug_measure: p.drug_measure || "mg",
+              duration: p.duration ?? 1,
+              duration_type: p.duration_type || "Days",
+              quantity: p.quantity ?? 1,
+              instruction: p.instruction || "",
+              morning_bf: p.morning_bf,
+              morning_af: p.morning_af,
+              noon_bf: p.noon_bf,
+              noon_af: p.noon_af,
+              evening_bf: p.evening_bf,
+              evening_af: p.evening_af,
+              night_bf: p.night_bf,
+              night_af: p.night_af,
+            }));
+            setRows(editRows.length > 0 ? editRows : [emptyRow()]);
+            setIsEditing(false);
+          }}>
+            Cancel
+          </Button>
+        )}
+      </div>
+
       {/* Template Load Bar with Save Button */}
       <div className="flex items-center gap-3 p-2 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200/50 dark:border-amber-800/50">
             <div className="flex items-center gap-2">
@@ -482,8 +529,8 @@ export function PatientVisitPrescriptionPage() {
             {/* Spacer to push items to right */}
             <div className="flex-1" />
             
-            {/* Save Template Section (shown when rows selected) */}
-            {hasSelectedRows && (
+            {/* Save Template Section (shown when valid rows exist) */}
+            {hasValidRows && (
               <>
                 <Input
                   value={templateName}
@@ -530,13 +577,6 @@ export function PatientVisitPrescriptionPage() {
               <table className="w-full text-xs">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-2 py-2 w-8">
-                      <Checkbox
-                        checked={allSelected}
-                        onCheckedChange={toggleAllSelection}
-                        disabled={validRowsCount === 0}
-                      />
-                    </th>
                     <th className="px-2 py-2 text-left font-medium">Drug Name</th>
                     <th className="px-2 py-2 text-left font-medium w-32">Duration</th>
                     <th className="px-2 py-2 text-left font-medium w-16">Qty</th>
@@ -546,7 +586,6 @@ export function PatientVisitPrescriptionPage() {
                     <th className="px-2 py-2 w-10"></th>
                   </tr>
                   <tr className="bg-muted/30">
-                    <th></th>
                     <th></th>
                     <th></th>
                     <th></th>
@@ -562,17 +601,9 @@ export function PatientVisitPrescriptionPage() {
                 <tbody>
                   {rows.map((row) => {
                     const hasDrug = row.drug_name.trim();
-                    const isSelected = selectedRowIds.has(row.id);
 
                     return (
                       <tr key={row.id} className="border-t hover:bg-muted/20">
-                        <td className="px-2 py-1.5 text-center">
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={(c) => toggleRowSelection(row.id, !!c)}
-                            disabled={!hasDrug}
-                          />
-                        </td>
                         <td className="px-2 py-1.5 min-w-[180px]">
                           {hasDrug ? (
                             <div className="flex flex-col gap-0.5">

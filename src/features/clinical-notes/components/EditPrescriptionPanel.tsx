@@ -108,7 +108,7 @@ const emptyRow = (): PrescriptionRow => ({
 function DrugSearchCell({ onDrugSelect }: { onDrugSelect: (drug: Drug) => void }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  
+
   const { data: drugs = [], isLoading } = useDrugSearch(query);
 
   const handleSelect = (drug: Drug) => {
@@ -120,9 +120,9 @@ function DrugSearchCell({ onDrugSelect }: { onDrugSelect: (drug: Drug) => void }
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="h-8 w-full justify-start gap-2 text-muted-foreground border-dashed hover:border-primary/50 hover:bg-primary/5"
         >
           <Search className="h-3.5 w-3.5" />
@@ -241,7 +241,7 @@ export function EditPrescriptionPanel({
 
   const handleSave = async () => {
     const validRows = rows.filter((r) => r.drug_name.trim());
-    
+
     // Check for empty rows with drug names
     if (rows.some((r) => !r.drug_name.trim() && rows.length > 0)) {
       // Remove empty rows before saving
@@ -352,7 +352,7 @@ export function EditPrescriptionPanel({
                 <div className="flex items-center gap-2 text-xs">
                   <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-muted-foreground">Doctor:</span>
-                  <span className="font-medium truncate">Dr. {visit.doctor.displayName}</span>
+                  <span className="font-medium truncate">{visit.doctor.displayName}</span>
                 </div>
               )}
 
@@ -380,9 +380,9 @@ export function EditPrescriptionPanel({
                 <p className="text-[10px] text-amber-600 dark:text-amber-400">Modify all prescriptions for this visit</p>
               </div>
             </div>
-            
+
             <div className="flex-1" />
-            
+
             {/* Save Button */}
             <Button
               size="sm"
@@ -454,7 +454,7 @@ export function EditPrescriptionPanel({
                               </p>
                             </div>
                           ) : (
-                            <DrugSearchCell 
+                            <DrugSearchCell
                               onDrugSelect={(drug) => {
                                 updateRow(row.id, {
                                   drug_id: drug.drug_id,
@@ -562,10 +562,10 @@ export function EditPrescriptionPanel({
 
             {/* Add Row Button */}
             <div className="border-t p-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={addRow} 
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addRow}
                 disabled={rows.length > 0 && !lastRowHasDrug}
                 className="h-7 text-xs"
               >

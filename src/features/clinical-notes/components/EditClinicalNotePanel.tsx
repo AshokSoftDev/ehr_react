@@ -135,7 +135,7 @@ export function EditClinicalNotePanel({
                 <div className="flex items-center gap-2 text-xs">
                   <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-muted-foreground">Doctor:</span>
-                  <span className="font-medium truncate">Dr. {visit.doctor.displayName}</span>
+                  <span className="font-medium truncate">{visit.doctor.displayName}</span>
                 </div>
               )}
 

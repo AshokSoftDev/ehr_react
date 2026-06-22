@@ -195,8 +195,8 @@ export function PatientVisitPage() {
               <span>{new Date(selectedVisit.visit_date).toLocaleDateString()}</span>
               {selectedVisit.doctor?.displayName && (
                 <>
-                  <span>•</span>
-                  <span>Dr. {selectedVisit.doctor.displayName}</span>
+                  <span>|</span>
+                  <span>{selectedVisit.doctor.displayName}</span>
                 </>
               )}
             </div>

@@ -135,7 +135,7 @@ export function PatientClinicalNotesPage() {
                     {v.doctor?.displayName && (
                       <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
                         <User className="h-3 w-3" />
-                        <span>Dr. {v.doctor.displayName}</span>
+                        <span>{v.doctor.displayName}</span>
                       </div>
                     )}
                   </button>
@@ -160,7 +160,7 @@ export function PatientClinicalNotesPage() {
             <h2 className="text-sm font-semibold">{selectedVisit.visit_type}</h2>
             <div className="text-[11px] text-muted-foreground">
               {new Date(selectedVisit.visit_date).toLocaleDateString()}
-              {selectedVisit.doctor?.displayName && ` • Dr. ${selectedVisit.doctor.displayName}`}
+              {selectedVisit.doctor?.displayName && ` | ${selectedVisit.doctor.displayName}`}
             </div>
           </div>
         </div>
@@ -223,8 +223,8 @@ export function PatientClinicalNotesPage() {
                     <div className="flex items-center gap-3 w-full">
                       {/* Icon */}
                       <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isAudio
-                          ? "bg-purple-100 dark:bg-purple-900/50"
-                          : "bg-blue-100 dark:bg-blue-900/50"
+                        ? "bg-purple-100 dark:bg-purple-900/50"
+                        : "bg-blue-100 dark:bg-blue-900/50"
                         }`}>
                         {isAudio ? (
                           <Mic className="h-4 w-4 text-purple-600" />

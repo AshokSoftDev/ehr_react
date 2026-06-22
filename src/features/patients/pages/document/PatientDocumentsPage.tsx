@@ -174,7 +174,7 @@ export function PatientDocumentsPage() {
                     {v.doctor?.displayName && (
                       <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
                         <User className="h-3 w-3" />
-                        <span>Dr. {v.doctor.displayName}</span>
+                        <span>{v.doctor.displayName}</span>
                       </div>
                     )}
                   </button>
@@ -200,7 +200,7 @@ export function PatientDocumentsPage() {
               <h2 className="text-sm font-semibold">{selectedVisit.visit_type}</h2>
               <div className="text-[11px] text-muted-foreground">
                 {new Date(selectedVisit.visit_date).toLocaleDateString()}
-                {selectedVisit.doctor?.displayName && ` • Dr. ${selectedVisit.doctor.displayName}`}
+                {selectedVisit.doctor?.displayName && ` | ${selectedVisit.doctor.displayName}`}
               </div>
             </div>
           </div>

@@ -47,12 +47,12 @@ export function VisitDetailPanel({ visit }: VisitDetailPanelProps) {
   const hasPrescriptions = prescriptions.length > 0;
 
   const handleSaveAudio = async () => {
-    const file = uploadFile 
-      ? uploadFile 
-      : audioBlob 
-      ? new File([audioBlob], `clinical-${Date.now()}.webm`, { type: audioBlob.type || "audio/webm" })
-      : null;
-    
+    const file = uploadFile
+      ? uploadFile
+      : audioBlob
+        ? new File([audioBlob], `clinical-${Date.now()}.webm`, { type: audioBlob.type || "audio/webm" })
+        : null;
+
     if (!file) {
       toast.error("Record or upload audio first");
       return;
@@ -96,7 +96,7 @@ export function VisitDetailPanel({ visit }: VisitDetailPanelProps) {
               {visit.doctor?.displayName && (
                 <span className="flex items-center gap-1">
                   <Stethoscope className="h-3 w-3" />
-                  Dr. {visit.doctor.displayName}
+                  {visit.doctor.displayName}
                 </span>
               )}
             </div>
@@ -126,8 +126,8 @@ export function VisitDetailPanel({ visit }: VisitDetailPanelProps) {
                 <p className="text-xs text-muted-foreground mb-3 text-center">
                   Record or upload audio to create clinical notes
                 </p>
-                
-                <DictationRecorder 
+
+                <DictationRecorder
                   onRecorded={(blob) => {
                     setAudioBlob(blob);
                     setUploadFile(null);
@@ -171,9 +171,8 @@ export function VisitDetailPanel({ visit }: VisitDetailPanelProps) {
                     >
                       <AccordionTrigger className="hover:no-underline py-2">
                         <div className="flex items-center gap-2">
-                          <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${
-                            isAudio ? "bg-purple-100 dark:bg-purple-900/50" : "bg-blue-100 dark:bg-blue-900/50"
-                          }`}>
+                          <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${isAudio ? "bg-purple-100 dark:bg-purple-900/50" : "bg-blue-100 dark:bg-blue-900/50"
+                            }`}>
                             {isAudio ? <Mic className="h-3.5 w-3.5 text-purple-600" /> : <Type className="h-3.5 w-3.5 text-blue-600" />}
                           </div>
                           <Badge variant={isAudio ? "secondary" : "default"} className="text-[9px] px-1.5 py-0">
@@ -190,10 +189,10 @@ export function VisitDetailPanel({ visit }: VisitDetailPanelProps) {
                             <AudioPlayer src={note.audio_url} />
                           </div>
                         )}
-                        <div 
+                        <div
                           className="prose prose-sm dark:prose-invert max-w-none text-sm"
-                          dangerouslySetInnerHTML={{ 
-                            __html: note.editor_notes || note.transcription || '<p class="text-muted-foreground">No transcription</p>' 
+                          dangerouslySetInnerHTML={{
+                            __html: note.editor_notes || note.transcription || '<p class="text-muted-foreground">No transcription</p>'
                           }}
                         />
                       </AccordionContent>
