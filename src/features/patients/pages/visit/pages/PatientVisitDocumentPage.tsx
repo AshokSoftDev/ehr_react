@@ -68,7 +68,7 @@ function getFileIcon(mimeType: string) {
   return <File className="h-5 w-5 text-gray-500" />;
 }
 
-export function PatientVisitDocumentPage() {
+export function PatientVisitDocumentPage({ isReadOnly }: { isReadOnly?: boolean }) {
   const [searchParams] = useSearchParams();
   const visitId = searchParams.get("visitId") ? Number(searchParams.get("visitId")) : null;
 
@@ -195,16 +195,18 @@ export function PatientVisitDocumentPage() {
   return (
     <div className="space-y-3">
       {/* Header with Add Document Button */}
-      <div className="flex justify-end">
-        <Button
-          size="sm"
-          onClick={() => setShowUploadSheet(true)}
-          className="h-8 text-xs gap-1.5"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add Document
-        </Button>
-      </div>
+      {!isReadOnly && (
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            onClick={() => setShowUploadSheet(true)}
+            className="h-8 text-xs gap-1.5"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Document
+          </Button>
+        </div>
+      )}
 
       {/* Upload Sheet */}
       <Sheet open={showUploadSheet} onOpenChange={setShowUploadSheet}>
@@ -399,16 +401,18 @@ export function PatientVisitDocumentPage() {
                 >
                   <Download className="h-3.5 w-3.5" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(doc)}
-                  disabled={deleteMutation.isPending}
-                  className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                  title="Delete"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                {!isReadOnly && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(doc)}
+                    disabled={deleteMutation.isPending}
+                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </div>
             </div>
           ))}

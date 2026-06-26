@@ -1,5 +1,6 @@
 import { toothImages } from "@/assets/toothImages";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Pencil, Trash2 } from "lucide-react";
 import {
   useDentalHpiList,
@@ -459,9 +460,10 @@ function DentitionToggle({ view, onChange }: DentitionToggleProps) {
 
 interface HPIDentalChartProps {
   visitId?: number;
+  isReadOnly?: boolean;
 }
 
-export function HPIDentalChart({ visitId }: HPIDentalChartProps) {
+export function HPIDentalChart({ visitId, isReadOnly }: HPIDentalChartProps) {
   const [view, setView] = useState<DentitionView>("primary");
   const [selectedTeeth, setSelectedTeeth] = useState<string[]>([]);
   const [selectedComplaints, setSelectedComplaints] = useState<
@@ -643,7 +645,7 @@ export function HPIDentalChart({ visitId }: HPIDentalChartProps) {
   return (
     <div className="py-0 px-1">
       <div className="grid gap-2 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-        <div className="flex flex-col gap-2">
+        <div className={cn("flex flex-col gap-2", isReadOnly && "pointer-events-none")}>
           <DentitionToggle view={view} onChange={handleChangeView} />
 
           {view === "permanent" && (
@@ -716,7 +718,9 @@ export function HPIDentalChart({ visitId }: HPIDentalChartProps) {
         </div>
 
         <div className="flex flex-col gap-2 border-l border-border pl-3">
-          {/* Selected Teeth Badge */}
+          {!isReadOnly && (
+            <>
+              {/* Selected Teeth Badge */}
           <div className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5">
             <span className="text-xs font-semibold text-gray-700">Selected:</span>
             <span className="text-xs font-medium text-primary">
@@ -834,6 +838,8 @@ export function HPIDentalChart({ visitId }: HPIDentalChartProps) {
               Clear
             </button>
           </div>
+          </>
+          )}
 
           <div className="mt-2 overflow-x-auto rounded border border-primary/30">
             <table className="min-w-full text-xs">
@@ -849,7 +855,7 @@ export function HPIDentalChart({ visitId }: HPIDentalChartProps) {
                   <th className="px-2 py-1 text-left font-semibold">
                     Duration
                   </th>
-                  <th className="px-2 py-1 text-left font-semibold">Action</th>
+                  {!isReadOnly && <th className="px-2 py-1 text-left font-semibold">Action</th>}
                 </tr>
               </thead>
               <tbody>
@@ -865,7 +871,7 @@ export function HPIDentalChart({ visitId }: HPIDentalChartProps) {
                 ) : apiEntries.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={isReadOnly ? 4 : 5}
                       className="px-2 py-3 text-center text-gray-400"
                     >
                       No entries added yet.
@@ -912,27 +918,29 @@ export function HPIDentalChart({ visitId }: HPIDentalChartProps) {
                         <td className="px-2 py-1 align-top text-gray-800">
                           {renderDurationText(durationValue)}
                         </td>
-                        <td className="px-2 py-1 align-top">
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleEditEntry(entry)}
-                              className="rounded p-1 text-primary hover:bg-primary/10"
-                              title="Edit"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteEntry(entry.hpi_id)}
-                              disabled={deleteMutation.isPending}
-                              className="rounded p-1 text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                              title="Delete"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </td>
+                        {!isReadOnly && (
+                          <td className="px-2 py-1 align-top">
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleEditEntry(entry)}
+                                className="rounded p-1 text-primary hover:bg-primary/10"
+                                title="Edit"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteEntry(entry.hpi_id)}
+                                disabled={deleteMutation.isPending}
+                                className="rounded p-1 text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                title="Delete"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     );
                   })

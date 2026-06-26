@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import {
   ArrowLeft,
   CalendarDays,
@@ -30,7 +31,7 @@ import { CreateVisitSheet } from "@/features/visits/components/CreateVisitSheet"
 const tabs = [
   { id: "overview", label: "Overview", icon: ClipboardList },
   { id: "hpi", label: "HPI", icon: Stethoscope },
-  { id: "treatment", label: "Treatment", icon: Stethoscope },
+  // { id: "treatment", label: "Treatment", icon: Stethoscope },
   { id: "prescription", label: "Prescription", icon: Pill },
   { id: "document", label: "Document", icon: FileText },
   { id: "notes", label: "Clinical Notes", icon: NotebookPen },
@@ -245,39 +246,84 @@ export function PatientVisitPage() {
       {/* Tab Content */}
       <CardContent className="p-3">
         {currentTab === "overview" && (
-          <div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-md border bg-muted/20 p-3">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Type</p>
-                <p className="text-sm font-medium mt-0.5">{selectedVisit.visit_type}</p>
-              </div>
-              <div className="rounded-md border bg-muted/20 p-3">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Date</p>
-                <p className="text-sm font-medium mt-0.5">{new Date(selectedVisit.visit_date).toLocaleString()}</p>
-              </div>
-              <div className="rounded-md border bg-muted/20 p-3">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Doctor</p>
-                <p className="text-sm font-medium mt-0.5">{selectedVisit.doctor?.displayName || "Not assigned"}</p>
-              </div>
-            </div>
-            {selectedVisit.reason_for_visit && (
-              <div className="mt-3 rounded-md border bg-muted/20 p-3">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Reason</p>
-                <p className="text-sm mt-0.5">{selectedVisit.reason_for_visit}</p>
-              </div>
-            )}
+          <div className="-mx-3 -mt-3">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="hpi" className="border-b-0">
+                <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 data-[state=open]:bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">HPI</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <HPIDentalChart visitId={selectedVisitId ?? undefined} isReadOnly={true} />
+                </AccordionContent>
+              </AccordionItem>
+              {/* 
+              <AccordionItem value="treatment" className="border-t border-b-0">
+                <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 data-[state=open]:bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">Treatment</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center pointer-events-none">
+                    <Stethoscope className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm font-medium">Treatment Plan</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Coming soon</p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem> */}
+
+              <AccordionItem value="prescription" className="border-t border-b-0">
+                <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 data-[state=open]:bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <Pill className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">Prescription</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <PatientVisitPrescriptionPage isReadOnly={true} />
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="document" className="border-t border-b-0">
+                <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 data-[state=open]:bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">Document</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <PatientVisitDocumentPage isReadOnly={true} />
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="notes" className="border-t border-b-0">
+                <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 data-[state=open]:bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <NotebookPen className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">Clinical Notes</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <PatientVisitClinicalNotesPage isReadOnly={true} />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         )}
 
         {currentTab === "hpi" && <HPIDentalChart visitId={selectedVisitId ?? undefined} />}
 
-        {currentTab === "treatment" && (
+        {/* {currentTab === "treatment" && (
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
             <Stethoscope className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
             <p className="text-sm font-medium">Treatment Plan</p>
             <p className="text-xs text-muted-foreground mt-0.5">Coming soon</p>
           </div>
-        )}
+        )} */}
 
         {currentTab === "prescription" && <PatientVisitPrescriptionPage />}
         {currentTab === "document" && <PatientVisitDocumentPage />}

@@ -36,7 +36,7 @@ import { toast } from "@/lib/toast";
 
 const formatDate = (dt?: string) => (dt ? new Date(dt).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : "");
 
-export function PatientVisitClinicalNotesPage() {
+export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boolean }) {
   const [searchParams] = useSearchParams();
   const visitId = searchParams.get("visitId") ? Number(searchParams.get("visitId")) : null;
 
@@ -259,7 +259,7 @@ export function PatientVisitClinicalNotesPage() {
         <div className="flex-1" />
 
         {/* Add New Note Button */}
-        {!isEditorOpen && (
+        {!isReadOnly && !isEditorOpen && (
           <Button
             size="sm"
             onClick={startNewNote}
@@ -453,36 +453,40 @@ export function PatientVisitClinicalNotesPage() {
                           >
                             <Printer className="h-3.5 w-3.5" />
                           </div>
-                          {/* Edit Button */}
-                          <div
-                            role="button"
-                            tabIndex={0}
-                            className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 cursor-pointer"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setEditingId(note.cn_id);
-                            }}
-                            onKeyDown={(e) => e.key === 'Enter' && setEditingId(note.cn_id)}
-                            title="Edit"
-                          >
-                            <Edit3 className="h-3.5 w-3.5" />
-                          </div>
-                          {/* Delete Button */}
-                          <div
-                            role="button"
-                            tabIndex={0}
-                            className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-red-100 dark:hover:bg-red-900/50 text-destructive cursor-pointer"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              deleteNote.mutate(note.cn_id);
-                            }}
-                            onKeyDown={(e) => e.key === 'Enter' && deleteNote.mutate(note.cn_id)}
-                            title="Delete"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </div>
+                          {!isReadOnly && (
+                            <>
+                              {/* Edit Button */}
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 cursor-pointer"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setEditingId(note.cn_id);
+                                }}
+                                onKeyDown={(e) => e.key === 'Enter' && setEditingId(note.cn_id)}
+                                title="Edit"
+                              >
+                                <Edit3 className="h-3.5 w-3.5" />
+                              </div>
+                              {/* Delete Button */}
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-red-100 dark:hover:bg-red-900/50 text-destructive cursor-pointer"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  deleteNote.mutate(note.cn_id);
+                                }}
+                                onKeyDown={(e) => e.key === 'Enter' && deleteNote.mutate(note.cn_id)}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </AccordionTrigger>

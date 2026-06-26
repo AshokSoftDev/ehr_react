@@ -164,7 +164,7 @@ function DrugSearchCell({ onDrugSelect }: { onDrugSelect: (drug: Drug) => void }
   );
 }
 
-export function PatientVisitPrescriptionPage() {
+export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: boolean }) {
   const [searchParams] = useSearchParams();
   const visitId = searchParams.get("visitId") ? Number(searchParams.get("visitId")) : null;
   const editMode = searchParams.get("edit") === "true";
@@ -220,7 +220,7 @@ export function PatientVisitPrescriptionPage() {
         setRows(editRows);
         setIsEditing(editMode ? true : false);
       } else {
-        setIsEditing(true);
+        setIsEditing(!isReadOnly);
       }
       setInitialized(true);
     }
@@ -391,10 +391,12 @@ export function PatientVisitPrescriptionPage() {
             <h3 className="text-sm font-medium">Prescriptions</h3>
             <p className="text-xs text-muted-foreground">{prescriptions.length} prescription(s) saved</p>
           </div>
-          <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
-            <Edit2 className="h-4 w-4 mr-2" />
-            Edit Prescriptions
-          </Button>
+          {!isReadOnly && (
+            <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
+              <Edit2 className="h-4 w-4 mr-2" />
+              Edit Prescriptions
+            </Button>
+          )}
         </div>
         
         {prescriptions.length === 0 ? (
@@ -402,10 +404,12 @@ export function PatientVisitPrescriptionPage() {
             <Pill className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
             <p className="text-sm font-medium">No prescriptions</p>
             <p className="text-xs text-muted-foreground mb-3">This visit has no prescriptions yet</p>
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="h-8">
-              <Plus className="h-3.5 w-3.5 mr-1" />
-              Add Prescription
-            </Button>
+            {!isReadOnly && (
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="h-8">
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Add Prescription
+              </Button>
+            )}
           </div>
         ) : (
           <div className="space-y-2">
