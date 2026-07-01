@@ -19,7 +19,7 @@ export interface Invoice {
   invoice_id: number;
   invoice_number: string;
   patient_id: number;
-  visit_id: number;
+  visit_id?: number; // Optional — invoices can exist without a visit
   items: InvoiceItem[];
   gross_total: number;
   discount_type: 'percentage' | 'fixed';
@@ -27,12 +27,14 @@ export interface Invoice {
   discount_amount: number;
   tax_amount: number;
   net_total: number;
+  paid_amount: number;
+  balance_amount: number;
   coupon_code?: string;
   discount_reason?: string;
   invoice_date: string;
   due_date?: string;
   notes?: string;
-  status: 'draft' | 'sent' | 'paid' | 'cancelled';
+  status: 'draft' | 'sent' | 'partial' | 'paid' | 'cancelled';
   patient?: {
     patient_id: number;
     firstName: string;
@@ -44,6 +46,7 @@ export interface Invoice {
     visit_type: string;
     visit_date: string;
   };
+  receipts?: Receipt[];
   createdAt: string;
   updatedAt: string;
 }
@@ -51,10 +54,11 @@ export interface Invoice {
 export interface Receipt {
   receipt_id: number;
   receipt_number: string;
-  invoice_id: number;
+  invoice_id?: number; // Optional — advance deposits have no invoice
   patient_id: number;
   amount: number;
   payment_method: 'cash' | 'card' | 'upi' | 'bank_transfer' | 'other';
+  receipt_type: 'payment' | 'advance_deposit' | 'advance_deduction';
   payment_date: string;
   notes?: string;
   invoice?: {
@@ -88,7 +92,7 @@ export interface CreateInvoiceItemDto {
 
 export interface CreateInvoiceDto {
   patient_id: number;
-  visit_id: number;
+  visit_id?: number; // Optional
   items: CreateInvoiceItemDto[];
   discount_type?: 'percentage' | 'fixed';
   discount_value?: number;
@@ -108,7 +112,7 @@ export interface UpdateInvoiceDto {
   invoice_date?: string;
   due_date?: string;
   notes?: string;
-  status?: 'draft' | 'sent' | 'paid' | 'cancelled';
+  status?: 'draft' | 'sent' | 'partial' | 'paid' | 'cancelled';
 }
 
 export interface InvoiceFilters {
@@ -126,6 +130,7 @@ export interface ReceiptFilters {
   invoice_id?: number;
   patient_id?: number;
   payment_method?: string;
+  receipt_type?: string;
   from_date?: string;
   to_date?: string;
   search?: string;
@@ -134,10 +139,11 @@ export interface ReceiptFilters {
 }
 
 export interface CreateReceiptDto {
-  invoice_id: number;
+  invoice_id?: number; // Optional
   patient_id: number;
   amount: number;
   payment_method: 'cash' | 'card' | 'upi' | 'bank_transfer' | 'other';
+  receipt_type?: 'payment' | 'advance_deposit' | 'advance_deduction';
   payment_date?: string;
   notes?: string;
 }
@@ -207,4 +213,79 @@ export interface PaginatedBillingVisitsResponse {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+// ============================================
+// Advance / Wallet types
+// ============================================
+
+export interface PatientAdvance {
+  advance_id: number;
+  patient_id: number;
+  amount: number;
+  transaction_type: 'deposit' | 'deduction';
+  reference_type?: string;
+  reference_id?: number;
+  payment_method?: string;
+  receipt_id?: number;
+  notes?: string;
+  status: number;
+  createdAt: string;
+  patient?: {
+    patient_id: number;
+    firstName: string;
+    lastName: string;
+    mrn: string;
+  };
+}
+
+export interface AdvanceBalanceResponse {
+  patient_id: number;
+  balance: number;
+}
+
+export interface CreateAdvanceDto {
+  patient_id: number;
+  amount: number;
+  payment_method: 'cash' | 'card' | 'upi' | 'bank_transfer' | 'other';
+  notes?: string;
+}
+
+export interface AdvanceFilters {
+  transaction_type?: 'deposit' | 'deduction';
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedAdvancesResponse {
+  advances: PatientAdvance[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface DepositAdvanceResponse {
+  advance: PatientAdvance;
+  balance: number;
+}
+
+// ============================================
+// Payment types (from invoice page)
+// ============================================
+
+export interface CreatePaymentDto {
+  invoice_id: number;
+  patient_id: number;
+  amount: number;
+  payment_method: 'cash' | 'card' | 'upi' | 'bank_transfer' | 'other';
+  from_advance?: number;
+  payment_date?: string;
+  notes?: string;
+}
+
+export interface PaymentResult {
+  receipts: Receipt[];
+  advance_deduction?: PatientAdvance;
+  invoice: Invoice;
+  advance_balance: number;
 }

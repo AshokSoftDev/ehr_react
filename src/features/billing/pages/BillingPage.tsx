@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -28,8 +28,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverAnchor,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { format } from "date-fns";
 import { billingService } from "../services/billing.service";
+import { patientService } from "@/features/patients/services/patient.service";
 import type { Invoice, Receipt as ReceiptType, BillingVisit, BillingVisitsFilters } from "../types/billing.types";
 
 // Payment method icon mapping
@@ -52,9 +65,32 @@ const paymentLabels: Record<string, string> = {
 export function BillingPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [patientSearchQuery, setPatientSearchQuery] = useState("");
+  const [patientDropdownOpen, setPatientDropdownOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptType | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced patient search
+  const [debouncedPatientQuery, setDebouncedPatientQuery] = useState("");
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedPatientQuery(patientSearchQuery);
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [patientSearchQuery]);
+
+  // Patient search query
+  const { data: patientResults, isLoading: patientsLoading } = useQuery({
+    queryKey: ["billing-patient-search", debouncedPatientQuery],
+    queryFn: () => patientService.getPatients(1, 10, debouncedPatientQuery),
+    enabled: debouncedPatientQuery.length >= 2,
+  });
 
   // Consolidated billing visits filters
   const filters: BillingVisitsFilters = useMemo(() => ({
@@ -73,6 +109,13 @@ export function BillingPage() {
   const visits = visitsData?.visits ?? [];
   const totalPages = visitsData?.totalPages ?? 1;
   const totalVisits = visitsData?.total ?? 0;
+
+  // Handle patient selection from searchable dropdown
+  const handlePatientSelect = (patientId: number) => {
+    setPatientDropdownOpen(false);
+    setPatientSearchQuery("");
+    navigate(`/main/billing/patient/${patientId}`);
+  };
 
   // Navigate to invoice page for a visit
   const handleGenerateInvoice = (visit: BillingVisit) => {
@@ -205,7 +248,11 @@ export function BillingPage() {
     if (doc) {
       const itemsHtml = invoice.items?.map(item => `
         <tr>
-          <td>${item.item_name}<br><small style="color:#888">${item.item_type}</small></td>
+          <td>
+            ${item.item_name}<br>
+            <small style="color:#888">${item.item_type}</small>
+            ${item.notes ? `<br><small style="color:#666; font-style:italic;">Note: ${item.notes}</small>` : ''}
+          </td>
           <td style="text-align:center">${item.quantity}</td>
           <td style="text-align:right">₹${Number(item.unit_amount).toFixed(2)}</td>
           <td style="text-align:right;font-weight:600">₹${Number(item.net_amount).toFixed(2)}</td>
@@ -329,19 +376,93 @@ export function BillingPage() {
           </p>
         </div>
 
+        {/* Patient Search (Searchable Dropdown) + Visit Search */}
+        <div className="shrink-0 flex items-center gap-3 mb-3">
+          {/* Patient Searchable Dropdown */}
+          <div className="relative max-w-sm flex-1">
+            <Popover open={patientDropdownOpen} onOpenChange={setPatientDropdownOpen}>
+              <PopoverAnchor asChild>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search patient by name, MRN, or phone..."
+                    value={patientSearchQuery}
+                    onChange={(e) => {
+                      setPatientSearchQuery(e.target.value);
+                      if (e.target.value.length >= 2) setPatientDropdownOpen(true);
+                      else setPatientDropdownOpen(false);
+                    }}
+                    onFocus={() => {
+                      if (patientSearchQuery.length >= 2) setPatientDropdownOpen(true);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setPatientDropdownOpen(false);
+                    }}
+                    className="pl-9 h-10 border-primary/30 focus:border-primary"
+                  />
+                </div>
+              </PopoverAnchor>
+              <PopoverContent
+                className="w-[400px] p-0"
+                align="start"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+              >
+                <Command shouldFilter={false}>
+                  <CommandList>
+                    {patientsLoading ? (
+                      <div className="p-3 space-y-2">
+                        {[1, 2, 3].map((i) => (
+                          <Skeleton key={i} className="h-10 w-full" />
+                        ))}
+                      </div>
+                    ) : patientResults?.patients && patientResults.patients.length > 0 ? (
+                      <CommandGroup heading="Select a patient to create invoice">
+                        {patientResults.patients.map((patient: any) => (
+                          <CommandItem
+                            key={patient.patient_id}
+                            value={`${patient.firstName} ${patient.lastName} ${patient.mrn}`}
+                            onSelect={() => handlePatientSelect(patient.patient_id)}
+                            className="flex items-center gap-3 py-2.5 cursor-pointer"
+                          >
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <User className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {patient.firstName} {patient.lastName}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                MRN: {patient.mrn} · {patient.mobileNumber}
+                              </p>
+                            </div>
+                            <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    ) : (
+                      <CommandEmpty className="py-4 text-xs">
+                        {debouncedPatientQuery.length >= 2
+                          ? "No patients found"
+                          : "Type at least 2 characters to search"}
+                      </CommandEmpty>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
 
-        {/* Search */}
-        <div className="shrink-0 flex items-center justify-between mb-3">
-          <div className="relative max-w-sm">
+          {/* Visit filter search */}
+          <div className="relative max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name, MRN, or phone..."
+              placeholder="Filter visits..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className="pl-9 h-9"
+              className="pl-9 h-10"
             />
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
             {totalVisits} visit{totalVisits !== 1 ? "s" : ""}
           </span>
         </div>
@@ -385,7 +506,8 @@ export function BillingPage() {
                       const receipt = invoice?.receipts?.[0] ?? null;
                       const hasInvoice = !!invoice;
                       const isPaid = invoice?.status === "paid";
-                      const isDraft = hasInvoice && !isPaid;
+                      const isPartial = invoice?.status === "partial";
+                      const isDraft = hasInvoice && !isPaid && !isPartial;
                       const visitDate = new Date(visit.visit_date);
 
                       return (
@@ -433,6 +555,10 @@ export function BillingPage() {
                               <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs">
                                 Paid
                               </Badge>
+                            ) : isPartial ? (
+                              <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 text-xs">
+                                Partial
+                              </Badge>
                             ) : isDraft ? (
                               <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 text-xs">
                                 Draft
@@ -458,8 +584,8 @@ export function BillingPage() {
                                 </Button>
                               )}
 
-                              {/* Has invoice (draft) - View/Pay */}
-                              {isDraft && (
+                              {/* Has invoice (draft/partial) - View/Pay */}
+                              {(isDraft || isPartial) && (
                                 <Button
                                   variant="outline"
                                   size="sm"

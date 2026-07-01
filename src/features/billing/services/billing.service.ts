@@ -12,6 +12,13 @@ import type {
   CreateInvoiceItemDto,
   BillingVisitsFilters,
   PaginatedBillingVisitsResponse,
+  CreateAdvanceDto,
+  AdvanceBalanceResponse,
+  AdvanceFilters,
+  PaginatedAdvancesResponse,
+  DepositAdvanceResponse,
+  CreatePaymentDto,
+  PaymentResult,
 } from '../types/billing.types';
 
 const BASE_URL = '/billing';
@@ -54,6 +61,12 @@ export const billingService = {
     return response.data;
   },
 
+  // Get pending invoices for a patient
+  getPatientPendingInvoices: async (patientId: number): Promise<Invoice[]> => {
+    const response = await api.get<Invoice[]>(`${BASE_URL}/invoices/patient/${patientId}/pending`);
+    return response.data;
+  },
+
   // Receipt APIs
   listReceipts: async (filters?: ReceiptFilters): Promise<PaginatedReceiptsResponse> => {
     const response = await api.get<PaginatedReceiptsResponse>(`${BASE_URL}/receipts`, { params: filters });
@@ -77,5 +90,38 @@ export const billingService = {
 
   deleteReceipt: async (id: number): Promise<void> => {
     await api.delete(`${BASE_URL}/receipts/${id}`);
+  },
+
+  // ============================================
+  // Advance / Wallet APIs
+  // ============================================
+
+  depositAdvance: async (data: CreateAdvanceDto): Promise<DepositAdvanceResponse> => {
+    const response = await api.post<DepositAdvanceResponse>(`${BASE_URL}/advance`, data);
+    return response.data;
+  },
+
+  getAdvanceBalance: async (patientId: number): Promise<AdvanceBalanceResponse> => {
+    const response = await api.get<AdvanceBalanceResponse>(`${BASE_URL}/advance/balance/${patientId}`);
+    return response.data;
+  },
+
+  getAdvanceLedger: async (patientId: number, filters?: AdvanceFilters): Promise<PaginatedAdvancesResponse> => {
+    const response = await api.get<PaginatedAdvancesResponse>(`${BASE_URL}/advance/ledger/${patientId}`, { params: filters });
+    return response.data;
+  },
+
+  // ============================================
+  // Payment APIs
+  // ============================================
+
+  createPayment: async (data: CreatePaymentDto): Promise<PaymentResult> => {
+    const response = await api.post<PaymentResult>(`${BASE_URL}/payments`, data);
+    return response.data;
+  },
+
+  getInvoicePayments: async (invoiceId: number): Promise<Receipt[]> => {
+    const response = await api.get<Receipt[]>(`${BASE_URL}/payments/invoice/${invoiceId}`);
+    return response.data;
   },
 };

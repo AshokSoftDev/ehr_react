@@ -34,6 +34,7 @@ const DocumentTypesPage = lazy(() => import('../features/document-types/pages/Do
 const LocationsPage = lazy(() => import('../features/locations/pages/LocationsPage').then(module => ({ default: module.LocationsPage })))
 const ClinicalNotesPage = lazy(() => import('../features/clinical-notes/pages/ClinicalNotesPage').then(module => ({ default: module.ClinicalNotesPage })))
 const BillingPage = lazy(() => import('../features/billing/pages/BillingPage').then(module => ({ default: module.BillingPage })))
+const PatientBillingDashboard = lazy(() => import('../features/billing/pages/patient/PatientBillingDashboard').then(module => ({ default: module.PatientBillingDashboard })))
 const InvoicePage = lazy(() => import('../features/billing/pages/InvoicePage'))
 const AIChatPage = lazy(() => import('../features/ai-chat/pages/AIChatPage').then(module => ({ default: module.AIChatPage })))
 
@@ -163,6 +164,16 @@ export const routes: RouteConfig[] = [
         name: 'Billing',
         icon: Receipt,
         component: BillingPage,
+        roles: [1],
+        showInNav: false,
+        module: 'Billing',
+      },
+      {
+        id: 'patient-billing',
+        path: '/main/billing/patient/:id',
+        name: 'Patient Billing',
+        icon: Receipt,
+        component: PatientBillingDashboard,
         roles: [1],
         showInNav: false,
         module: 'Billing',

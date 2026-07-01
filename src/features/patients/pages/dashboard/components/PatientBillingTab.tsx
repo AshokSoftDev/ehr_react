@@ -203,7 +203,7 @@ export function PatientBillingTab({ patientId }: Props) {
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-sm">
-                        {receipt.invoice?.invoice_number || 'N/A'}
+                        {receipt.invoice?.invoice_number || (receipt.receipt_type === 'advance_deposit' ? 'Advance Deposit' : 'N/A')}
                       </span>
                       <span className="text-xs text-muted-foreground">|</span>
                       <span className="font-semibold text-xs">

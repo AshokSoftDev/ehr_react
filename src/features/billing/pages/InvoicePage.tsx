@@ -11,9 +11,8 @@ import {
   CheckCircle,
   Save,
   X,
-  Smartphone,
-  Banknote,
-  Building,
+  User,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,18 +41,20 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+// import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { visitService } from "@/features/visits/services/visit.service";
+import { patientService } from "@/features/patients/services/patient.service";
 import { useDrugSearch } from "@/features/visits/hooks/useDrugs";
 import {
   useVisitPrescriptionsForInvoice,
   useCreateInvoice,
   useUpdateInvoice,
+  useAdvanceBalance,
 } from "../hooks/useBilling";
-import type { VisitItem, VisitFilters } from "@/features/visits/types/visit.types";
-import type { InvoiceItemRow, CreateInvoiceDto, CreateReceiptDto, Invoice } from "../types/billing.types";
+import type { InvoiceItemRow, CreateInvoiceDto, Invoice } from "../types/billing.types";
 import type { Drug } from "@/features/visits/types/drug.types";
 import { billingService } from "../services/billing.service";
 
@@ -125,7 +126,7 @@ function InlineDrugSearchRow({
                 if (e.key === "Escape") setOpen(false);
               }}
               placeholder="Search drugs to add..."
-              className="h-7 text-xs w-full min-w-[200px]"
+              className="h-8 text-xs w-full max-w-[250px]"
               disabled={disabled}
             />
           </PopoverAnchor>
@@ -172,6 +173,7 @@ function InlineDrugSearchRow({
       <td className="p-2" />
       <td className="p-2" />
       <td className="p-2" />
+      <td className="p-2" />
     </tr>
   );
 }
@@ -180,9 +182,10 @@ export function InvoicePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const visitIdFromUrl = searchParams.get("visitId");
+  const patientIdFromUrl = searchParams.get("patientId");
+  const invoiceIdFromUrl = searchParams.get("invoiceId");
 
   // State
-  const [selectedVisit, setSelectedVisit] = useState<VisitItem | null>(null);
   const [savedInvoice, setSavedInvoice] = useState<Invoice | null>(null);
   const [items, setItems] = useState<InvoiceItemRow[]>([]);
   const [invoiceDate, setInvoiceDate] = useState<Date>(new Date());
@@ -190,57 +193,72 @@ export function InvoicePage() {
   const [discountValue, setDiscountValue] = useState(0);
   const [couponCode, setCouponCode] = useState("");
   const [discountReason, setDiscountReason] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Payment State
+  // const [paymentMethod] = useState<string>("cash");
+  // const [payAmount, setPayAmount] = useState<string>("");
+  // const [useAdvance, setUseAdvance] = useState(false);
+  // const [advanceToUse, setAdvanceToUse] = useState<string>("");
+
   const [isSaving, setIsSaving] = useState(false);
-  const [receiptGenerated, setReceiptGenerated] = useState<{
-    receipt_number: string;
-    amount: number;
-  } | null>(null);
+  const [receiptsGenerated, setReceiptsGenerated] = useState<any[]>([]);
 
-  // Fetch the specific visit by ID
-  const visitFilters: VisitFilters = useMemo(() => ({
-    status: "1",
-    page: 1,
-    limit: 50,
-  }), []);
-
+  // 1. Fetch Visit (if visitId provided)
   const { data: visitsData, isLoading: visitsLoading } = useQuery({
     queryKey: ["invoice-visit", visitIdFromUrl],
-    queryFn: () => visitService.list(visitFilters),
+    queryFn: () => visitService.list({ status: "1", page: 1, limit: 50 }),
     enabled: !!visitIdFromUrl,
   });
 
-  // Auto-select visit from URL param
-  useEffect(() => {
+  const selectedVisit = useMemo(() => {
     if (visitIdFromUrl && visitsData?.visits) {
-      const visitFromUrl = visitsData.visits.find(
-        (v) => v.visit_id === Number(visitIdFromUrl)
-      );
-      if (visitFromUrl && selectedVisit?.visit_id !== visitFromUrl.visit_id) {
-        setSelectedVisit(visitFromUrl);
-      }
+      return visitsData.visits.find((v) => v.visit_id === Number(visitIdFromUrl));
     }
+    return null;
   }, [visitIdFromUrl, visitsData]);
 
-  // Fetch prescriptions for selected visit
+  // 2. Fetch Patient (if patientId provided directly)
+  const { data: directPatient, isLoading: patientLoading } = useQuery({
+    queryKey: ["patient", patientIdFromUrl],
+    queryFn: () => patientService.getPatient(Number(patientIdFromUrl)),
+    enabled: !!patientIdFromUrl && !visitIdFromUrl,
+  });
+
+  const resolvedPatientId = selectedVisit?.patient_id || directPatient?.patient_id;
+  const resolvedPatient = selectedVisit?.patient || directPatient;
+
+  // 3. Fetch Advance Balance
+  const { data: advanceData } = useAdvanceBalance(resolvedPatientId ?? 0);
+  const advanceBalance = advanceData?.balance || 0;
+
+  // 4. Fetch Prescriptions (if visit)
   const { data: prescriptionItems, isLoading: prescriptionsLoading } =
     useVisitPrescriptionsForInvoice(selectedVisit?.visit_id ?? 0);
 
-  // Fetch existing invoice for visit
+  // 5. Fetch existing invoices (for visit or specific invoice)
   const { data: existingInvoicesData } = useQuery({
-    queryKey: ["visit-invoices", selectedVisit?.visit_id],
-    queryFn: () => billingService.listInvoices({ visit_id: selectedVisit?.visit_id }),
-    enabled: !!selectedVisit?.visit_id,
+    queryKey: ["visit-invoices", selectedVisit?.visit_id, invoiceIdFromUrl],
+    queryFn: async () => {
+      if (invoiceIdFromUrl) {
+        const inv = await billingService.getInvoice(Number(invoiceIdFromUrl));
+        return { invoices: [inv], total: 1, page: 1, totalPages: 1 };
+      }
+      if (selectedVisit?.visit_id) {
+        return billingService.listInvoices({ visit_id: selectedVisit.visit_id });
+      }
+      return { invoices: [], total: 0, page: 1, totalPages: 1 };
+    },
+    enabled: !!selectedVisit?.visit_id || !!invoiceIdFromUrl,
   });
 
-  // Create/Update invoice mutations
+  // Mutations
   const createInvoiceMutation = useCreateInvoice();
   const updateInvoiceMutation = useUpdateInvoice();
+  // const createPaymentMutation = useCreatePayment();
 
-  // Load existing invoice or prescriptions when visit is selected
+  // Load existing invoice or prescriptions
   useEffect(() => {
-    if (selectedVisit && existingInvoicesData?.invoices && existingInvoicesData.invoices.length > 0) {
+    if (resolvedPatientId && existingInvoicesData?.invoices && existingInvoicesData.invoices.length > 0) {
       const existingInvoice = existingInvoicesData.invoices[0];
       setSavedInvoice(existingInvoice);
 
@@ -265,16 +283,14 @@ export function InvoicePage() {
       setDiscountReason(existingInvoice.discount_reason || "");
       setInvoiceDate(new Date(existingInvoice.invoice_date));
 
-      if (existingInvoice.status === "paid") {
-        billingService.listReceipts({ invoice_id: existingInvoice.invoice_id }).then((res) => {
-          if (res.receipts.length > 0) {
-            setReceiptGenerated({
-              receipt_number: res.receipts[0].receipt_number,
-              amount: Number(res.receipts[0].amount),
-            });
-          }
-        });
-      }
+      // Reset payment amounts
+      // setPayAmount(Number(existingInvoice.balance_amount || 0).toFixed(2));
+
+      // Load receipts
+      billingService.getInvoicePayments(existingInvoice.invoice_id).then(receipts => {
+        setReceiptsGenerated(receipts);
+      });
+
     } else if (selectedVisit && prescriptionItems && prescriptionItems.length > 0 && !existingInvoicesData?.invoices?.length) {
       const initialItems: InvoiceItemRow[] = prescriptionItems.map((p) => ({
         _id: generateId(),
@@ -291,30 +307,37 @@ export function InvoicePage() {
       }));
       setItems(initialItems);
       setSavedInvoice(null);
-    } else if (selectedVisit && (!prescriptionItems || prescriptionItems.length === 0) && !existingInvoicesData?.invoices?.length) {
+    } else if (resolvedPatientId && (!prescriptionItems || prescriptionItems.length === 0) && !existingInvoicesData?.invoices?.length) {
       setItems([]);
       setSavedInvoice(null);
     }
-  }, [selectedVisit, prescriptionItems, existingInvoicesData]);
+  }, [selectedVisit, resolvedPatientId, prescriptionItems, existingInvoicesData]);
 
-  // Navigate back to billing list
+  // When savedInvoice updates, keep payAmount in sync with balance
+  // useEffect(() => {
+  //   if (savedInvoice) {
+  //     setPayAmount(Number(savedInvoice.balance_amount || 0).toFixed(2));
+  //   }
+  // }, [savedInvoice?.balance_amount]);
+
+  // Navigate back
   const handleBackToBilling = useCallback(() => {
-    navigate("/main/billing");
-  }, [navigate]);
+    if (resolvedPatientId) {
+      navigate(`/main/billing/patient/${resolvedPatientId}`);
+    } else {
+      navigate("/main/billing");
+    }
+  }, [navigate, resolvedPatientId]);
 
-  // Update item
+  // Item operations
   const updateItem = useCallback((id: string, updates: Partial<InvoiceItemRow>) => {
-    setItems((prev) =>
-      prev.map((item) => (item._id === id ? { ...item, ...updates } : item))
-    );
+    setItems((prev) => prev.map((item) => (item._id === id ? { ...item, ...updates } : item)));
   }, []);
 
-  // Remove item
   const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((item) => item._id !== id));
   }, []);
 
-  // Add drug from search
   const handleAddDrug = useCallback((drug: Drug) => {
     const newItem: InvoiceItemRow = {
       _id: generateId(),
@@ -331,16 +354,10 @@ export function InvoicePage() {
     setItems((prev) => [...prev, newItem]);
   }, []);
 
-  // Calculate totals
+  // Totals
   const totals = useMemo(() => {
-    const itemsWithAmounts = items.map((item) => ({
-      ...item,
-      ...calculateItemAmounts(item),
-    }));
-
-    const baseSubtotal = items.reduce((sum, item) =>
-      sum + (item.quantity ?? 1) * (item.unit_amount ?? 0), 0);
-
+    const itemsWithAmounts = items.map((item) => ({ ...item, ...calculateItemAmounts(item) }));
+    const baseSubtotal = items.reduce((sum, item) => sum + (item.quantity ?? 1) * (item.unit_amount ?? 0), 0);
     const totalPremium = items.reduce((sum, item) => sum + (item.premium ?? 0), 0);
     const totalItemDiscount = itemsWithAmounts.reduce((sum, item) => sum + (item.discount_amount || 0), 0);
     const grossTotal = itemsWithAmounts.reduce((sum, item) => sum + (item.net_amount || 0), 0);
@@ -374,9 +391,9 @@ export function InvoicePage() {
     };
   }, [items, discountType, discountValue, couponCode]);
 
-  // Handle Save Invoice
+  // Handle Save
   const handleSave = async () => {
-    if (!selectedVisit || items.length === 0) {
+    if (!resolvedPatientId || items.length === 0) {
       toast.error("Please add at least one item");
       return;
     }
@@ -421,8 +438,8 @@ export function InvoicePage() {
         toast.success("Invoice updated successfully");
       } else {
         const createDto: CreateInvoiceDto = {
-          patient_id: selectedVisit.patient_id,
-          visit_id: selectedVisit.visit_id,
+          patient_id: resolvedPatientId,
+          visit_id: selectedVisit?.visit_id, // optional
           ...invoiceData,
         };
         invoice = await createInvoiceMutation.mutateAsync(createDto);
@@ -437,206 +454,303 @@ export function InvoicePage() {
     }
   };
 
-  // Handle payment
-  const handlePay = async () => {
-    if (!savedInvoice) {
-      toast.error("Please save the invoice first");
-      return;
-    }
+  // Handle Payment
+  // const handlePay = async () => {
+  //   if (!savedInvoice || !resolvedPatientId) return;
 
-    setIsProcessingPayment(true);
+  //   const amountToPay = parseFloat(payAmount || "0");
+  //   const advanceAmount = useAdvance ? parseFloat(advanceToUse || "0") : 0;
 
-    try {
-      const receiptDto: CreateReceiptDto = {
-        invoice_id: savedInvoice.invoice_id,
-        patient_id: selectedVisit!.patient_id,
-        amount: totals.netTotal,
-        payment_method: paymentMethod as CreateReceiptDto["payment_method"],
-      };
+  //   const totalPayment = amountToPay + advanceAmount;
 
-      const receipt = await billingService.createReceipt(receiptDto);
+  //   if (totalPayment <= 0) {
+  //     toast.error("Please enter a valid payment amount");
+  //     return;
+  //   }
 
-      setReceiptGenerated({
-        receipt_number: receipt.receipt_number,
-        amount: Number(receipt.amount),
-      });
+  //   if (totalPayment > savedInvoice.balance_amount) {
+  //     toast.error("Payment amount cannot exceed the balance amount");
+  //     return;
+  //   }
 
-      setSavedInvoice((prev) => prev ? { ...prev, status: "paid" } : null);
-      toast.success("Payment successful! Receipt generated.");
-    } catch {
-      toast.error("Payment failed. Please try again.");
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
+  //   try {
+  //     const dto: CreatePaymentDto = {
+  //       invoice_id: savedInvoice.invoice_id,
+  //       patient_id: resolvedPatientId,
+  //       amount: amountToPay,
+  //       payment_method: paymentMethod as CreatePaymentDto["payment_method"],
+  //       from_advance: advanceAmount,
+  //     };
 
-  const isPaid = savedInvoice?.status === "paid" || !!receiptGenerated;
+  //     const result = await createPaymentMutation.mutateAsync(dto);
 
-  // Loading state
-  if (visitsLoading || !selectedVisit) {
+  //     setSavedInvoice(result.invoice);
+
+  //     // Add new receipts to the list
+  //     setReceiptsGenerated(prev => [...prev, ...result.receipts]);
+
+  //     // Reset payment inputs
+  //     setPayAmount(Number(result.invoice.balance_amount).toFixed(2));
+  //     setUseAdvance(false);
+  //     setAdvanceToUse("");
+
+  //     toast.success("Payment recorded successfully");
+  //   } catch (e: any) {
+  //     toast.error(e.response?.data?.error || "Payment failed");
+  //   }
+  // };
+
+  // Auto-fill advance logic
+  // useEffect(() => {
+  //   if (useAdvance && savedInvoice) {
+  //     const balance = savedInvoice.balance_amount || 0;
+  //     const amountFromWallet = Math.min(balance, advanceBalance);
+  //     setAdvanceToUse(String(amountFromWallet));
+  //     setPayAmount(Number(Math.max(0, balance - amountFromWallet)).toFixed(2));
+  //   } else if (!useAdvance && savedInvoice) {
+  //     setAdvanceToUse("");
+  //     setPayAmount(Number(savedInvoice.balance_amount || 0).toFixed(2));
+  //   }
+  // }, [useAdvance, advanceBalance, savedInvoice?.balance_amount]);
+
+  const isFullyPaid = savedInvoice?.status === "paid";
+
+  if ((visitIdFromUrl && visitsLoading) || (patientIdFromUrl && patientLoading) || !resolvedPatient) {
     return (
       <div className="h-full flex flex-col p-4">
         <div className="flex items-center gap-3 mb-4">
           <Button variant="ghost" size="sm" onClick={handleBackToBilling} className="h-8 px-2">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
+            <ArrowLeft className="h-4 w-4 mr-1" /> Back
           </Button>
-          <div>
-            <h2 className="text-base font-semibold">Loading Invoice...</h2>
-          </div>
+          <h2 className="text-base font-semibold">Loading...</h2>
         </div>
         <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-12 w-full" />
-          ))}
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
         </div>
       </div>
     );
   }
 
-  // Invoice Creation / View
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-[calc(100vh-4rem)] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 shrink-0">
+      <div className="flex items-center justify-between mb-4 shrink-0 border-b pb-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={handleBackToBilling} className="h-8 px-2">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
+            <ArrowLeft className="h-4 w-4 mr-1" /> Back
           </Button>
           <div>
-            <h2 className="text-base font-semibold flex items-center gap-2">
-              <FileText className="h-4 w-4 text-primary" />
-              Invoice - {selectedVisit.patient?.firstName} {selectedVisit.patient?.lastName}
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Invoice - {resolvedPatient?.firstName} {resolvedPatient?.lastName}
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Visit #{selectedVisit.visit_id} • {selectedVisit.visit_type} • {format(new Date(selectedVisit.visit_date), "dd MMM yyyy")}
-            </p>
+            <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+              <span className="flex items-center gap-1"><User className="h-3 w-3" /> MRN: {resolvedPatient?.mrn}</span>
+              {selectedVisit && (
+                <>
+                  <span>•</span>
+                  <span>Visit #{selectedVisit.visit_id} ({selectedVisit.visit_type})</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {savedInvoice && (
-            <Badge variant={isPaid ? "default" : "secondary"} className={isPaid ? "bg-green-500" : ""}>
-              {isPaid ? "Paid" : savedInvoice.invoice_number}
-            </Badge>
-          )}
-          {receiptGenerated && (
-            <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              {receiptGenerated.receipt_number}
-            </Badge>
-          )}
+
+        <div className="flex items-center gap-4">
+          {/* Wallet Balance Display */}
+          <div className="flex flex-col items-end mr-4">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Advance Balance</span>
+            <div className="flex items-center gap-1 text-green-600 font-semibold">
+              <Wallet className="h-4 w-4" />
+              ₹{advanceBalance.toFixed(2)}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {savedInvoice && (
+              <Badge variant={isFullyPaid ? "default" : "secondary"} className={isFullyPaid ? "bg-green-500" : ""}>
+                {isFullyPaid ? "Paid" : savedInvoice.status === "partial" ? "Partial" : "Draft"} - {savedInvoice.invoice_number}
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Invoice Content */}
-      {prescriptionsLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-12 w-full" />
-          ))}
-        </div>
-      ) : (
-        <div className="flex-1 flex flex-col gap-4 overflow-auto">
-          {/* Items Table */}
-          <Card className="shrink-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="w-8 p-2 text-left text-orange-500">#</th>
-                    <th className="w-48 p-2 text-left">Item / Procedure</th>
-                    <th className="w-16 p-2 text-center">Qty</th>
-                    <th className="w-20 p-2 text-right">Rate</th>
-                    <th className="w-20 p-2 text-right">Premium</th>
-                    <th className="w-28 p-2 text-right">Discount</th>
-                    <th className="w-24 p-2 text-right text-green-600">Amount</th>
-                    <th className="w-8 p-2" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {items.map((item, index) => {
-                    const calculated = calculateItemAmounts(item);
-                    return (
-                      <tr key={item._id} className="hover:bg-muted/20">
-                        <td className="p-2 text-muted-foreground">{index + 1}</td>
-                        <td className="p-2">
-                          <div className="flex items-center gap-2">
+      {/* Main Content Scrollable Area */}
+      <div className="flex-1 overflow-y-auto pr-2 pb-4">
+        {prescriptionsLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-6">
+            {/* Items Table */}
+            <Card className="shrink-0 shadow-sm border-muted">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/30">
+                    <tr>
+                      <th className="w-8 p-3 text-left font-medium text-muted-foreground">#</th>
+                      <th className="w-[350px] p-3 text-left font-medium text-muted-foreground">Item / Procedure</th>
+                      <th className="w-20 p-3 text-center font-medium text-muted-foreground">Qty</th>
+                      <th className="w-24 p-3 text-right font-medium text-muted-foreground">Rate</th>
+                      <th className="w-24 p-3 text-right font-medium text-muted-foreground">Premium</th>
+                      <th className="w-32 p-3 text-right font-medium text-muted-foreground">Discount</th>
+                      <th className="p-3 text-left font-medium text-muted-foreground">Notes</th>
+                      <th className="w-28 p-3 text-right font-medium text-muted-foreground">Amount</th>
+                      <th className="w-10 p-3" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {items.map((item, index) => {
+                      const calculated = calculateItemAmounts(item);
+                      return (
+                        <tr key={item._id} className="hover:bg-muted/10 transition-colors">
+                          <td className="p-3 text-muted-foreground">{index + 1}</td>
+                          <td className="p-3">
                             <Input
                               value={item.item_name}
                               onChange={(e) => updateItem(item._id, { item_name: e.target.value })}
-                              className="h-7 text-xs border-0 bg-transparent p-0 focus-visible:ring-0"
+                              className={cn("h-8 text-xs font-medium w-full", item.item_type === 'drug' && "bg-muted cursor-not-allowed")}
                               placeholder="Item name"
-                              disabled={isPaid}
+                              readOnly={item.item_type === "drug"}
+                              disabled={isFullyPaid}
                             />
-                            {/* <Badge variant="outline" className="text-[9px] px-1 py-0 shrink-0">
-                              {item.item_type}
-                            </Badge> */}
-                          </div>
-                        </td>
-                        <td className="p-2">
-                          <Input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              updateItem(item._id, { quantity: Number(e.target.value) || 1 })
-                            }
-                            className="h-7 text-xs text-center w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            min={1}
-                            disabled={isPaid}
-                          />
-                        </td>
-                        <td className="p-2">
-                          <Input
-                            type="number"
-                            value={item.unit_amount}
-                            onChange={(e) =>
-                              updateItem(item._id, { unit_amount: Number(e.target.value) || 0 })
-                            }
-                            className="h-7 text-xs text-right w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            min={0}
-                            step="0.01"
-                            disabled={isPaid}
-                          />
-                        </td>
-                        <td className="p-2">
-                          <Input
-                            type="number"
-                            value={item.premium || ""}
-                            onChange={(e) =>
-                              updateItem(item._id, { premium: e.target.value === "" ? 0 : Number(e.target.value) })
-                            }
-                            className="h-7 text-xs text-right w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            min={0}
-                            step="0.01"
-                            disabled={isPaid}
-                          />
-                        </td>
-                        <td className="p-2">
-                          <div className="flex items-center gap-1">
+                          </td>
+                          <td className="p-3">
                             <Input
                               type="number"
-                              value={item.discount_value || ""}
-                              onChange={(e) =>
-                                updateItem(item._id, {
-                                  discount_value: e.target.value === "" ? 0 : Number(e.target.value),
-                                })
-                              }
-                              className="h-7 text-xs text-right flex-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              value={item.quantity}
+                              onChange={(e) => updateItem(item._id, { quantity: Number(e.target.value) || 1 })}
+                              className="h-8 text-xs text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full"
+                              min={1}
+                              disabled={isFullyPaid}
+                            />
+                          </td>
+                          <td className="p-3">
+                            <Input
+                              type="number"
+                              value={item.unit_amount}
+                              onChange={(e) => updateItem(item._id, { unit_amount: Number(e.target.value) || 0 })}
+                              className={cn("h-8 text-xs text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full", item.item_type === 'drug' && "bg-muted cursor-not-allowed")}
                               min={0}
                               step="0.01"
-                              disabled={isPaid}
+                              readOnly={item.item_type === "drug"}
+                              disabled={isFullyPaid || item.item_type === "drug"}
                             />
-                            <Select
-                              value={item.discount_type}
-                              onValueChange={(v) =>
-                                updateItem(item._id, {
-                                  discount_type: v as "percentage" | "fixed",
-                                })
-                              }
-                              disabled={isPaid}
+                          </td>
+                          <td className="p-3">
+                            <Input
+                              type="number"
+                              value={item.premium || ""}
+                              onChange={(e) => updateItem(item._id, { premium: e.target.value === "" ? 0 : Number(e.target.value) })}
+                              className="h-8 text-xs text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full"
+                              min={0}
+                              step="0.01"
+                              disabled={isFullyPaid}
+                            />
+                          </td>
+                          <td className="p-3">
+                            <div className="flex items-center gap-1 bg-background rounded-md border border-input shadow-sm p-0.5 w-full">
+                              <Input
+                                type="number"
+                                value={item.discount_value || ""}
+                                onChange={(e) => updateItem(item._id, { discount_value: e.target.value === "" ? 0 : Number(e.target.value) })}
+                                className="h-6 text-xs text-right flex-1 border-0 focus-visible:ring-0 shadow-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                min={0}
+                                step="0.01"
+                                disabled={isFullyPaid}
+                              />
+                              <Select
+                                value={item.discount_type}
+                                onValueChange={(v) => updateItem(item._id, { discount_type: v as "percentage" | "fixed" })}
+                                disabled={isFullyPaid}
+                              >
+                                <SelectTrigger className="h-6 w-10 text-[10px] px-1 border-0 shadow-none bg-muted/50 rounded-sm">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="percentage">%</SelectItem>
+                                  <SelectItem value="fixed">₹</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <Input
+                              value={item.notes || ""}
+                              onChange={(e) => updateItem(item._id, { notes: e.target.value })}
+                              className="h-8 text-xs w-full"
+                              placeholder="Notes (opt)"
+                              disabled={isFullyPaid}
+                            />
+                          </td>
+                          <td className="p-3 text-right font-medium text-foreground">
+                            ₹{calculated.net_amount.toFixed(2)}
+                          </td>
+                          <td className="p-3 text-right">
+                            {!isFullyPaid && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => removeItem(item._id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {!isFullyPaid && <InlineDrugSearchRow onDrugSelect={handleAddDrug} disabled={isFullyPaid} />}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            {/* Totals & Settings Grid */}
+            <div className="grid gap-6 lg:grid-cols-12 shrink-0">
+              {/* Left Column: Settings & History */}
+              <div className="lg:col-span-8 space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Card className="p-4 shadow-sm">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1.5 block">Invoice Date</label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn("h-9 w-full justify-start text-left font-normal text-xs", !invoiceDate && "text-muted-foreground")}
+                              disabled={isFullyPaid}
                             >
-                              <SelectTrigger className="h-7 w-12 text-xs px-1">
+                              <CalendarDays className="mr-2 h-4 w-4" />
+                              {invoiceDate ? format(invoiceDate, "dd MMM yyyy") : "Pick a date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar mode="single" selected={invoiceDate} onSelect={(date) => date && setInvoiceDate(date)} initialFocus />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1.5 block">Overall Discount</label>
+                          <div className="flex items-center gap-1 border rounded-md p-0.5">
+                            <Input
+                              type="number"
+                              value={discountValue || ""}
+                              onChange={(e) => setDiscountValue(e.target.value === "" ? 0 : Number(e.target.value))}
+                              className="h-7 text-xs border-0 focus-visible:ring-0 shadow-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              min={0}
+                              step="0.01"
+                              placeholder="0"
+                              disabled={isFullyPaid}
+                            />
+                            <Select value={discountType} onValueChange={(v) => setDiscountType(v as "percentage" | "fixed")} disabled={isFullyPaid}>
+                              <SelectTrigger className="h-7 w-12 text-xs border-0 bg-muted/50">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -645,242 +759,146 @@ export function InvoicePage() {
                               </SelectContent>
                             </Select>
                           </div>
-                        </td>
-                        <td className="p-2 text-right font-semibold text-green-600">
-                          ₹{calculated.net_amount.toFixed(2)}
-                        </td>
-                        <td className="p-2">
-                          {!isPaid && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                              onClick={() => removeItem(item._id)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {/* Inline Drug Search Row */}
-                  <InlineDrugSearchRow onDrugSelect={handleAddDrug} disabled={isPaid} />
-                </tbody>
-              </table>
-            </div>
-          </Card>
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1.5 block">Coupon</label>
+                          <Input
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            className="h-8 text-xs uppercase"
+                            placeholder="e.g. CC100"
+                            disabled={isFullyPaid}
+                          />
+                        </div>
+                      </div>
 
-          {/* Totals & Settings Grid */}
-          <div className="grid gap-4 lg:grid-cols-3 shrink-0">
-            {/* Left: Discount Settings */}
-            <Card className="p-3">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Discount</p>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={discountValue || ""}
-                    onChange={(e) => setDiscountValue(e.target.value === "" ? 0 : Number(e.target.value))}
-                    className="h-8 text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    min={0}
-                    step="0.01"
-                    placeholder="Value"
-                    disabled={isPaid}
-                  />
-                  <Select
-                    value={discountType}
-                    onValueChange={(v) => setDiscountType(v as "percentage" | "fixed")}
-                    disabled={isPaid}
-                  >
-                    <SelectTrigger className="h-8 w-16 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percentage">%</SelectItem>
-                      <SelectItem value="fixed">₹</SelectItem>
-                    </SelectContent>
-                  </Select>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1.5 block">Notes / Reason</label>
+                        <Textarea
+                          value={discountReason}
+                          onChange={(e) => setDiscountReason(e.target.value)}
+                          className="text-xs min-h-[60px] resize-none"
+                          placeholder="Optional notes or reason for discount..."
+                          disabled={isFullyPaid}
+                        />
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Payment History */}
+                  {receiptsGenerated.length > 0 && (
+                    <Card className="p-4 shadow-sm flex flex-col">
+                      <p className="text-sm font-semibold text-foreground mb-4">Payment History</p>
+                      <div className="flex-1 overflow-y-auto space-y-3">
+                        {receiptsGenerated.map(receipt => (
+                          <div key={receipt.receipt_id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                                <CheckCircle className="h-4 w-4 text-green-600" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-foreground">{receipt.receipt_number}</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {format(new Date(receipt.payment_date), "dd MMM, hh:mm a")} • {receipt.payment_method}
+                                  {receipt.receipt_type === "advance_deduction" && " (Wallet)"}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="font-semibold text-sm text-green-700">₹{Number(receipt.amount).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
                 </div>
-                <Input
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  className="h-8 text-xs uppercase"
-                  placeholder="Coupon Code (e.g., CC100)"
-                  disabled={isPaid}
-                />
-
-                <Textarea
-                  value={discountReason}
-                  onChange={(e) => setDiscountReason(e.target.value)}
-                  className="text-xs min-h-[60px] resize-none"
-                  placeholder="Discount Reason"
-                  disabled={isPaid}
-                />
               </div>
-            </Card>
 
-            {/* Center: Date */}
-            <Card className="p-3">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Invoice Date</p>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "h-8 w-full justify-start text-left font-normal text-xs",
-                      !invoiceDate && "text-muted-foreground"
+              {/* Right Column: Summary & Payment Box */}
+              <div className="lg:col-span-4 space-y-4">
+                <Card className="p-5 bg-gradient-to-br from-orange-50/50 to-orange-100/50 border-orange-200/50 shadow-sm">
+                  <h3 className="text-sm font-semibold text-orange-900 mb-4">Invoice Summary</h3>
+
+                  <div className="space-y-2.5 text-sm">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Subtotal</span>
+                      <span>₹{totals.baseSubtotal.toFixed(2)}</span>
+                    </div>
+                    {totals.totalPremium > 0 && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Premium</span>
+                        <span>₹{totals.totalPremium.toFixed(2)}</span>
+                      </div>
                     )}
-                    disabled={isPaid}
-                  >
-                    <CalendarDays className="mr-2 h-3 w-3" />
-                    {invoiceDate ? format(invoiceDate, "dd MMM yyyy") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={invoiceDate}
-                    onSelect={(date) => date && setInvoiceDate(date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </Card>
+                    {totals.totalItemDiscount > 0 && (
+                      <div className="flex justify-between text-red-600/80">
+                        <span>Item Discounts</span>
+                        <span>-₹{totals.totalItemDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-medium border-t border-orange-200/50 pt-2 pb-1 text-foreground">
+                      <span>Gross Total</span>
+                      <span>₹{totals.grossTotal.toFixed(2)}</span>
+                    </div>
+                    {totals.invoiceDiscount > 0 && (
+                      <div className="flex justify-between text-red-600/80">
+                        <span>Overall Discount</span>
+                        <span>-₹{totals.invoiceDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {totals.couponDiscount > 0 && (
+                      <div className="flex justify-between text-purple-600/80">
+                        <span>Coupon ({couponCode})</span>
+                        <span>-₹{totals.couponDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-orange-200/80 pt-3 mt-1 flex justify-between items-center">
+                      <span className="font-bold text-base">Net Total</span>
+                      <span className="font-bold text-lg">₹{totals.netTotal.toFixed(2)}</span>
+                    </div>
 
-            {/* Right: Totals */}
-            <Card className="p-3 bg-orange-50 border-orange-200">
-              <div className="space-y-1.5 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>₹{totals.baseSubtotal.toFixed(2)}</span>
-                </div>
-                {totals.totalPremium > 0 && (
-                  <div className="flex justify-between text-blue-600">
-                    <span>+ Premium</span>
-                    <span>₹{totals.totalPremium.toFixed(2)}</span>
+                    {/* Paid & Balance (only if saved) */}
+                    {savedInvoice && (
+                      <>
+                        <div className="flex justify-between text-green-600 pt-2">
+                          <span>Amount Paid</span>
+                          <span>₹{Number(savedInvoice.paid_amount || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-orange-700 bg-white/50 p-2 rounded-md mt-2 border border-orange-200/50">
+                          <span>Balance Due</span>
+                          <span>₹{Number(savedInvoice.balance_amount || 0).toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
-                )}
-                {totals.totalItemDiscount > 0 && (
-                  <div className="flex justify-between text-red-500">
-                    <span>- Item Discounts</span>
-                    <span>-₹{totals.totalItemDiscount.toFixed(2)}</span>
+
+                  <div className="mt-5">
+                    {!savedInvoice && (
+                      <Button
+                        onClick={handleSave}
+                        disabled={isSaving || items.length === 0}
+                        className="w-full bg-primary hover:bg-primary/90 gap-2 h-11"
+                      >
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Save Invoice
+                      </Button>
+                    )}
+                    {savedInvoice && savedInvoice.balance_amount > 0 && (
+                      <Button
+                        onClick={() => navigate(`/main/billing/patient/${resolvedPatientId}?tab=payment`)}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 h-11 mt-4"
+                      >
+                        <CreditCard className="h-4 w-4" />
+                        Pay Invoice
+                      </Button>
+                    )}
                   </div>
-                )}
-                <div className="flex justify-between font-medium border-t border-orange-200 pt-1.5 mt-1.5">
-                  <span>Gross Total</span>
-                  <span>₹{totals.grossTotal.toFixed(2)}</span>
-                </div>
-                {totals.invoiceDiscount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>- Overall Discount</span>
-                    <span>-₹{totals.invoiceDiscount.toFixed(2)}</span>
-                  </div>
-                )}
-                {totals.couponDiscount > 0 && (
-                  <div className="flex justify-between text-purple-600">
-                    <span>- Coupon ({couponCode.toUpperCase()})</span>
-                    <span>-₹{totals.couponDiscount.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="border-t border-orange-300 pt-2 mt-2 flex justify-between font-bold text-base">
-                  <span>Net Total</span>
-                  <span className="text-green-600">₹{totals.netTotal.toFixed(2)}</span>
-                </div>
+                </Card>
+
               </div>
-            </Card>
-          </div>
-
-          {/* Action Buttons */}
-          {!isPaid && (
-            <div className="shrink-0 flex items-center justify-end gap-3 pt-3 border-t mt-auto">
-              <Button variant="outline" onClick={handleBackToBilling} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleSave}
-                disabled={isSaving || items.length === 0}
-                className="gap-2"
-              >
-                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                <Save className="h-4 w-4" />
-                {savedInvoice ? "Update" : "Save"}
-              </Button>
-              {savedInvoice && (
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={paymentMethod}
-                    onValueChange={setPaymentMethod}
-                    disabled={isSaving}
-                  >
-                    <SelectTrigger className="w-36 h-10">
-                      <SelectValue placeholder="Payment" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cash">
-                        <div className="flex items-center gap-2">
-                          <Banknote className="h-4 w-4" />
-                          Cash
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="card">
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="h-4 w-4" />
-                          Card
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="upi">
-                        <div className="flex items-center gap-2">
-                          <Smartphone className="h-4 w-4" />
-                          UPI
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="bank_transfer">
-                        <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4" />
-                          Bank Transfer
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    onClick={handlePay}
-                    disabled={totals.netTotal <= 0 || isProcessingPayment || isSaving}
-                    className="bg-green-600 hover:bg-green-700 gap-2"
-                  >
-                    {isProcessingPayment && <Loader2 className="h-4 w-4 animate-spin" />}
-                    <CreditCard className="h-4 w-4" />
-                    Pay ₹{totals.netTotal.toFixed(2)}
-                  </Button>
-                </div>
-              )}
             </div>
-          )}
-
-          {/* Receipt Generated Success */}
-          {receiptGenerated && (
-            <Card className="p-4 bg-green-50 border-green-200 shrink-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-green-800">Payment Successful!</p>
-                    <p className="text-sm text-green-600">
-                      Receipt {receiptGenerated.receipt_number} • ₹{receiptGenerated.amount.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleBackToBilling}>
-                  Back to Billing
-                </Button>
-              </div>
-            </Card>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

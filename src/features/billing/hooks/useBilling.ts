@@ -6,6 +6,9 @@ import type {
   UpdateInvoiceDto,
   ReceiptFilters,
   CreateReceiptDto,
+  CreateAdvanceDto,
+  AdvanceFilters,
+  CreatePaymentDto,
 } from '../types/billing.types';
 
 // Query Keys
@@ -15,6 +18,10 @@ export const billingQueryKeys = {
   visitPrescriptions: (visitId: number) => ['visit-prescriptions-for-invoice', visitId] as const,
   receipts: ['receipts'] as const,
   receipt: (id: number) => ['receipt', id] as const,
+  advanceBalance: (patientId: number) => ['advance-balance', patientId] as const,
+  advanceLedger: (patientId: number) => ['advance-ledger', patientId] as const,
+  pendingInvoices: (patientId: number) => ['pending-invoices', patientId] as const,
+  invoicePayments: (invoiceId: number) => ['invoice-payments', invoiceId] as const,
 };
 
 // Invoice Hooks
@@ -125,5 +132,75 @@ export function useDeleteReceipt() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: billingQueryKeys.receipts });
     },
+  });
+}
+
+// ============================================
+// Advance / Wallet Hooks
+// ============================================
+
+export function useAdvanceBalance(patientId: number) {
+  return useQuery({
+    queryKey: billingQueryKeys.advanceBalance(patientId),
+    queryFn: () => billingService.getAdvanceBalance(patientId),
+    enabled: patientId > 0,
+  });
+}
+
+export function useAdvanceLedger(patientId: number, filters?: AdvanceFilters) {
+  return useQuery({
+    queryKey: [...billingQueryKeys.advanceLedger(patientId), filters],
+    queryFn: () => billingService.getAdvanceLedger(patientId, filters),
+    enabled: patientId > 0,
+  });
+}
+
+export function useDepositAdvance() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateAdvanceDto) => billingService.depositAdvance(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: billingQueryKeys.advanceBalance(variables.patient_id) });
+      queryClient.invalidateQueries({ queryKey: billingQueryKeys.advanceLedger(variables.patient_id) });
+      queryClient.invalidateQueries({ queryKey: billingQueryKeys.receipts });
+    },
+  });
+}
+
+// ============================================
+// Payment Hooks
+// ============================================
+
+export function useCreatePayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreatePaymentDto) => billingService.createPayment(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: billingQueryKeys.invoices });
+      queryClient.invalidateQueries({ queryKey: billingQueryKeys.invoice(variables.invoice_id) });
+      queryClient.invalidateQueries({ queryKey: billingQueryKeys.advanceBalance(variables.patient_id) });
+      queryClient.invalidateQueries({ queryKey: billingQueryKeys.advanceLedger(variables.patient_id) });
+      queryClient.invalidateQueries({ queryKey: billingQueryKeys.pendingInvoices(variables.patient_id) });
+      queryClient.invalidateQueries({ queryKey: billingQueryKeys.invoicePayments(variables.invoice_id) });
+      queryClient.invalidateQueries({ queryKey: billingQueryKeys.receipts });
+    },
+  });
+}
+
+export function usePatientPendingInvoices(patientId: number) {
+  return useQuery({
+    queryKey: billingQueryKeys.pendingInvoices(patientId),
+    queryFn: () => billingService.getPatientPendingInvoices(patientId),
+    enabled: patientId > 0,
+  });
+}
+
+export function useInvoicePayments(invoiceId: number) {
+  return useQuery({
+    queryKey: billingQueryKeys.invoicePayments(invoiceId),
+    queryFn: () => billingService.getInvoicePayments(invoiceId),
+    enabled: invoiceId > 0,
   });
 }
