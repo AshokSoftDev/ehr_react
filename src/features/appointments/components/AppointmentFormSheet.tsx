@@ -44,9 +44,10 @@ interface AppointmentFormSheetProps {
   defaultStatus?: string;
   hideStatus?: boolean;
   isLoading?: boolean;
+  fixedPatient?: boolean;
 }
 
-export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, initial, defaultStatus, hideStatus, isLoading }: AppointmentFormSheetProps) {
+export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, initial, defaultStatus, hideStatus, isLoading, fixedPatient }: AppointmentFormSheetProps) {
   const form = useForm<AppointmentFormInput, unknown, AppointmentFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -179,6 +180,9 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
       setIsSelecting(true);
       form.setValue('patient_id', p.patient_id);
       form.setValue('patient_mrn', `${p.firstName} ${p.lastName} (${p.mrn})`, { shouldValidate: true });
+      if (p.patientInfo?.primaryDoctorId) {
+        form.setValue('doctor_id', p.patientInfo.primaryDoctorId);
+      }
       setPatients([]);
       setHasSearched(false);
       // Allow effect to clear 'isSelecting' after text update propagates
@@ -196,16 +200,32 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
     'Checkup',
   ].map(t => ({ label: t, value: t }));
 
-  const appointmentStatusOptions = [
+  const allStatusOptions = [
     { label: 'Scheduled', value: 'SCHEDULED' },
     { label: 'Confirmed', value: 'CONFIRMED' },
     { label: 'Checked-In', value: 'CHECKED-IN' },
     { label: 'Checked-Out', value: 'CHECKED-OUT' },
+    { label: 'Rescheduled', value: 'RESCHEDULED' },
     { label: 'No-Show', value: 'NO-SHOW' },
+    { label: 'Cancelled', value: 'CANCELLED' },
     { label: 'With Doctor', value: 'WITH DOCTOR' },
     { label: 'Wait List', value: 'WAIT LIST' },
-    { label: 'Cancelled', value: 'CANCELLED' },
   ];
+
+  const currentStatus = (initial?.appointment_status || defaultStatus || 'SCHEDULED').toUpperCase();
+
+  const allowedTransitions: Record<string, string[]> = {
+    'SCHEDULED': ['CONFIRMED', 'CANCELLED', 'NO-SHOW', 'RESCHEDULED'],
+    'CONFIRMED': ['CHECKED-IN', 'NO-SHOW', 'CANCELLED', 'RESCHEDULED'],
+    'CHECKED-IN': ['WITH DOCTOR', 'NO-SHOW'],
+    'WITH DOCTOR': ['CHECKED-OUT'],
+    'RESCHEDULED': ['CONFIRMED', 'CANCELLED', 'NO-SHOW'],
+  };
+
+  const validNextStatuses = allowedTransitions[currentStatus] || [];
+  const appointmentStatusOptions = initial?.appointment_id 
+    ? allStatusOptions.filter(opt => opt.value === currentStatus || validNextStatuses.includes(opt.value))
+    : allStatusOptions;
 
   return (
     <>
@@ -259,18 +279,21 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
                             label="Patient (Name or MRN)" 
                             required 
                             autoComplete="off"
+                            disabled={fixedPatient}
                           />
                       </div>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="icon" 
-                        className="h-10 w-10 shrink-0"
-                        title="Add New Patient"
-                        onClick={() => setShowPatientSheet(true)}
-                      >
-                        <Plus className="h-5 w-5" />
-                      </Button>
+                      {!fixedPatient && (
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-10 w-10 shrink-0"
+                          title="Add New Patient"
+                          onClick={() => setShowPatientSheet(true)}
+                        >
+                          <Plus className="h-5 w-5" />
+                        </Button>
+                      )}
                    </div>
                   
                   {patients.length > 0 && (
@@ -306,7 +329,15 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
                 <FormFloatingTextarea control={form.control} name="reason_for_visit" label="Reason for Visit" className="min-h-[80px]" />
                 
                 {!hideStatus && (
-                  <FormFloatingSelect control={form.control} name="appointment_status" label="Status" options={appointmentStatusOptions} placeholder="Select status" required />
+                  <FormFloatingSelect 
+                    control={form.control} 
+                    name="appointment_status" 
+                    label="Status" 
+                    options={appointmentStatusOptions} 
+                    placeholder="Select status" 
+                    required 
+                    disabled={!initial?.appointment_id}
+                  />
                 )}
                 <FormFloatingTextarea control={form.control} name="notes" label="Notes" />
                 

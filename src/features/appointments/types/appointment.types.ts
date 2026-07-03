@@ -11,6 +11,9 @@ export interface AppointmentPatientLite {
   lastName?: string;
   dateOfBirth?: string | Date;
   gender?: string;
+  patientInfo?: {
+    primaryDoctorId?: string | null;
+  };
 }
 
 export interface AppointmentItem {

@@ -34,7 +34,6 @@ const formSchema = z.object({
   patient_mrn: z.string().optional(),
   doctor_id: z.string().min(1, 'Doctor is required'),
   visit_date: z.union([z.string(), z.date()]),
-  visit_time: z.string().min(1, 'Visit time is required'),
   visit_type: z.string().min(1, 'Visit type is required'),
   reason_for_visit: z.string().optional(),
 });
@@ -71,7 +70,6 @@ export function CreateVisitSheet({ open, onOpenChange, patientId }: Props) {
       patient_mrn: '',
       doctor_id: '',
       visit_date: format(new Date(), 'yyyy-MM-dd'),
-      visit_time: format(new Date(), 'HH:mm'),
       visit_type: 'Consultation',
       reason_for_visit: '',
     },
@@ -141,7 +139,6 @@ export function CreateVisitSheet({ open, onOpenChange, patientId }: Props) {
         patient_mrn: '',
         doctor_id: '',
         visit_date: format(new Date(), 'yyyy-MM-dd'),
-        visit_time: format(new Date(), 'HH:mm'),
         visit_type: 'Consultation',
         reason_for_visit: '',
       });
@@ -169,8 +166,7 @@ export function CreateVisitSheet({ open, onOpenChange, patientId }: Props) {
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) => {
-      const datePart = typeof values.visit_date === 'string' ? values.visit_date : format(values.visit_date as Date, 'yyyy-MM-dd');
-      const fullDate = new Date(`${datePart}T${values.visit_time}:00`);
+      const fullDate = typeof values.visit_date === 'string' ? new Date(values.visit_date) : values.visit_date;
       return visitService.create({
         patient_id: values.patient_id,
         doctor_id: values.doctor_id,
@@ -267,18 +263,11 @@ export function CreateVisitSheet({ open, onOpenChange, patientId }: Props) {
                   )}
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3">
                   <FormFloatingDatePicker
                     control={form.control}
                     name="visit_date"
                     label="Visit Date"
-                    required
-                  />
-                  <FormFloatingInput
-                    control={form.control}
-                    name="visit_time"
-                    label="Visit Time"
-                    type="time"
                     required
                   />
                 </div>

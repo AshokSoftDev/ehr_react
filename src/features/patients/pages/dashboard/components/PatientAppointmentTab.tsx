@@ -85,6 +85,7 @@ export function PatientAppointmentTab({ patientId }: Props) {
     patient_mrn: patient?.mrn,
     patient_firstName: patient?.firstName,
     patient_lastName: patient?.lastName,
+    doctor_id: patient?.patientInfo?.primaryDoctorId || undefined,
   };
 
   const getStatusColor = (status: string) => {
@@ -176,6 +177,7 @@ export function PatientAppointmentTab({ patientId }: Props) {
           doctors={doctorsQuery.data || []}
           initial={initialValues}
           isLoading={createMutation.isPending || updateMutation.isPending}
+          fixedPatient={true}
         />
       </CardContent>
     </Card>
