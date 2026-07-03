@@ -88,7 +88,15 @@ export function PatientInfoTab({ patientId }: Props) {
       bloodGroup: z.string().optional(),
       overseas: z.boolean().optional(),
       passportNumber: z.string().optional().nullable(),
-      validityDate: z.date().nullable(),
+      validityDate: z.union([
+        z.date(),
+        z.string().transform((val) => {
+          if (!val) return null;
+          const d = new Date(val);
+          return isNaN(d.getTime()) ? null : d;
+        }),
+        z.null(),
+      ]).nullable().optional(),
       occupation: z.string().optional().nullable(),
       department: z.string().optional().nullable(),
       companyName: z.string().optional().nullable(),
@@ -102,17 +110,18 @@ export function PatientInfoTab({ patientId }: Props) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const max = new Date(today);
-        max.setFullYear(max.getFullYear() + 20);
+        max.setFullYear(2100);
         return data.validityDate >= today && data.validityDate <= max;
       },
       {
-        message: "Passport expiry must be between today and +20 years",
+        message: "Passport expiry must be between today and year 2100",
         path: ["validityDate"],
       }
     );
   type FormValues = z.infer<typeof schema>;
+  type FormInput = z.input<typeof schema>;
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, any, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       bloodGroup: "",
@@ -402,6 +411,8 @@ export function PatientInfoTab({ patientId }: Props) {
                       control={control}
                       name="validityDate"
                       label="Passport Expiry Date"
+                      fromDate={new Date()}
+                      toDate={new Date(2100, 11, 31)}
                     />
                     <FormFloatingInput
                       control={control}

@@ -123,8 +123,10 @@ export function FormFloatingDatePicker<
               captionLayout="dropdown"
               mode="single"
               selected={selectedDate}
+              startMonth={fromDate ?? new Date(1900, 0, 1)}
+              endMonth={toDate ?? new Date()}
               fromDate={fromDate ?? new Date(1900, 0, 1)}
-              toDate={toDate ?? new Date(2100, 11, 31)}
+              toDate={toDate ?? new Date()}
               onSelect={(date) => {
                 onValueChange(date);
                 setOpen(false);
@@ -199,8 +201,10 @@ export function FormFloatingDatePicker<
                   captionLayout="dropdown"
                   mode="single"
                   selected={selectedDate}
+                  startMonth={fromDate ?? new Date(1900, 0, 1)}
+                  endMonth={toDate ?? new Date(2100, 11, 31)}
                   fromDate={fromDate ?? new Date(1900, 0, 1)}
-                  toDate={toDate ?? new Date()}
+                  toDate={toDate ?? new Date(2100, 11, 31)}
                   onSelect={(date) => {
                     if (date) {
                       // ensure selected date is within range

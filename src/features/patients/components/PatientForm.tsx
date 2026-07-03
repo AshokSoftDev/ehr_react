@@ -55,7 +55,21 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onC
         const dob = value.dateOfBirth;
         if (dob) {
           const age = differenceInYears(new Date(), new Date(dob));
-          form.setValue('age', age);
+          if (form.getValues('age') !== age) {
+            form.setValue('age', age);
+          }
+        }
+      } else if (name === 'age') {
+        const age = value.age;
+        if (age !== undefined && age !== null && !Number.isNaN(Number(age))) {
+          const currentDob = form.getValues('dateOfBirth');
+          if (currentDob) {
+             const currentAge = differenceInYears(new Date(), new Date(currentDob));
+             if (currentAge === Number(age)) return;
+          }
+          const year = new Date().getFullYear() - Number(age);
+          const dob = `${year}-01-01`;
+          form.setValue('dateOfBirth', dob);
         }
       }
     });
@@ -92,14 +106,14 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onC
                   options={titleOptions.map(title => ({ label: title, value: title }))}
                 />
                 <FormFloatingInput control={form.control} name="firstName" label="First Name" required className="flex-1" />
-                <FormFloatingInput control={form.control} name="lastName" label="Last Name" required className="flex-1" />
+                <FormFloatingInput control={form.control} name="lastName" label="Last Name" className="flex-1" />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <FormFloatingDatePicker 
-                  control={form.control} 
-                  name="dateOfBirth" 
-                  label="Date of Birth" 
-                  required 
+                <FormFloatingDatePicker
+                  control={form.control}
+                  name="dateOfBirth"
+                  label="Date of Birth"
+                  required
                   toDate={new Date()} // Disable future dates
                 />
                 <FormFloatingInput control={form.control} name="age" label="Age" type="number" />
@@ -112,19 +126,19 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onC
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <FormFloatingInput 
-                  control={form.control} 
-                  name="mobileNumber" 
-                  label="Mobile Number" 
+                <FormFloatingInput
+                  control={form.control}
+                  name="mobileNumber"
+                  label="Mobile Number"
                   required
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={10}
                 />
-                <FormFloatingInput 
-                  control={form.control} 
-                  name="aadhar" 
+                <FormFloatingInput
+                  control={form.control}
+                  name="aadhar"
                   label="Aadhar Number"
                   type="text"
                   inputMode="numeric"
@@ -153,10 +167,10 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onC
               <div className="grid grid-cols-3 gap-3">
                 <FormFloatingInput control={form.control} name="state" label="State" />
                 <FormFloatingInput control={form.control} name="country" label="Country" />
-                <FormFloatingInput 
-                  control={form.control} 
-                  name="pincode" 
-                  label="Pincode" 
+                <FormFloatingInput
+                  control={form.control}
+                  name="pincode"
+                  label="Pincode"
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
@@ -177,9 +191,9 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onC
                 </div>
               </div>
               <FormFloatingInput control={form.control} name="referalSource" label="Referral Source" />
-              <FormFloatingTextarea 
-                control={form.control} 
-                name="comments" 
+              <FormFloatingTextarea
+                control={form.control}
+                name="comments"
                 label="Comments / Notes"
                 rows={2}
               />
@@ -189,10 +203,10 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onC
 
         {/* Footer with buttons */}
         <div className="flex justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">
-          <Button 
-            type="button" 
-            variant="secondary" 
-            onClick={onCancel} 
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onCancel}
             disabled={isLoading}
             className="btn-cancel"
           >
