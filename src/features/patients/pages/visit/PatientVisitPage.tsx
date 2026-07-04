@@ -22,6 +22,7 @@ import { patientService } from "@/features/patients/services/patient.service";
 import { visitService } from "@/features/visits/services/visit.service";
 import type { VisitItem } from "@/features/visits/types/visit.types";
 import { HPIDentalChart } from "./hpi/HPIDentalChart";
+import { HPIOverviewCardView } from "./hpi/HPIOverviewCardView";
 import { PatientVisitPrescriptionPage } from "./pages/PatientVisitPrescriptionPage";
 import { PatientVisitClinicalNotesPage } from "./pages/PatientVisitClinicalNotesPage";
 import { PatientVisitDocumentPage } from "./pages/PatientVisitDocumentPage";
@@ -255,8 +256,8 @@ export function PatientVisitPage() {
                     <span className="font-semibold">HPI</span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
-                  <HPIDentalChart visitId={selectedVisitId ?? undefined} isReadOnly={true} />
+                <AccordionContent className="px-4 pb-4 bg-muted/10 pt-4">
+                  <HPIOverviewCardView visitId={selectedVisitId ?? undefined} />
                 </AccordionContent>
               </AccordionItem>
               {/* 

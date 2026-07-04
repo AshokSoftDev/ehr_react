@@ -88,6 +88,17 @@ export function PatientAppointmentTab({ patientId }: Props) {
     doctor_id: patient?.patientInfo?.primaryDoctorId || undefined,
   };
 
+  const getTypeColor = (type: string) => {
+    switch (type?.toUpperCase()) {
+      case 'FOLLOW-UP': return 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200';
+      case 'CONSULTATION': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200';
+      case 'EMERGENCY': return 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200';
+      case 'ROUTINE': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
+      case 'NEW PATIENT': return 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200';
+      default: return 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200';
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
       case 'SCHEDULED': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-200';
@@ -104,8 +115,8 @@ export function PatientAppointmentTab({ patientId }: Props) {
 
   return (
     <Card className="bg-card h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 shrink-0 border-b">
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 shrink-0 border-b !py-2 !px-4">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           Appointments
           <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs font-semibold">
             {appointments.length}
@@ -121,50 +132,62 @@ export function PatientAppointmentTab({ patientId }: Props) {
           <Plus className="mr-2 h-4 w-4" /> Add Appointment
         </Button>
       </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto p-4">
+      <CardContent className="p-0">
         {listQuery.isLoading ? (
           <div className="flex justify-center p-8 text-sm text-muted-foreground">Loading appointments...</div>
         ) : appointments.length === 0 ? (
-          <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
-            No appointments found for this patient.
+          <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+            <CalendarIcon className="h-10 w-10 opacity-20 mb-3" />
+            <p className="text-sm">No appointments found for this patient.</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="divide-y divide-border">
             {appointments.map((item: AppointmentItem) => (
-              <div key={item.appointment_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border p-4 hover:bg-accent/50 transition-colors">
+              <div
+                key={item.appointment_id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors gap-3"
+              >
                 <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium text-foreground">
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                    <div className="flex items-center gap-1.5 font-medium text-sm text-foreground pr-1">
                       <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                       {format(new Date(item.appointment_date), 'MMM d, yyyy')}
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-1 font-bold text-foreground">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       {format(new Date(item.start_time), 'h:mm a')} - {format(new Date(item.end_time), 'h:mm a')} ({item.duration}m)
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm text-muted-foreground">
-                      {item.appointment_type}
-                    </span>
-                    <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", getStatusColor(item.appointment_status))}>
-                      {item.appointment_status}
-                    </Badge>
-                  </div>
-
-                  <div className="text-sm">
-                    {item.doctor_title} {item.doctor_firstName} {item.doctor_lastName}
-                    {item.doctor_specialty && <span className="text-muted-foreground"> | {item.doctor_specialty}</span>}
-                  </div>
-
-                  {item.reason_for_visit && (
-                    <div className="text-sm text-muted-foreground line-clamp-1">
-                      <span className="font-medium text-foreground">Reason:</span> {item.reason_for_visit}
+                    <div className="flex items-center gap-1.5 ml-1">
+                      <Badge variant="secondary" className={cn("text-[9px] px-1.5 py-0 h-4 border-none", getTypeColor(item.appointment_type))}>
+                        {item.appointment_type}
+                      </Badge>
+                      <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0 h-4 border-none", getStatusColor(item.appointment_status))}>
+                        {item.appointment_status}
+                      </Badge>
                     </div>
-                  )}
-                </div>
+                  </div>
 
+                  <div className="flex items-center gap-2 text-xs flex-wrap mt-1">
+                    <span className="font-medium text-foreground whitespace-nowrap">
+                      {item.doctor_title} {item.doctor_firstName} {item.doctor_lastName}
+                    </span>
+                    {item.doctor_specialty && (
+                      <>
+                        <span className="text-xs text-muted-foreground">|</span>
+                        <span className="text-muted-foreground whitespace-nowrap">{item.doctor_specialty}</span>
+                      </>
+                    )}
+                    {item.reason_for_visit && (
+                      <>
+                        <span className="text-xs text-muted-foreground">|</span>
+                        <span className="text-muted-foreground line-clamp-1 max-w-[250px]" title={item.reason_for_visit}>
+                          <span className="font-medium text-foreground">Reason:</span> {item.reason_for_visit}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
           </div>

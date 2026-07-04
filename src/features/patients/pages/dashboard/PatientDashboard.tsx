@@ -40,7 +40,7 @@ export function PatientDashboard() {
   };
 
   return (
-    <Card className="border-border shadow-sm overflow-hidden">
+    <Card className="border-border shadow-sm overflow-hidden pb-0">
       {/* Compact Tabs */}
       <div className="px-1 border-b border-border">
         <nav
@@ -72,7 +72,7 @@ export function PatientDashboard() {
         </nav>
       </div>
 
-      <CardContent className="p-4">
+      <CardContent className="p-0">
         {currentTab === "info" && <PatientInfoTab patientId={patientId} />}
         {currentTab === "emergency" && <PatientEmergencyTab patientId={patientId} />}
         {currentTab === "appointment" && <PatientAppointmentTab patientId={patientId} />}
