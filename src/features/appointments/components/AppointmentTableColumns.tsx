@@ -195,23 +195,26 @@ export const createAppointmentColumns = ({ onEdit, onStatusChange, navigate }: A
       const isLocked = appointment.appointment_status?.toUpperCase() === 'CHECKED-OUT' || appointment.appointment_status?.toUpperCase() === 'CANCELLED';
 
       return (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
+          {appointment.token ? (
+            <Badge variant="outline" className="font-mono bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+              #{appointment.token}
+            </Badge>
+          ) : null}
           {!isLocked && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onEdit(appointment);
-                }}
-                className="h-8 w-8 hover:bg-muted/50 text-primary hover:text-primary"
-                aria-label="Edit appointment"
-                title="Edit appointment"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            </>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(event) => {
+                event.stopPropagation();
+                onEdit(appointment);
+              }}
+              className="h-8 w-8 hover:bg-muted/50 text-primary hover:text-primary shrink-0"
+              aria-label="Edit appointment"
+              title="Edit appointment"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
           )}
         </div>
       );

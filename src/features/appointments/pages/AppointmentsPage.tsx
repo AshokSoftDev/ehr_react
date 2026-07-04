@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { FormFloatingInput } from "@/components/form/form-floating-input";
 import { FormFloatingDatePicker } from "@/components/form/FormFloatingDatePicker";
+import { FormFloatingSelect } from "@/components/form/FormFloatingSelect";
 import { appointmentService } from "../services/appointment.service";
 import type {
   AppointmentItem,
@@ -21,13 +22,14 @@ import AppointmentFormSheet, {
 import AppointmentsCalendar from "../components/AppointmentsCalendar";
 import { createAppointmentColumns } from "../components/AppointmentTableColumns";
 import { CancelAppointmentDialog } from "../components/CancelAppointmentDialog";
-import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
-import { CalendarDays, Table, X, Plus } from "lucide-react";
+import { AppointmentDashboardStats } from "../components/AppointmentDashboardStats";
+import { AppointmentList } from "../components/AppointmentList";
+import { CalendarDays, Table, X, Plus, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 
 const filterSchema = z.object({
   search: z.string().optional(),
-  dateFrom: z.union([z.string(), z.date()]).optional(),
-  dateTo: z.union([z.string(), z.date()]).optional(),
+  appointment_date: z.union([z.string(), z.date()]).optional(),
+  status: z.string().optional(),
 });
 type FilterValues = z.infer<typeof filterSchema>;
 
@@ -40,7 +42,7 @@ export function AppointmentsPage() {
 
   const filterForm = useForm<FilterValues>({
     resolver: zodResolver(filterSchema),
-    defaultValues: { search: "", dateFrom: new Date(), dateTo: new Date() },
+    defaultValues: { search: "", appointment_date: new Date(), status: "ALL" },
   });
   const _watch = filterForm.watch();
 
@@ -48,12 +50,10 @@ export function AppointmentsPage() {
     const vals = filterForm.getValues();
     return {
       search: vals.search || undefined,
-      dateFrom: vals.dateFrom
-        ? startOfDay(new Date(vals.dateFrom as string)).toISOString()
+      appointment_date: vals.appointment_date
+        ? new Date(vals.appointment_date as string).toISOString()
         : undefined,
-      dateTo: vals.dateTo
-        ? endOfDay(new Date(vals.dateTo as string)).toISOString()
-        : undefined,
+      status: vals.status && vals.status !== "ALL" ? vals.status : undefined,
       page,
       limit,
     };
@@ -153,28 +153,9 @@ export function AppointmentsPage() {
     onSuccess: () => {
       setCancelAppointmentItem(null);
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["appointment-stats"] });
     },
   });
-
-  const tableColumns = useMemo(
-    () =>
-      createAppointmentColumns({
-        onEdit: (appointment) => {
-          setEditItem(appointment);
-          setOpenForm(true);
-        },
-        onStatusChange: (id, status) => {
-          if (status.toUpperCase() === 'CANCELLED') {
-            const appt = listQuery.data?.appointments.find(a => a.appointment_id === id);
-            if (appt) setCancelAppointmentItem(appt);
-          } else {
-            statusUpdateMutation.mutate({ id, status: status.toUpperCase() });
-          }
-        },
-        navigate,
-      }),
-    [statusUpdateMutation, navigate]
-  );
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -235,17 +216,29 @@ export function AppointmentsPage() {
             <div>
               <FormFloatingDatePicker
                 control={filterForm.control}
-                name="dateFrom"
-                label="From"
+                name="appointment_date"
+                label="Date"
                 className="h-10"
               />
             </div>
             <div>
-              <FormFloatingDatePicker
+              <FormFloatingSelect
                 control={filterForm.control}
-                name="dateTo"
-                label="To"
-                className="h-10"
+                name="status"
+                label="Status"
+                placeholder="All Statuses"
+                options={[
+                  { value: "ALL", label: "All" },
+                  { value: "SCHEDULED", label: "Scheduled" },
+                  { value: "CONFIRMED", label: "Confirmed" },
+                  { value: "CHECKED-IN", label: "Checked-In" },
+                  { value: "WITH DOCTOR", label: "With Doctor" },
+                  { value: "CHECKED-OUT", label: "Checked-Out" },
+                  { value: "RESCHEDULED", label: "Rescheduled" },
+                  { value: "NO-SHOW", label: "No-Show" },
+                  { value: "CANCELLED", label: "Cancelled" },
+                  { value: "WAIT LIST", label: "Wait List" },
+                ]}
               />
             </div>
             <div className="flex gap-2">
@@ -260,6 +253,17 @@ export function AppointmentsPage() {
                 <X className="h-4 w-4" />
                 <span className="sr-only">Clear</span>
               </Button>
+             <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                onClick={() => queryClient.invalidateQueries({ queryKey: ["appointments"] })}
+                className="h-10 w-10 shrink-0"
+                title="Refresh"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span className="sr-only">Refresh</span>
+              </Button>
             </div>
           </form>
         </Form>
@@ -267,21 +271,44 @@ export function AppointmentsPage() {
 
       {/* Main Content */}
       <ScrollArea className="flex-1">
-        <div className="">
+        <div className="p-4">
           {view === "table" ? (
-            <>
-              <AdvancedDataTable
-                columns={tableColumns}
-                data={listQuery.data?.appointments ?? []}
+            <div className="flex flex-col gap-2">
+              <AppointmentDashboardStats filters={filters} />
+              <AppointmentList
+                appointments={listQuery.data?.appointments ?? []}
                 isLoading={listQuery.isLoading}
-                page={page}
-                limit={limit}
-                total={listQuery.data?.total ?? 0}
-                onPageChange={setPage}
-                onLimitChange={setLimit}
-                searchPlaceholder="Search by patient, doctor, or type..."
+                onEdit={(appt) => {
+                  setEditItem(appt);
+                  setOpenForm(true);
+                }}
+                onStatusChange={(id, status) => {
+                  if (status.toUpperCase() === 'CANCELLED') {
+                    const appt = listQuery.data?.appointments.find(a => a.appointment_id === id);
+                    if (appt) setCancelAppointmentItem(appt);
+                  } else {
+                    statusUpdateMutation.mutate({ id, status: status.toUpperCase() });
+                  }
+                }}
+                navigate={navigate}
               />
-            </>
+              {/* Pagination */}
+              {listQuery.data && listQuery.data.total > 0 && (
+                <div className="flex justify-between items-center px-4 py-3 mt-4 border-t">
+                  <span className="text-sm text-muted-foreground">
+                    Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, listQuery.data.total)} of {listQuery.data.total}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                      <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= listQuery.data.totalPages}>
+                      Next <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <AppointmentsCalendar
               items={listQuery.data?.appointments ?? []}

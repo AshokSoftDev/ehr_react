@@ -19,6 +19,11 @@ export class AppointmentService {
     return res.data.data;
   }
 
+  async getDashboardStats(filters: AppointmentFilters): Promise<Record<string, number>> {
+    const res = await api.get<{ status: string; data: Record<string, number> }>(`${this.baseUrl}/stats`, { params: filters });
+    return res.data.data;
+  }
+
   async create(data: CreateAppointmentInput): Promise<AppointmentItem> {
     const res = await api.post<{ status: string; data: AppointmentItem }>(this.baseUrl, data);
     return res.data.data;

@@ -39,6 +39,8 @@ export interface AppointmentItem {
   doctor_firstName: string;
   doctor_lastName: string;
   doctor_specialty: string;
+  token?: number;
+  
   // includes (optional)
   patient?: AppointmentPatientLite;
   doctor?: AppointmentDoctorLite;
@@ -66,8 +68,8 @@ export interface AppointmentFilters {
   mrn?: string;
   patientName?: string;
   doctorName?: string;
-  dateFrom?: string;
-  dateTo?: string;
+  appointment_date?: string;
+  status?: string;
   page?: number;
   limit?: number;
 }
