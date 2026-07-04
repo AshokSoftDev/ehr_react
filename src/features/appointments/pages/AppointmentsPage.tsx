@@ -20,8 +20,8 @@ import AppointmentFormSheet, {
 } from "../components/AppointmentFormSheet";
 import AppointmentsCalendar from "../components/AppointmentsCalendar";
 import { createAppointmentColumns } from "../components/AppointmentTableColumns";
+import { CancelAppointmentDialog } from "../components/CancelAppointmentDialog";
 import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
-import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 import { CalendarDays, Table, X, Plus } from "lucide-react";
 
 const filterSchema = z.object({
@@ -71,7 +71,7 @@ export function AppointmentsPage() {
 
   const [openForm, setOpenForm] = useState(false);
   const [editItem, setEditItem] = useState<AppointmentItem | null>(null);
-  const [deleteItem, setDeleteItem] = useState<AppointmentItem | null>(null);
+  const [cancelAppointmentItem, setCancelAppointmentItem] = useState<AppointmentItem | null>(null);
 
   const createMutation = useMutation({
     mutationFn: (payload: AppointmentFormValues) =>
@@ -114,11 +114,6 @@ export function AppointmentsPage() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => appointmentService.remove(id),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["appointments"] }),
-  });
 
   const onReschedule = (id: number, targetDate: Date) => {
     const appt = listQuery.data?.appointments.find(
@@ -153,10 +148,12 @@ export function AppointmentsPage() {
   };
 
   const statusUpdateMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
-      appointmentService.update(id, { appointment_status: status }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["appointments"] }),
+    mutationFn: ({ id, status, cancellation_reason, cancelled_by }: { id: number; status: string; cancellation_reason?: string, cancelled_by?: string }) =>
+      appointmentService.update(id, { appointment_status: status, cancellation_reason, cancelled_by }),
+    onSuccess: () => {
+      setCancelAppointmentItem(null);
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
   });
 
   const tableColumns = useMemo(
@@ -166,12 +163,17 @@ export function AppointmentsPage() {
           setEditItem(appointment);
           setOpenForm(true);
         },
-        onDelete: (appointment) => setDeleteItem(appointment),
-        onStatusChange: (id, status) =>
-          statusUpdateMutation.mutate({ id, status }),
+        onStatusChange: (id, status) => {
+          if (status.toUpperCase() === 'CANCELLED') {
+            const appt = listQuery.data?.appointments.find(a => a.appointment_id === id);
+            if (appt) setCancelAppointmentItem(appt);
+          } else {
+            statusUpdateMutation.mutate({ id, status: status.toUpperCase() });
+          }
+        },
         navigate,
       }),
-    [deleteMutation, statusUpdateMutation, navigate]
+    [statusUpdateMutation, navigate]
   );
 
   return (
@@ -308,30 +310,21 @@ export function AppointmentsPage() {
         isLoading={createMutation.isPending || updateMutation.isPending}
       />
 
-      <ConfirmDeleteDialog
-        open={deleteItem !== null}
-        onOpenChange={(open) => !open && setDeleteItem(null)}
-        onConfirm={() => {
-          if (deleteItem) {
-            deleteMutation.mutate(deleteItem.appointment_id);
-            setDeleteItem(null);
+      <CancelAppointmentDialog
+        open={cancelAppointmentItem !== null}
+        onOpenChange={(open) => !open && setCancelAppointmentItem(null)}
+        appointment={cancelAppointmentItem}
+        onConfirm={(reason, cancelledBy) => {
+          if (cancelAppointmentItem !== null) {
+            statusUpdateMutation.mutate({ 
+              id: cancelAppointmentItem.appointment_id, 
+              status: 'CANCELLED', 
+              cancellation_reason: reason,
+              cancelled_by: cancelledBy
+            });
           }
         }}
-        title="Delete Appointment"
-        description={
-          deleteItem ? (
-            <span>
-              Are you sure you want to delete the appointment for{" "}
-              <span className="font-bold">
-                {deleteItem.patient_firstName} {deleteItem.patient_lastName}
-              </span>
-              ?
-            </span>
-          ) : (
-            "This action cannot be undone."
-          )
-        }
-        isDeleting={deleteMutation.isPending}
+        isLoading={statusUpdateMutation.isPending}
       />
     </div>
   );

@@ -3,7 +3,8 @@ import { format, addMinutes } from 'date-fns';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Form } from '@/components/ui/form';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { FormFloatingInput } from '@/components/form/form-floating-input';
 import { FormFloatingSelect } from '@/components/form/FormFloatingSelect';
 import { FormFloatingDatePicker } from '@/components/form/FormFloatingDatePicker';
@@ -30,6 +31,25 @@ const schema = z.object({
   appointment_status: z.string().min(1, "Status is required"),
   notes: z.string().optional(),
   patient_mrn: z.string().optional(),
+  cancellation_reason: z.string().optional(),
+  cancelled_by: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.appointment_status === 'CANCELLED') {
+    if (!data.cancellation_reason || data.cancellation_reason.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Cancellation reason is required",
+        path: ["cancellation_reason"]
+      });
+    }
+    if (!data.cancelled_by || data.cancelled_by.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please specify who cancelled",
+        path: ["cancelled_by"]
+      });
+    }
+  }
 });
 
 type AppointmentFormInput = z.input<typeof schema>;
@@ -59,8 +79,10 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
       duration: initial?.duration ?? 15,
       appointment_type: initial?.appointment_type ?? '',
       reason_for_visit: initial?.reason_for_visit ?? '',
-      appointment_status: (initial?.appointment_status ?? defaultStatus ?? 'SCHEDULED').toUpperCase(),
-      notes: initial?.notes ?? '',
+      appointment_status: initial?.appointment_status || defaultStatus || 'SCHEDULED',
+      cancellation_reason: initial?.cancellation_reason || '',
+      cancelled_by: initial?.cancelled_by || '',
+      notes: initial?.notes || '',
       patient_mrn: initial?.patient_mrn ?? '',
     },
   });
@@ -140,8 +162,10 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
         duration: initial?.duration ?? 15,
         appointment_type: initial?.appointment_type ?? '',
         reason_for_visit: initial?.reason_for_visit ?? '',
-        appointment_status: (initial?.appointment_status ?? defaultStatus ?? 'SCHEDULED').toUpperCase(),
-        notes: initial?.notes ?? '',
+        appointment_status: initial?.appointment_status || defaultStatus || 'SCHEDULED',
+        cancellation_reason: initial?.cancellation_reason || '',
+        cancelled_by: initial?.cancelled_by || '',
+        notes: initial?.notes || '',
         patient_mrn: initial?.patient_firstName ? `${initial.patient_firstName} ${initial.patient_lastName} (${initial.patient_mrn})` : (initial?.patient_mrn ?? ''),
       });
       setSearchText('');
@@ -338,6 +362,52 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
                     required 
                     disabled={!initial?.appointment_id}
                   />
+                )}
+                
+                {form.watch('appointment_status') === 'CANCELLED' && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="cancelled_by"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3 pt-2">
+                          <FormLabel className="text-sm font-medium">Cancelled By <span className="text-red-500">*</span></FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="flex flex-row space-x-4"
+                            >
+                              <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="PATIENT" />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  Patient
+                                </FormLabel>
+                              </FormItem>
+                              <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value="DOCTOR" />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  Doctor/Clinic
+                                </FormLabel>
+                              </FormItem>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormFloatingTextarea 
+                      control={form.control} 
+                      name="cancellation_reason" 
+                      label="Cancellation Reason *" 
+                      className="min-h-[80px]"
+                    />
+                  </>
                 )}
                 <FormFloatingTextarea control={form.control} name="notes" label="Notes" />
                 

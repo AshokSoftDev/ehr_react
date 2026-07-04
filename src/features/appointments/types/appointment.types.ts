@@ -27,6 +27,8 @@ export interface AppointmentItem {
   appointment_type: string;
   reason_for_visit?: string;
   appointment_status: string;
+  cancellation_reason?: string;
+  cancelled_by?: string;
   notes?: string;
   // snapshots
   patient_mrn: string;
@@ -52,6 +54,8 @@ export interface CreateAppointmentInput {
   appointment_type: string;
   reason_for_visit?: string;
   appointment_status: string;
+  cancellation_reason?: string;
+  cancelled_by?: string;
   notes?: string;
 }
 

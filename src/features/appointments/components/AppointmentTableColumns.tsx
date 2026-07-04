@@ -3,28 +3,54 @@ import { format, differenceInYears } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Edit, Trash, User, Calendar, Clock } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Edit, User, Calendar, Clock, Info } from 'lucide-react';
 import type { AppointmentItem } from '../types/appointment.types';
 
 interface AppointmentTableColumnsProps {
   onEdit: (appointment: AppointmentItem) => void;
-  onDelete: (appointment: AppointmentItem) => void;
   onStatusChange: (id: number, status: string) => void;
   navigate: (path: string) => void;
 }
 
-export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, navigate }: AppointmentTableColumnsProps): ColumnDef<AppointmentItem>[] => [
+export const createAppointmentColumns = ({ onEdit, onStatusChange, navigate }: AppointmentTableColumnsProps): ColumnDef<AppointmentItem>[] => [
+  {
+    accessorKey: 'appointment_date',
+    header: 'Date & Time',
+    cell: ({ row }) => {
+      const appointment = row.original;
+      const date = new Date(appointment.appointment_date);
+      const startTime = new Date(appointment.start_time);
+      const endTime = new Date(appointment.end_time);
+      const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+      const isPast = date < new Date();
+
+      return (
+        <div className="space-y-1">
+          <div className={`flex items-center gap-2 text-xs font-medium ${isToday ? 'text-blue-600 dark:text-blue-400' : isPast ? 'text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+            <Calendar className="h-3 w-3 text-blue-500" />
+            {format(date, 'dd/MM/yyyy')}
+            {isToday && <Badge variant="default" className="text-xs px-1 py-0">Today</Badge>}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-mono">
+            <Clock className="h-3 w-3 text-blue-500" />
+            {format(startTime, 'hh:mm a')} - {format(endTime, 'hh:mm a')}
+          </div>
+        </div>
+      );
+    },
+  },
   {
     accessorKey: 'patient_name',
     header: 'Patient',
     cell: ({ row }) => {
       const appointment = row.original;
-      
+
       let age = '';
       if (appointment.patient?.dateOfBirth) {
         age = differenceInYears(new Date(), new Date(appointment.patient.dateOfBirth)).toString() + 'y';
       }
-      
+
       const gender = appointment.patient?.gender ? appointment.patient.gender[0].toUpperCase() : '';
       const demo = [age, gender].filter(Boolean).join('/');
 
@@ -45,9 +71,9 @@ export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, nav
                 </span>
               </div>
               {demo && (
-                 <div className="text-xs text-muted-foreground">
-                   {demo}
-                 </div>
+                <div className="text-xs text-muted-foreground">
+                  {demo}
+                </div>
               )}
             </div>
           </button>
@@ -73,32 +99,6 @@ export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, nav
     },
   },
   {
-    accessorKey: 'appointment_date',
-    header: 'Date & Time',
-    cell: ({ row }) => {
-      const appointment = row.original;
-      const date = new Date(appointment.appointment_date);
-      const startTime = new Date(appointment.start_time);
-      const endTime = new Date(appointment.end_time);
-      const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
-      const isPast = date < new Date();
-      
-      return (
-        <div className="space-y-1">
-          <div className={`flex items-center gap-2 text-xs font-medium ${isToday ? 'text-blue-600 dark:text-blue-400' : isPast ? 'text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
-            <Calendar className="h-3 w-3 text-blue-500" />
-            {format(date, 'dd/MM/yyyy')}
-            {isToday && <Badge variant="default" className="text-xs px-1 py-0">Today</Badge>}
-          </div>
-          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-mono">
-            <Clock className="h-3 w-3 text-blue-500" />
-            {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
-          </div>
-        </div>
-      );
-    },
-  },
-  {
     accessorKey: 'appointment_type',
     header: 'Type',
     cell: ({ row }) => (
@@ -113,7 +113,7 @@ export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, nav
     cell: ({ row }) => {
       const appointment = row.original;
       const status = (appointment.appointment_status || '').toUpperCase();
-      
+
       const statusOptions = [
         { value: 'SCHEDULED', label: 'Scheduled', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' },
         { value: 'CONFIRMED', label: 'Confirmed', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
@@ -125,7 +125,7 @@ export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, nav
         { value: 'WITH DOCTOR', label: 'With Doctor', color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300' },
         { value: 'WAIT LIST', label: 'Wait List', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' },
       ];
-      
+
       const allowedTransitions: Record<string, string[]> = {
         'SCHEDULED': ['CONFIRMED', 'CANCELLED', 'NO-SHOW', 'RESCHEDULED'],
         'CONFIRMED': ['CHECKED-IN', 'NO-SHOW', 'CANCELLED', 'RESCHEDULED'],
@@ -133,89 +133,86 @@ export const createAppointmentColumns = ({ onEdit, onDelete, onStatusChange, nav
         'WITH DOCTOR': ['CHECKED-OUT'],
         'RESCHEDULED': ['CONFIRMED', 'CANCELLED', 'NO-SHOW'],
       };
-      
+
       const validNextStatuses = allowedTransitions[status] || [];
       const filteredOptions = statusOptions.filter(opt => opt.value === status || validNextStatuses.includes(opt.value));
-      
+
       const currentStatus = statusOptions.find(s => s.value === status);
-      
-      const isCompleted = status === 'CHECKED-OUT';
-      
+
+      const isCompleted = status === 'CHECKED-OUT' || status === 'CANCELLED';
+
       return (
-        <Select 
-          value={status} 
-          onValueChange={(newStatus) => onStatusChange(appointment.appointment_id, newStatus)}
-          disabled={isCompleted}
-        >
-          <SelectTrigger className={`w-[130px] h-7 px-2 text-xs ${isCompleted ? 'opacity-60 cursor-not-allowed' : ''}`}>
-            <SelectValue>
-              <span className={`truncate block w-full text-left font-medium px-1.5 py-0.5 rounded-full ${currentStatus?.color || 'bg-gray-100 text-gray-800'}`}>
-                {currentStatus?.label || status}
-              </span>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {filteredOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${option.color}`}>
-                  {option.label}
+        <div className="flex items-center gap-2">
+          <Select
+            value={status}
+            onValueChange={(newStatus) => onStatusChange(appointment.appointment_id, newStatus)}
+            disabled={isCompleted}
+          >
+            <SelectTrigger className={`w-[130px] h-7 px-2 text-xs ${isCompleted ? 'opacity-60 cursor-not-allowed' : ''}`}>
+              <SelectValue>
+                <span className={`truncate block w-full text-left font-medium px-1.5 py-0.5 rounded-full ${currentStatus?.color || 'bg-gray-100 text-gray-800'}`}>
+                  {currentStatus?.label || status}
                 </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      );
-    },
-  },
-  {
-    accessorKey: 'reason_for_visit',
-    header: 'Reason',
-    cell: ({ row }) => {
-      const reason = row.getValue('reason_for_visit') as string;
-      return reason ? (
-        <div className="max-w-[200px] truncate text-xs" title={reason}>
-          {reason}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {filteredOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${option.color}`}>
+                    {option.label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {status === 'CANCELLED' && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="font-semibold text-sm mb-1">
+                    Cancelled By {appointment.cancelled_by === 'PATIENT' ? 'Patient' : (appointment.cancelled_by === 'DOCTOR' ? 'Doctor/Clinic' : '')}
+                  </p>
+                  <p className="text-xs max-w-[200px] break-words">{appointment.cancellation_reason}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
-      ) : (
-        <span className="text-muted-foreground text-xs">-</span>
       );
     },
   },
+
   {
     id: 'actions',
     header: 'Actions',
     enableHiding: false,
     cell: ({ row }) => {
       const appointment = row.original;
+      const isLocked = appointment.appointment_status?.toUpperCase() === 'CHECKED-OUT' || appointment.appointment_status?.toUpperCase() === 'CANCELLED';
 
       return (
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit(appointment);
-            }}
-            className="h-8 w-8 hover:bg-muted/50 text-primary hover:text-primary"
-            aria-label="Edit appointment"
-            title="Edit appointment"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(event) => {
-              event.stopPropagation();
-              onDelete(appointment);
-            }}
-            className="h-8 w-8 text-destructive hover:bg-muted/50 hover:text-destructive"
-            aria-label="Delete appointment"
-            title="Delete appointment"
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
+          {!isLocked && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEdit(appointment);
+                }}
+                className="h-8 w-8 hover:bg-muted/50 text-primary hover:text-primary"
+                aria-label="Edit appointment"
+                title="Edit appointment"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            </>
+          )}
         </div>
       );
     },
