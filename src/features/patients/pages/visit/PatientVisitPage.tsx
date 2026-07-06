@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -103,32 +103,27 @@ export function PatientVisitPage() {
   // Visit List View
   if (!selectedVisit) {
     return (
-      <Card className="border-border shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <div className="flex items-center gap-2">
+      <Card className="border-border shadow-sm overflow-hidden flex flex-col h-full bg-card">
+        <CardHeader className="border-b p-2 [.border-b]:pb-0 flex flex-row items-center justify-between space-y-0 shrink-0">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold">Patient Visits</h2>
-            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 ml-2">
+            Patient Visits
+            <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs font-semibold">
               {visits.length}
             </Badge>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button size="sm" onClick={() => setShowCreateSheet(true)} className="h-7 px-2 text-xs">
-              <Plus className="h-3 w-3 mr-1" />
-              Create Visit
+          </CardTitle>
+          <div className="pb-2">
+            <Button size="sm" onClick={() => setShowCreateSheet(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Add Visit
             </Button>
           </div>
-        </div>
-        <CardContent className="p-3">
+        </CardHeader>
+        <CardContent className="p-0">
           {visitsLoading ? (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-24 rounded-lg" />
-              ))}
-            </div>
+            <div className="flex justify-center p-8 text-sm text-muted-foreground">Loading visits...</div>
           ) : visits.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
-              <CalendarDays className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+            <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+              <CalendarDays className="h-10 w-10 opacity-20 mx-auto mb-3" />
               <p className="text-sm font-medium">No visits yet</p>
               <Button variant="outline" size="sm" onClick={() => setShowCreateSheet(true)} className="mt-3 text-xs h-8">
                 <Plus className="h-3 w-3 mr-1.5" />
@@ -136,35 +131,31 @@ export function PatientVisitPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="divide-y divide-border">
               {visits.map((visit) => {
                 const date = new Date(visit.visit_date);
                 return (
                   <button
                     key={visit.visit_id}
                     onClick={() => handleSelectVisit(visit.visit_id)}
-                    className="group relative rounded-lg border border-border bg-card p-3 text-left transition-all hover:border-primary/50 hover:shadow-md"
+                    className="w-full flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-muted/30 transition-colors gap-2 text-left"
                   >
-                    <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-lg bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="flex items-center justify-between mb-1.5">
-                      {/* <Badge variant={visit.status === 1 ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
-                        {visit.status === 1 ? "Active" : "Done"}
-                      </Badge> */}
-                      {/* <span className="text-[10px] text-muted-foreground">#{visit.visit_id}</span> */}
-                    </div>
-                    <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
-                      <CalendarDays className="h-3.5 w-3.5" />
-                      {date.toLocaleDateString()}
-                    </h3>
-                    {visit.doctor?.displayName && (
-                      <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
-                        <User className="h-3 w-3" />
-                        <span>{visit.doctor.displayName}</span>
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                        <div className="flex items-center gap-1.5 font-medium text-sm text-foreground pr-1 group-hover:text-primary transition-colors">
+                          <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                          {date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </div>
+                        {visit.doctor?.displayName && (
+                           <div className="flex items-center gap-1 font-bold text-foreground">
+                             <User className="h-3.5 w-3.5 text-muted-foreground" />
+                             {visit.doctor.displayName}
+                           </div>
+                        )}
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 border-none bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 ml-1">
+                          {visit.visit_type}
+                        </Badge>
                       </div>
-                    )}
-                    <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
-                      <ClipboardList className="h-3 w-3" />
-                      <span>{visit.visit_type}</span>
                     </div>
                   </button>
                 );

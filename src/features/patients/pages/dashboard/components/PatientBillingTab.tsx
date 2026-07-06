@@ -11,10 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  FileText, 
-  Banknote, 
-  CreditCard as CreditCardIcon, 
+import {
+  FileText,
+  Banknote,
+  CreditCard as CreditCardIcon,
   Loader2,
   Receipt,
   Eye,
@@ -43,6 +43,14 @@ const paymentLabels: Record<string, string> = {
   upi: "UPI",
   bank_transfer: "Bank Transfer",
   other: "Other",
+};
+
+const paymentColors: Record<string, string> = {
+  cash: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800",
+  card: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:border-blue-800",
+  upi: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:text-purple-400 dark:border-purple-800",
+  bank_transfer: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/50 dark:text-amber-400 dark:border-amber-800",
+  other: "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
 };
 
 type Props = {
@@ -181,7 +189,7 @@ export function PatientBillingTab({ patientId }: Props) {
   return (
     <>
       <Card>
-        <CardHeader className="border-b pb-4">
+        <CardHeader className="border-b p-2 [.border-b]:pb-0">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Banknote className="h-4 w-4 text-primary" />
             Billing & Receipts
@@ -196,9 +204,9 @@ export function PatientBillingTab({ patientId }: Props) {
           ) : (
             <div className="divide-y divide-border">
               {receipts.map((receipt) => (
-                <div 
+                <div
                   key={receipt.receipt_id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors gap-3"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-muted/30 transition-colors gap-2"
                 >
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-2">
@@ -210,25 +218,25 @@ export function PatientBillingTab({ patientId }: Props) {
                         {format(new Date(receipt.payment_date || receipt.createdAt), 'dd/MM/yyyy, hh:mm a')}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs text-muted-foreground">
                         {receipt.receipt_number}
                       </span>
-                      <Badge variant="outline" className="text-[10px] uppercase font-semibold">
+                      <Badge variant="outline" className={`text-[10px] uppercase font-semibold ${paymentColors[receipt.payment_method] || paymentColors.other}`}>
                         {(() => {
                           const Icon = paymentIcons[receipt.payment_method] || CreditCardIcon;
                           return <Icon className="mr-1 h-3 w-3 inline" />;
                         })()}
                         {paymentLabels[receipt.payment_method] || receipt.payment_method}
                       </Badge>
+                      {receipt.notes && (
+                        <span className="text-xs text-muted-foreground border-l pl-2 border-border/50">
+                          Note: {receipt.notes}
+                        </span>
+                      )}
                     </div>
-                    {receipt.notes && (
-                      <p className="text-xs text-muted-foreground italic mt-1">
-                        Note: {receipt.notes}
-                      </p>
-                    )}
                   </div>
-                  
+
                   <div className="flex items-center gap-3 sm:self-start">
                     <span className="font-bold text-base text-green-600">
                       ₹{Number(receipt.amount).toFixed(2)}
@@ -266,8 +274,8 @@ export function PatientBillingTab({ patientId }: Props) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <span>Receipt Details</span>
-              <Button variant="outline" size="sm" onClick={() => selectedReceipt && handlePrintReceipt(selectedReceipt)} className="gap-2">
+              <span className="dark:text-gray-100">Receipt Details</span>
+              <Button variant="outline" size="sm" onClick={() => selectedReceipt && handlePrintReceipt(selectedReceipt)} className="gap-2 dark:text-gray-100 dark:hover:text-white">
                 <Printer className="h-4 w-4" />
                 Print
               </Button>
@@ -279,17 +287,17 @@ export function PatientBillingTab({ patientId }: Props) {
               <div className="receipt-container">
                 {/* Header */}
                 <div className="header text-center mb-6">
-                  <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
-                    <Receipt className="h-8 w-8 text-green-600" />
+                  <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-3">
+                    <Receipt className="h-8 w-8 text-green-600 dark:text-green-500" />
                   </div>
-                  <h1 className="text-xl font-bold">Payment Receipt</h1>
+                  <h1 className="text-xl font-bold dark:text-gray-100">Payment Receipt</h1>
                   <p className="text-muted-foreground text-sm">{selectedReceipt.receipt_number}</p>
                 </div>
 
                 {/* Amount */}
-                <div className="amount text-center py-4 bg-green-50 rounded-lg mb-4">
+                <div className="amount text-center py-4 bg-green-50 dark:bg-green-900/10 rounded-lg mb-4">
                   <p className="text-xs text-muted-foreground mb-1">Amount Paid</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-500">
                     ₹{Number(selectedReceipt.amount).toFixed(2)}
                   </p>
                 </div>
@@ -303,7 +311,7 @@ export function PatientBillingTab({ patientId }: Props) {
                       <User className="h-4 w-4" />
                       Patient
                     </span>
-                    <span className="font-medium text-right">
+                    <span className="font-medium text-right dark:text-gray-100">
                       {selectedReceipt.patient?.firstName} {selectedReceipt.patient?.lastName}
                       <br />
                       <span className="text-xs text-muted-foreground">
@@ -318,13 +326,13 @@ export function PatientBillingTab({ patientId }: Props) {
                         <FileText className="h-4 w-4" />
                         Invoice
                       </span>
-                      <span className="font-medium">
+                      <span className="font-medium dark:text-gray-100">
                         {selectedReceipt.invoice.invoice_number}
                       </span>
                     </div>
                   )}
 
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm items-center">
                     <span className="text-muted-foreground flex items-center gap-2">
                       {(() => {
                         const Icon = paymentIcons[selectedReceipt.payment_method] || CreditCard;
@@ -332,9 +340,9 @@ export function PatientBillingTab({ patientId }: Props) {
                       })()}
                       Payment Method
                     </span>
-                    <span className="font-medium">
+                    <Badge variant="outline" className={`text-xs ${paymentColors[selectedReceipt.payment_method] || paymentColors.other}`}>
                       {paymentLabels[selectedReceipt.payment_method] || selectedReceipt.payment_method}
-                    </span>
+                    </Badge>
                   </div>
 
                   <div className="flex justify-between text-sm">
@@ -342,7 +350,7 @@ export function PatientBillingTab({ patientId }: Props) {
                       <CalendarDays className="h-4 w-4" />
                       Payment Date
                     </span>
-                    <span className="font-medium text-right">
+                    <span className="font-medium text-right dark:text-gray-100">
                       {format(new Date(selectedReceipt.payment_date), "dd MMMM yyyy")}
                       <br />
                       <span className="text-xs text-muted-foreground">

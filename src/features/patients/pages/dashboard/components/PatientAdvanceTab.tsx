@@ -39,6 +39,14 @@ const paymentLabels: Record<string, string> = {
   other: "Other",
 };
 
+const paymentColors: Record<string, string> = {
+  cash: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800",
+  card: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:border-blue-800",
+  upi: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:text-purple-400 dark:border-purple-800",
+  bank_transfer: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/50 dark:text-amber-400 dark:border-amber-800",
+  other: "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
+};
+
 export function PatientAdvanceTab({ patientId }: Props) {
   const [depositOpen, setDepositOpen] = useState(false);
 
@@ -72,17 +80,18 @@ export function PatientAdvanceTab({ patientId }: Props) {
   return (
     <div className="space-y-4">
       <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-        <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-              <Wallet className="h-6 w-6 text-green-700" />
+        <CardContent className="p-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+              <Wallet className="h-5 w-5 text-green-700" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-green-900 mb-1">Available Advance Balance</p>
-              <h2 className="text-3xl font-bold text-green-700">₹{currentBalance.toFixed(2)}</h2>
+              <p className="text-xs font-semibold text-green-900 mb-0.5">Available Advance Balance</p>
+              <h2 className="text-2xl font-bold text-green-700">₹{currentBalance.toFixed(2)}</h2>
             </div>
           </div>
-          <Button 
+          <Button
+            size="sm"
             className="bg-green-600 hover:bg-green-700 text-white gap-2"
             onClick={() => setDepositOpen(true)}
           >
@@ -92,8 +101,8 @@ export function PatientAdvanceTab({ patientId }: Props) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="border-b pb-4">
+      <Card className='pt-0'>
+        <CardHeader className="border-b [.border-b]:pb-0">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Wallet className="h-4 w-4 text-primary" />
             Advance Ledger History
@@ -110,31 +119,31 @@ export function PatientAdvanceTab({ patientId }: Props) {
               {advances.map((tx) => {
                 const isDeposit = tx.transaction_type === 'deposit';
                 return (
-                  <div 
+                  <div
                     key={tx.advance_id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors gap-3"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-muted/30 transition-colors gap-2"
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isDeposit ? 'bg-green-100' : 'bg-red-100'}`}>
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isDeposit ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
                         {isDeposit ? (
-                          <ArrowDownRight className="h-4 w-4 text-green-600" />
+                          <ArrowDownRight className="h-4 w-4 text-green-600 dark:text-green-500" />
                         ) : (
-                          <ArrowUpRight className="h-4 w-4 text-red-600" />
+                          <ArrowUpRight className="h-4 w-4 text-red-600 dark:text-red-500" />
                         )}
                       </div>
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col gap-1.5">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm">
                             {isDeposit ? 'Deposit' : 'Deduction'}
                           </span>
                           <span className="text-xs text-muted-foreground">|</span>
-                          <span className="font-medium text-xs">
+                          <span className="font-semibold text-xs">
                             {format(new Date(tx.createdAt), 'dd/MM/yyyy, hh:mm a')}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
                           {tx.payment_method && (
-                            <Badge variant="outline" className="text-[10px] uppercase font-semibold text-muted-foreground">
+                            <Badge variant="outline" className={`text-[10px] uppercase font-semibold ${paymentColors[tx.payment_method] || paymentColors.other}`}>
                               {(() => {
                                 const Icon = paymentIcons[tx.payment_method] || CreditCard;
                                 return <Icon className="mr-1 h-3 w-3 inline" />;
@@ -147,17 +156,17 @@ export function PatientAdvanceTab({ patientId }: Props) {
                               {tx.reference_type}: {tx.reference_id}
                             </Badge>
                           )}
+                          {tx.notes && (
+                            <span className="text-xs text-muted-foreground italic border-l pl-2 border-border/50">
+                              Note: {tx.notes}
+                            </span>
+                          )}
                         </div>
-                        {tx.notes && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {tx.notes}
-                          </p>
-                        )}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-3 sm:self-start ml-11 sm:ml-0 mt-2 sm:mt-0">
-                      <span className={`font-bold text-base ${isDeposit ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`font-bold text-base ${isDeposit ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
                         {isDeposit ? '+' : '-'}₹{Math.abs(tx.amount).toFixed(2)}
                       </span>
                     </div>

@@ -16,7 +16,7 @@ import { FormFloatingDatePicker } from "@/components/form/FormFloatingDatePicker
 import { FormSearchSelect } from "@/components/form/form-search-select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-import { Loader2, Pencil, Plus } from "lucide-react";
+import { Loader2, Pencil, Plus, Droplet, Stethoscope, Globe, Briefcase, Building2, Calendar, FileText, Fingerprint, Tags, Hash } from "lucide-react";
 
 import {
   patientInfoService,
@@ -213,74 +213,154 @@ export function PatientInfoTab({ patientId }: Props) {
     viewBody = <div className="text-sm text-muted-foreground">Loading...</div>;
   } else if (info) {
     viewBody = (
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-8 mt-2">
+        {/* Medical & General */}
         <div>
-          <div className="text-xs text-muted-foreground">Blood Group</div>
-          <div className="mt-1">
-            <Badge variant="secondary">{info.bloodGroup}</Badge>
+          <h3 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-2 uppercase tracking-wider">
+            <Stethoscope className="h-3.5 w-3.5" /> Medical & General
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-red-200 dark:hover:border-red-900/50 hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-all shadow-sm">
+              <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg shrink-0">
+                <Droplet className="h-4 w-4 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Blood Group</p>
+                <div className="font-semibold text-sm truncate">
+                  {info.bloodGroup ? (
+                    <span className="text-red-700 dark:text-red-400">{info.bloodGroup}</span>
+                  ) : "—"}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-blue-200 dark:hover:border-blue-900/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all shadow-sm">
+              <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg shrink-0">
+                <Stethoscope className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Primary Doctor</p>
+                <div className="font-semibold text-sm truncate" title={doctorOptions.find((o) => o.value === info.primaryDoctorId)?.label}>
+                  {info.primaryDoctorId 
+                    ? doctorOptions.find((o) => o.value === info.primaryDoctorId)?.label || "—" 
+                    : "—"}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-emerald-200 dark:hover:border-emerald-900/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all shadow-sm">
+              <div className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-lg shrink-0">
+                <Globe className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Overseas Patient</p>
+                <div className="font-semibold text-sm mt-0.5">
+                  {info.overseas ? <Badge className="bg-emerald-500 hover:bg-emerald-600 px-1.5 py-0 text-[10px]">YES</Badge> : <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">NO</Badge>}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div>
-          <div className="text-xs text-muted-foreground">Overseas</div>
-          <div className="mt-1">
-            {info.overseas ? (
-              <Badge>Yes</Badge>
-            ) : (
-              <Badge variant="outline">No</Badge>
-            )}
-          </div>
-        </div>
-        {info.primaryDoctorId && (
+
+        {/* Identity & Travel */}
+        {(info.passportNumber || info.validityDate) && (
           <div>
-            <div className="text-xs text-muted-foreground">Primary Doctor</div>
-            <div className="mt-1">
-              {doctorOptions.find((o) => o.value === info.primaryDoctorId)
-                ?.label || "—"}
+            <h3 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-2 uppercase tracking-wider">
+              <Globe className="h-3.5 w-3.5" /> Identity & Travel
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {info.passportNumber && (
+                <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-indigo-200 dark:hover:border-indigo-900/50 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all shadow-sm">
+                  <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg shrink-0">
+                    <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Passport No.</p>
+                    <div className="font-semibold text-sm truncate">{info.passportNumber}</div>
+                  </div>
+                </div>
+              )}
+
+              {info.validityDate && (
+                <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-orange-200 dark:hover:border-orange-900/50 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-all shadow-sm">
+                  <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-lg shrink-0">
+                    <Calendar className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Passport Expiry</p>
+                    <div className="font-semibold text-sm truncate">
+                      {coerceDate(info.validityDate)?.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
-        {info.passportNumber && (
+
+        {/* Occupational Details */}
+        {(info.occupation || info.companyName || info.department || info.designation || info.employeeCode) && (
           <div>
-            <div className="text-xs text-muted-foreground">Passport No.</div>
-            <div className="mt-1">{info.passportNumber}</div>
-          </div>
-        )}
-        {info.validityDate && (
-          <div>
-            <div className="text-xs text-muted-foreground">Passport Expiry</div>
-            <div className="mt-1">
-              {coerceDate(info.validityDate)?.toLocaleDateString()}
+            <h3 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-2 uppercase tracking-wider">
+              <Briefcase className="h-3.5 w-3.5" /> Occupational Details
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {info.occupation && (
+                <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-violet-200 dark:hover:border-violet-900/50 hover:bg-violet-50/50 dark:hover:bg-violet-900/10 transition-all shadow-sm">
+                  <div className="bg-violet-100 dark:bg-violet-900/30 p-2 rounded-lg shrink-0">
+                    <Briefcase className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Occupation</p>
+                    <div className="font-semibold text-sm truncate" title={info.occupation}>{info.occupation}</div>
+                  </div>
+                </div>
+              )}
+              {info.companyName && (
+                <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-cyan-200 dark:hover:border-cyan-900/50 hover:bg-cyan-50/50 dark:hover:bg-cyan-900/10 transition-all shadow-sm">
+                  <div className="bg-cyan-100 dark:bg-cyan-900/30 p-2 rounded-lg shrink-0">
+                    <Building2 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Company</p>
+                    <div className="font-semibold text-sm truncate" title={info.companyName}>{info.companyName}</div>
+                  </div>
+                </div>
+              )}
+              {info.department && (
+                <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-pink-200 dark:hover:border-pink-900/50 hover:bg-pink-50/50 dark:hover:bg-pink-900/10 transition-all shadow-sm">
+                  <div className="bg-pink-100 dark:bg-pink-900/30 p-2 rounded-lg shrink-0">
+                    <Tags className="h-4 w-4 text-pink-600 dark:text-pink-400" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Department</p>
+                    <div className="font-semibold text-sm truncate" title={info.department}>{info.department}</div>
+                  </div>
+                </div>
+              )}
+              {info.designation && (
+                <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-teal-200 dark:hover:border-teal-900/50 hover:bg-teal-50/50 dark:hover:bg-teal-900/10 transition-all shadow-sm">
+                  <div className="bg-teal-100 dark:bg-teal-900/30 p-2 rounded-lg shrink-0">
+                    <Fingerprint className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Designation</p>
+                    <div className="font-semibold text-sm truncate" title={info.designation}>{info.designation}</div>
+                  </div>
+                </div>
+              )}
+              {info.employeeCode && (
+                <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-amber-200 dark:hover:border-amber-900/50 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-all shadow-sm">
+                  <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg shrink-0">
+                    <Hash className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Employee Code</p>
+                    <div className="font-semibold text-sm truncate" title={info.employeeCode}>{info.employeeCode}</div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
-        {info.occupation && (
-          <div>
-            <div className="text-xs text-muted-foreground">Occupation</div>
-            <div className="mt-1">{info.occupation}</div>
-          </div>
-        )}
-        {info.department && (
-          <div>
-            <div className="text-xs text-muted-foreground">Department</div>
-            <div className="mt-1">{info.department}</div>
-          </div>
-        )}
-        {info.companyName && (
-          <div>
-            <div className="text-xs text-muted-foreground">Company</div>
-            <div className="mt-1">{info.companyName}</div>
-          </div>
-        )}
-        {info.designation && (
-          <div>
-            <div className="text-xs text-muted-foreground">Designation</div>
-            <div className="mt-1">{info.designation}</div>
-          </div>
-        )}
-        {info.employeeCode && (
-          <div>
-            <div className="text-xs text-muted-foreground">Employee Code</div>
-            <div className="mt-1">{info.employeeCode}</div>
           </div>
         )}
       </div>

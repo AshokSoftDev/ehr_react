@@ -115,22 +115,24 @@ export function PatientAppointmentTab({ patientId }: Props) {
 
   return (
     <Card className="bg-card h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 shrink-0 border-b !py-2 !px-4">
+      <CardHeader className="border-b p-2 [.border-b]:pb-0 flex flex-row items-center justify-between space-y-0 shrink-0">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           Appointments
           <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs font-semibold">
             {appointments.length}
           </Badge>
         </CardTitle>
-        <Button
-          size="sm"
-          onClick={() => {
-            setEditing(null);
-            setOpen(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" /> Add Appointment
-        </Button>
+        <div className='pb-2'>
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditing(null);
+              setOpen(true);
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" /> Add Appointment
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         {listQuery.isLoading ? (
@@ -145,7 +147,7 @@ export function PatientAppointmentTab({ patientId }: Props) {
             {appointments.map((item: AppointmentItem) => (
               <div
                 key={item.appointment_id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors gap-3"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-muted/30 transition-colors gap-2"
               >
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
@@ -179,12 +181,9 @@ export function PatientAppointmentTab({ patientId }: Props) {
                       </>
                     )}
                     {item.reason_for_visit && (
-                      <>
-                        <span className="text-xs text-muted-foreground">|</span>
-                        <span className="text-muted-foreground line-clamp-1 max-w-[250px]" title={item.reason_for_visit}>
-                          <span className="font-medium text-foreground">Reason:</span> {item.reason_for_visit}
-                        </span>
-                      </>
+                      <span className="text-xs text-muted-foreground italic border-l pl-2 border-border/50 line-clamp-1 max-w-[250px]" title={item.reason_for_visit}>
+                        <span className="font-medium text-foreground not-italic">Reason:</span> {item.reason_for_visit}
+                      </span>
                     )}
                   </div>
                 </div>

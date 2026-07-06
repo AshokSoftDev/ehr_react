@@ -117,8 +117,8 @@ export function PatientEmergencyTab({ patientId }: Props) {
 
   return (
     <Card className="bg-card">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle>Emergency Contacts</CardTitle>
+      <CardHeader className="border-b p-2 [.border-b]:pb-0 flex flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-base font-semibold">Emergency Contacts</CardTitle>
         <div className="flex items-center gap-3">
           <Button
             size="sm"
@@ -138,25 +138,29 @@ export function PatientEmergencyTab({ patientId }: Props) {
           <span className="text-xs text-muted-foreground">{count}/{MAX_CONTACTS}</span>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {listQuery.isLoading ? (
-          <div className="text-sm text-muted-foreground">Loading...</div>
+          <div className="p-8 text-center text-sm text-muted-foreground">Loading...</div>
         ) : count === 0 ? (
-          <div className="rounded-md border p-4 text-sm text-muted-foreground">No emergency contacts added.</div>
+          <div className="p-8 text-center text-sm text-muted-foreground">No emergency contacts added.</div>
         ) : (
-          <div className="grid gap-3">
+          <div className="divide-y divide-border">
             {listQuery.data!.map((item) => (
-              <div key={item.pe_id} className="flex items-center justify-between rounded-md border p-3">
-                <div className="space-y-0.5">
-                  <div className="font-medium text-foreground flex items-center gap-2">
+              <div key={item.pe_id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-muted/30 transition-colors gap-2">
+                <div className="flex flex-col gap-1.5">
+                  <div className="font-semibold text-sm flex items-center gap-2">
                     {item.name}
                     {item.isPrimary && (
-                      <Badge variant="default" className="text-[10px] px-1.5 py-0">Primary</Badge>
+                      <Badge variant="default" className="text-[10px] px-1.5 py-0 uppercase font-semibold">Primary</Badge>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground">{item.relation} • {item.contactNumber}</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-medium text-muted-foreground">{item.relation}</span>
+                    <span className="text-xs text-muted-foreground">|</span>
+                    <span className="text-xs font-medium text-muted-foreground">{item.contactNumber}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 sm:self-start mt-2 sm:mt-0">
                   <Button
                     size="icon"
                     variant="ghost"
