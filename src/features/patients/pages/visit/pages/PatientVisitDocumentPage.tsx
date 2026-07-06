@@ -44,6 +44,7 @@ import { visitDocumentService } from "@/features/visits/services/visitDocument.s
 import { useDocumentTypes, useCreateDocumentType } from "@/features/masters/hooks/useDocumentTypes";
 import { DocumentTypeFormSheet, type DocumentTypeFormValues } from "@/features/document-types/components/DocumentTypeFormSheet";
 import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
+import { Badge } from "@/components/ui/badge";
 
 const uploadFormSchema = z.object({
   document_name: z.string().min(1, "Document name is required"),
@@ -359,62 +360,65 @@ export function PatientVisitDocumentPage({ isReadOnly }: { isReadOnly?: boolean 
           {documents.map((doc) => (
             <div
               key={doc.document_id}
-              className="flex items-center gap-2.5 p-3 hover:bg-muted/30 transition-colors"
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-muted/30 transition-colors gap-2"
             >
-              {/* File Icon */}
-              <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                {getFileIcon(doc.mime_type)}
-              </div>
-
-              {/* File Info */}
-              <div className="flex-1 min-w-0">
+              <div className="flex flex-col gap-1.5">
                 <div className="flex items-center gap-2">
-                  <p className="text-xs font-medium truncate">{doc.description || doc.file_name}</p>
-                  <span className="px-1.5 py-0.5 text-[9px] font-medium rounded bg-primary/10 text-primary shrink-0">
+                  {getFileIcon(doc.mime_type)}
+                  <span className="font-semibold text-sm truncate max-w-[300px]">
+                    {doc.description || doc.file_name}
+                  </span>
+                  <span className="text-xs text-muted-foreground">|</span>
+                  <Badge variant="outline" className="text-[10px] uppercase font-semibold bg-primary/10 text-primary border-primary/20">
                     {doc.documentType?.type_name || 'Unknown'}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground">
+                    {formatFileSize(doc.file_size)}
+                  </span>
+                  <span className="text-xs text-muted-foreground border-l pl-2 border-border/50">
+                    {new Date(doc.createdAt).toLocaleDateString()}
+                  </span>
+                  <span className="text-xs text-muted-foreground border-l pl-2 border-border/50 truncate max-w-[200px]">
+                    {doc.file_name}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
-                  <span>{formatFileSize(doc.file_size)}</span>
-                  <span>|</span>
-                  <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
-                  <span>|</span>
-                  <span className="truncate">{doc.file_name}</span>
-                </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-0.5 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewingDoc(doc)}
-                  className="h-7 w-7 p-0"
-                  title="View"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDownload(doc)}
-                  className="h-7 w-7 p-0"
-                  title="Download"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                </Button>
-                {!isReadOnly && (
+              <div className="flex items-center gap-3 sm:self-start">
+                <div className="flex items-center gap-1 border-l pl-3 border-border/50">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDelete(doc)}
-                    disabled={deleteMutation.isPending}
-                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                    title="Delete"
+                    onClick={() => setViewingDoc(doc)}
+                    className="h-8 w-8 p-0 hover:bg-blue-50"
+                    title="View Document"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Eye className="h-4 w-4 text-blue-600" />
                   </Button>
-                )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDownload(doc)}
+                    className="h-8 w-8 p-0 hover:bg-green-50"
+                    title="Download Document"
+                  >
+                    <Download className="h-4 w-4 text-green-600" />
+                  </Button>
+                  {!isReadOnly && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(doc)}
+                      disabled={deleteMutation.isPending}
+                      className="h-8 w-8 p-0 hover:bg-red-50"
+                      title="Delete Document"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

@@ -126,7 +126,7 @@ export function PatientDocumentsPage() {
   // Visits List View
   if (!selectedVisit) {
     return (
-      <Card className="border-border shadow-sm overflow-hidden">
+      <Card className="border-border shadow-sm overflow-hidden py-0">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-blue-500" />
@@ -134,10 +134,7 @@ export function PatientDocumentsPage() {
           </div>
           {visitsLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </div>
-        <CardContent className="p-3">
-          <p className="text-xs text-muted-foreground mb-3">
-            Select a visit to view its documents
-          </p>
+        <CardContent className="px-0">
 
           {visitsLoading ? (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -149,34 +146,44 @@ export function PatientDocumentsPage() {
               <p className="text-sm font-medium">No visits found</p>
             </div>
           ) : (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="divide-y divide-border">
               {visits.map((v) => {
                 const date = new Date(v.visit_date);
                 return (
                   <button
                     key={v.visit_id}
                     onClick={() => setSelectedVisitId(v.visit_id)}
-                    className="group rounded-lg border border-border bg-card p-3 text-left transition-all hover:border-primary/50 hover:shadow-md"
+                    className="w-full flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-muted/30 transition-colors gap-2 text-left group"
                   >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <Badge variant={v.status === 1 ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
-                        {v.status === 1 ? "Active" : "Done"}
-                      </Badge>
-                      <span className="text-[10px] text-muted-foreground">#{v.visit_id}</span>
-                    </div>
-                    <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {v.visit_type}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
-                      <CalendarDays className="h-3 w-3" />
-                      <span>{date.toLocaleDateString()}</span>
-                    </div>
-                    {v.doctor?.displayName && (
-                      <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
-                        <User className="h-3 w-3" />
-                        <span>{v.doctor.displayName}</span>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm group-hover:text-primary transition-colors">
+                          {v.visit_type}
+                        </span>
+                        <span className="text-xs text-muted-foreground">|</span>
+                        <Badge variant={v.status === 1 ? "default" : "secondary"} className="text-[10px] uppercase font-semibold">
+                          {v.status === 1 ? "Active" : "Done"}
+                        </Badge>
                       </div>
-                    )}
+                      <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {date.toLocaleDateString()}
+                        </span>
+                        {v.doctor?.displayName && (
+                          <span className="flex items-center gap-1 border-l pl-2 border-border/50">
+                            <User className="h-3.5 w-3.5" />
+                            {v.doctor.displayName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 sm:self-start">
+                      <span className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                        #{v.visit_id}
+                      </span>
+                    </div>
                   </button>
                 );
               })}
@@ -227,61 +234,62 @@ export function PatientDocumentsPage() {
             </div>
           ) : (
             <ScrollArea className="max-h-[500px]">
-              <div className="space-y-1.5 pr-1">
-                <div className="text-[11px] font-medium text-muted-foreground mb-2">
+              <div className="divide-y divide-border">
+                <div className="text-[11px] font-medium text-muted-foreground p-3 pb-2 bg-muted/20">
                   {documents.length} document{documents.length !== 1 ? "s" : ""}
                 </div>
                 {documents.map((doc) => (
                   <div
                     key={doc.document_id}
-                    className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-muted/30 transition-colors gap-2"
                   >
-                    {/* File Icon */}
-                    <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                      {getFileIcon(doc.mime_type)}
-                    </div>
-
-                    {/* File Info */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
-                        <p className="text-xs font-medium truncate">{doc.file_name}</p>
-                        <span className="px-1.5 py-0.5 text-[9px] font-medium rounded bg-primary/10 text-primary shrink-0">
-                          {doc.documentType?.type_name || 'Unknown'}
+                        {getFileIcon(doc.mime_type)}
+                        <span className="font-semibold text-sm truncate max-w-[300px]">
+                          {doc.file_name}
                         </span>
+                        <span className="text-xs text-muted-foreground">|</span>
+                        <Badge variant="outline" className="text-[10px] uppercase font-semibold bg-primary/10 text-primary border-primary/20">
+                          {doc.documentType?.type_name || 'Unknown'}
+                        </Badge>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
-                        <span>{formatFileSize(doc.file_size)}</span>
-                        <span>•</span>
-                        <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-muted-foreground">
+                          {formatFileSize(doc.file_size)}
+                        </span>
+                        <span className="text-xs text-muted-foreground border-l pl-2 border-border/50">
+                          {new Date(doc.createdAt).toLocaleDateString()}
+                        </span>
                         {doc.description && (
-                          <>
-                            <span>•</span>
-                            <span className="truncate">{doc.description}</span>
-                          </>
+                          <span className="text-xs text-muted-foreground border-l pl-2 border-border/50 truncate max-w-[200px]">
+                            Note: {doc.description}
+                          </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setViewingDoc(doc)}
-                        className="h-7 w-7 p-0"
-                        title="View"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownload(doc)}
-                        className="h-7 w-7 p-0"
-                        title="Download"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                      </Button>
+                    <div className="flex items-center gap-3 sm:self-start">
+                      <div className="flex items-center gap-1 border-l pl-3 border-border/50">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewingDoc(doc)}
+                          className="h-8 w-8 p-0 hover:bg-blue-50"
+                          title="View Document"
+                        >
+                          <Eye className="h-4 w-4 text-blue-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownload(doc)}
+                          className="h-8 w-8 p-0 hover:bg-green-50"
+                          title="Download Document"
+                        >
+                          <Download className="h-4 w-4 text-green-600" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
