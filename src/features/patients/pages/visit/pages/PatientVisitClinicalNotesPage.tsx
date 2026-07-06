@@ -382,9 +382,9 @@ export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boo
             </p>
           </div>
         ) : (
-          <Accordion 
-            type="multiple" 
-            className={`divide-y divide-border ${isReadOnly ? "-mx-4 border-b" : "-mx-3 border-y bg-card overflow-hidden"}`}
+          <Accordion
+            type="multiple"
+            className={`divide-y divide-border border-b ${isReadOnly ? "-mx-4 border-b" : "-mx-3 border-y bg-card overflow-hidden"}`}
           >
             {!isReadOnly && (
               <div className="text-[11px] font-medium text-muted-foreground p-3 pb-2 bg-muted/20">
@@ -400,46 +400,44 @@ export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boo
                 <AccordionItem
                   key={note.cn_id}
                   value={String(note.cn_id)}
-                  className={`border-b-0 px-3 transition-colors ${isActive
+                  className={`border-b-1 px-3 transition-colors ${isActive
                     ? "bg-primary/5"
                     : "hover:bg-muted/30"
                     }`}
                 >
-                    <AccordionTrigger className="hover:no-underline py-2">
-                      <div className="flex items-center gap-2 flex-1">
-                        <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${isAudio
-                          ? "bg-purple-100 dark:bg-purple-900/50"
-                          : "bg-blue-100 dark:bg-blue-900/50"
-                          }`}>
-                          {isAudio ? (
-                            <Mic className="h-3.5 w-3.5 text-purple-600" />
-                          ) : (
-                            <Type className="h-3.5 w-3.5 text-blue-600" />
-                          )}
+                  <AccordionTrigger className="hover:no-underline py-3 px-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2 text-left">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isAudio
+                            ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600"
+                            : "bg-blue-100 dark:bg-blue-900/50 text-blue-600"
+                            }`}>
+                            {isAudio ? <Mic className="h-4 w-4" /> : <Type className="h-4 w-4" />}
+                          </div>
+                          <span className="font-semibold text-sm truncate">
+                            {doctorName}
+                          </span>
+                          <span className="text-xs text-muted-foreground">|</span>
+                          <Badge variant="outline" className={`text-[10px] uppercase font-semibold ${isAudio ? "bg-purple-100/50 text-purple-700 border-purple-200" : "bg-blue-100/50 text-blue-700 border-blue-200"}`}>
+                            {isAudio ? "Audio" : "Text"}
+                          </Badge>
                         </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(note.createdAt)}
+                          </span>
+                        </div>
+                      </div>
 
-                        <span className="text-xs font-medium text-foreground ml-1">
-                          {doctorName}
-                        </span>
-                        <span className="text-muted-foreground/40 text-[10px] mx-1.5">|</span>
-                        <Badge
-                          variant={isAudio ? "secondary" : "default"}
-                          className="px-1.5 py-0 text-[9px]"
-                        >
-                          {isAudio ? "Audio" : "Text"}
-                        </Badge>
-                        <span className="text-muted-foreground/40 text-[10px] mx-1.5">|</span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {formatDate(note.createdAt)}
-                        </span>
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-1 ml-auto mr-2 shrink-0">
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-3 sm:self-start ml-auto mr-2 shrink-0">
+                        <div className="flex items-center gap-1 border-l pl-3 border-border/50 shrink-0">
                           {/* Print Button */}
                           <div
                             role="button"
                             tabIndex={0}
-                            className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-600 cursor-pointer"
+                            className="h-8 w-8 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-emerald-50 text-emerald-600 cursor-pointer"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -448,14 +446,15 @@ export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boo
                             onKeyDown={(e) => e.key === 'Enter' && handlePrint(note)}
                             title="Print"
                           >
-                            <Printer className="h-3.5 w-3.5" />
+                            <Printer className="h-4 w-4" />
                           </div>
                           {!isReadOnly && (
                             <>
                               {/* Edit Button */}
-                              <Button
-                                variant="ghost"
-                                size="sm"
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                className="h-8 w-8 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/50 cursor-pointer"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
@@ -463,15 +462,14 @@ export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boo
                                 }}
                                 onKeyDown={(e) => e.key === 'Enter' && setEditingId(note.cn_id)}
                                 title="Edit"
-                                className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/50"
                               >
-                                <Edit3 className="h-3.5 w-3.5" />
-                              </Button>
+                                <Edit3 className="h-4 w-4" />
+                              </div>
                               {/* Delete Button */}
                               <div
                                 role="button"
                                 tabIndex={0}
-                                className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-red-100 dark:hover:bg-red-900/50 text-destructive cursor-pointer"
+                                className="h-8 w-8 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-red-50 text-destructive cursor-pointer"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
@@ -480,35 +478,36 @@ export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boo
                                 onKeyDown={(e) => e.key === 'Enter' && deleteNote.mutate(note.cn_id)}
                                 title="Delete"
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="h-4 w-4" />
                               </div>
                             </>
                           )}
                         </div>
                       </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-2 pb-3">
-                      {note.audio_url && (
-                        <div className="mb-3">
-                          <AudioPlayer src={note.audio_url} />
-                        </div>
-                      )}
-                      <div
-                        className="prose prose-sm dark:prose-invert max-w-none text-sm"
-                        dangerouslySetInnerHTML={{
-                          __html:
-                            note.editor_notes ||
-                            note.transcription ||
-                            '<p class="text-muted-foreground">No content</p>',
-                        }}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                );
-              })}
-            </Accordion>
-          )
-        )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-2 pb-3">
+                    {note.audio_url && (
+                      <div className="mb-3">
+                        <AudioPlayer src={note.audio_url} />
+                      </div>
+                    )}
+                    <div
+                      className="prose prose-sm dark:prose-invert max-w-none text-sm"
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          note.editor_notes ||
+                          note.transcription ||
+                          '<p class="text-muted-foreground">No content</p>',
+                      }}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        )
+      )}
     </div>
   );
 }

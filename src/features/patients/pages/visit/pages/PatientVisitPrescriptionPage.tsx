@@ -467,64 +467,57 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
               return (
                 <div
                   key={prescription.prescription_id}
-                  className="flex flex-col p-3 hover:bg-muted/30 transition-colors gap-2"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-muted/30 transition-colors gap-2"
                 >
                   <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Pill className="h-4 w-4 text-emerald-500" />
-                        <h4 className="font-semibold text-sm text-foreground">
-                          {prescription.drug_name}
-                        </h4>
-                        {prescription.drug_dosage && (
-                          <>
-                            <span className="text-muted-foreground/40 font-normal">|</span>
-                            <span className="font-medium text-xs text-foreground">
-                              {prescription.drug_dosage} {prescription.drug_measure}
-                            </span>
-                          </>
-                        )}
-                        {prescription.drug_type && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 border-none bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    <div className="flex items-center gap-2">
+                      <Pill className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span className="font-semibold text-sm truncate">
+                        {prescription.drug_name}
+                      </span>
+                      {prescription.drug_type && (
+                        <>
+                          <span className="text-xs text-muted-foreground">|</span>
+                          <Badge variant="outline" className="text-[10px] uppercase font-semibold bg-emerald-100/50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300">
                             {prescription.drug_type}
                           </Badge>
-                        )}
-                        {prescription.drug_generic && (
-                          <span className="text-xs text-muted-foreground">
-                            ({prescription.drug_generic})
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                      {(prescription.quantity || prescription.duration) && (
+                        </>
+                      )}
+                      {prescription.drug_generic && (
                         <>
-                          <span>
-                            <strong className="text-foreground font-medium">Qty:</strong> {prescription.quantity || '-'}
-                            {prescription.duration && ` (${prescription.duration} ${prescription.duration_type || 'Days'})`}
+                          <span className="text-xs text-muted-foreground">|</span>
+                          <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                            {prescription.drug_generic}
                           </span>
                         </>
                       )}
-
-                      <span className="text-muted-foreground/40 hidden sm:inline">|</span>
-                      <span>
-                        <strong className="text-foreground font-medium">Freq:</strong> {schedule}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {(prescription.quantity || prescription.duration) && (
+                        <span className="text-xs text-muted-foreground">
+                          Qty: {prescription.quantity || '-'}
+                          {prescription.duration && ` (${prescription.duration} ${prescription.duration_type || 'Days'})`}
+                        </span>
+                      )}
+                      <span className={`text-xs text-muted-foreground ${(prescription.quantity || prescription.duration) ? 'border-l pl-2 border-border/50' : ''}`}>
+                        Freq: {schedule}
                       </span>
-
-
                       {notes && (
-                        <span
-                          className="text-xs text-muted-foreground italic border-l pl-2 border-border/50 line-clamp-1 max-w-[250px] mt-0.5 sm:mt-0"
-                          title={notes}
-                        >
-                          <strong className="text-foreground font-medium not-italic">
-                            Notes:
-                          </strong>{" "}
-                          {notes}
+                        <span className="text-xs text-muted-foreground border-l pl-2 border-border/50 truncate max-w-[200px]" title={notes}>
+                          Note: {notes}
                         </span>
                       )}
                     </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 sm:self-start">
+                    {prescription.drug_dosage && (
+                      <div className="flex items-center gap-1 border-l pl-3 border-border/50 shrink-0">
+                        <span className="font-bold text-sm text-foreground">
+                          {prescription.drug_dosage} {prescription.drug_measure}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
