@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import {
   ArrowLeft,
@@ -147,10 +146,10 @@ export function PatientVisitPage() {
                           {date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </div>
                         {visit.doctor?.displayName && (
-                           <div className="flex items-center gap-1 font-bold text-foreground">
-                             <User className="h-3.5 w-3.5 text-muted-foreground" />
-                             {visit.doctor.displayName}
-                           </div>
+                          <div className="flex items-center gap-1 font-bold text-foreground">
+                            <User className="h-3.5 w-3.5 text-muted-foreground" />
+                            {visit.doctor.displayName}
+                          </div>
                         )}
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 border-none bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 ml-1">
                           {visit.visit_type}
@@ -174,7 +173,7 @@ export function PatientVisitPage() {
 
   // Tab View
   return (
-    <Card className="border-border shadow-sm overflow-hidden">
+    <Card className="border-border shadow-sm overflow-hidden py-0">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
         <div className="flex items-center gap-3">
@@ -236,7 +235,7 @@ export function PatientVisitPage() {
       </div>
 
       {/* Tab Content */}
-      <CardContent className="p-3">
+      <CardContent className="p-3 pb-0">
         {currentTab === "overview" && (
           <div className="-mx-3 -mt-3">
             <Accordion type="single" collapsible className="w-full">
@@ -247,7 +246,7 @@ export function PatientVisitPage() {
                     <span className="font-semibold">HPI</span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 bg-muted/10 pt-4">
+                <AccordionContent className="bg-muted/10 p-0">
                   <HPIOverviewCardView visitId={selectedVisitId ?? undefined} />
                 </AccordionContent>
               </AccordionItem>
@@ -275,7 +274,7 @@ export function PatientVisitPage() {
                     <span className="font-semibold">Prescription</span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
+                <AccordionContent className="px-4 pb-0">
                   <PatientVisitPrescriptionPage isReadOnly={true} />
                 </AccordionContent>
               </AccordionItem>
@@ -287,7 +286,7 @@ export function PatientVisitPage() {
                     <span className="font-semibold">Document</span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
+                <AccordionContent className="px-4 pb-0">
                   <PatientVisitDocumentPage isReadOnly={true} />
                 </AccordionContent>
               </AccordionItem>
@@ -299,7 +298,7 @@ export function PatientVisitPage() {
                     <span className="font-semibold">Clinical Notes</span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
+                <AccordionContent className="px-4 pb-0">
                   <PatientVisitClinicalNotesPage isReadOnly={true} />
                 </AccordionContent>
               </AccordionItem>

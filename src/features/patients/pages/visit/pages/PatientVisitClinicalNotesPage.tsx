@@ -246,30 +246,23 @@ export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boo
   }
 
   return (
-    <div className="space-y-2">
+    <div className="">
       {/* Header Bar - Similar to Prescription */}
-      <div className="flex items-center gap-3 p-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/50 dark:border-blue-800/50">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-            <FileText className="h-4 w-4 text-blue-600" />
-          </div>
-          <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Clinical Notes</span>
+      {!isReadOnly && (
+        <div className="flex items-center justify-end mb-3">
+          {/* Add New Note Button */}
+          {!isEditorOpen && (
+            <Button
+              size="sm"
+              onClick={startNewNote}
+              className="h-8 text-xs"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add Note
+            </Button>
+          )}
         </div>
-
-        <div className="flex-1" />
-
-        {/* Add New Note Button */}
-        {!isReadOnly && !isEditorOpen && (
-          <Button
-            size="sm"
-            onClick={startNewNote}
-            className="h-8 text-xs"
-          >
-            <Plus className="h-3.5 w-3.5 mr-1" />
-            Add Note
-          </Button>
-        )}
-      </div>
+      )}
 
       {/* Editor Section (shown when adding/editing) */}
       {isEditorOpen && (
@@ -389,25 +382,29 @@ export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boo
             </p>
           </div>
         ) : (
-          <div className="space-y-1.5">
-            <div className="text-[11px] font-medium text-muted-foreground">
-              {notes.length} note{notes.length !== 1 ? "s" : ""}
-            </div>
-            <Accordion type="multiple" className="space-y-2">
-              {notes.map((note) => {
-                const isAudio = note.notes_type === "audio";
-                const isActive = editingId === note.cn_id;
-                const doctorName = note.doctor ? note.doctor.displayName : "Unknown Doctor";
+          <Accordion 
+            type="multiple" 
+            className={`divide-y divide-border ${isReadOnly ? "-mx-4 border-b" : "-mx-3 border-y bg-card overflow-hidden"}`}
+          >
+            {!isReadOnly && (
+              <div className="text-[11px] font-medium text-muted-foreground p-3 pb-2 bg-muted/20">
+                {notes.length} note{notes.length !== 1 ? "s" : ""}
+              </div>
+            )}
+            {notes.map((note) => {
+              const isAudio = note.notes_type === "audio";
+              const isActive = editingId === note.cn_id;
+              const doctorName = note.doctor ? note.doctor.displayName : "Unknown Doctor";
 
-                return (
-                  <AccordionItem
-                    key={note.cn_id}
-                    value={String(note.cn_id)}
-                    className={`border rounded-lg px-3 transition-colors ${isActive
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-card hover:bg-muted/30"
-                      }`}
-                  >
+              return (
+                <AccordionItem
+                  key={note.cn_id}
+                  value={String(note.cn_id)}
+                  className={`border-b-0 px-3 transition-colors ${isActive
+                    ? "bg-primary/5"
+                    : "hover:bg-muted/30"
+                    }`}
+                >
                     <AccordionTrigger className="hover:no-underline py-2">
                       <div className="flex items-center gap-2 flex-1">
                         <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${isAudio
@@ -510,8 +507,8 @@ export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boo
                 );
               })}
             </Accordion>
-          </div>
-        ))}
+          )
+        )}
     </div>
   );
 }

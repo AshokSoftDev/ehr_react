@@ -350,14 +350,16 @@ export function PatientVisitDocumentPage({ isReadOnly }: { isReadOnly?: boolean 
           </p>
         </div>
       ) : (
-        <div className="space-y-1.5">
-          <div className="text-[11px] font-medium text-muted-foreground">
-            {documents.length} document{documents.length !== 1 ? "s" : ""}
-          </div>
+        <div className={`divide-y divide-border ${isReadOnly ? "-mx-4 border-b" : "-mx-3 border-y bg-card overflow-hidden"}`}>
+          {!isReadOnly && (
+            <div className="text-[11px] font-medium text-muted-foreground p-3 pb-2 bg-muted/20">
+              {documents.length} document{documents.length !== 1 ? "s" : ""}
+            </div>
+          )}
           {documents.map((doc) => (
             <div
               key={doc.document_id}
-              className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors"
+              className="flex items-center gap-2.5 p-3 hover:bg-muted/30 transition-colors"
             >
               {/* File Icon */}
               <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">

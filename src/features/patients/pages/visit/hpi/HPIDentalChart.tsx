@@ -182,8 +182,8 @@ function ToothSurfaceMap({
   };
 
   const getQuadrantColor = (region: ToothRegionId) => {
-    return isSelected(region) 
-      ? "bg-primary" 
+    return isSelected(region)
+      ? "bg-primary"
       : "bg-slate-200 dark:bg-slate-700 hover:bg-primary/20 dark:hover:bg-primary/30";
   };
 
@@ -193,8 +193,8 @@ function ToothSurfaceMap({
       <div className={`
         relative w-14 h-14
         border-2 rounded-lg transition-all duration-300
-        ${allSelected 
-          ? "border-primary shadow-lg shadow-primary/30" 
+        ${allSelected
+          ? "border-primary shadow-lg shadow-primary/30"
           : "border-slate-400 dark:border-slate-500"
         }
         bg-slate-100 dark:bg-slate-800
@@ -212,7 +212,7 @@ function ToothSurfaceMap({
           style={quadrantStyles.topLeft}
           title="Top-Left (Mesial)"
         />
-        
+
         {/* Top-Right quadrant */}
         <button
           type="button"
@@ -225,7 +225,7 @@ function ToothSurfaceMap({
           style={quadrantStyles.topRight}
           title="Top-Right (Distal)"
         />
-        
+
         {/* Bottom-Left quadrant */}
         <button
           type="button"
@@ -238,7 +238,7 @@ function ToothSurfaceMap({
           style={quadrantStyles.bottomLeft}
           title="Bottom-Left (Buccal)"
         />
-        
+
         {/* Bottom-Right quadrant */}
         <button
           type="button"
@@ -267,8 +267,8 @@ function ToothSurfaceMap({
             flex items-center justify-center
             text-[10px] font-bold
             border-2 z-10
-            ${isSelected("center") 
-              ? "bg-primary text-primary-foreground border-primary/80" 
+            ${isSelected("center")
+              ? "bg-primary text-primary-foreground border-primary/80"
               : "bg-white dark:bg-slate-600 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-500 hover:bg-primary/10 hover:border-primary hover:text-primary"
             }
           `}
@@ -283,12 +283,12 @@ function ToothSurfaceMap({
         <span className={`absolute bottom-0.5 left-1 text-[7px] font-bold pointer-events-none z-20 ${isSelected("leftBottom") ? "text-primary-foreground" : "text-slate-500"}`}>B</span>
         <span className={`absolute bottom-0.5 right-1 text-[7px] font-bold pointer-events-none z-20 ${isSelected("rightBottom") ? "text-primary-foreground" : "text-slate-500"}`}>L</span>
       </div>
-      
+
       {/* Selection indicator */}
       <div className={`
         text-[8px] font-medium px-1.5 py-0.5 rounded-full transition-all
-        ${allSelected 
-          ? "bg-primary/20 text-primary dark:bg-primary/30" 
+        ${allSelected
+          ? "bg-primary/20 text-primary dark:bg-primary/30"
           : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
         }
       `}>
@@ -320,9 +320,8 @@ function Tooth({
       <button
         type="button"
         onClick={() => onToggle(toothNumber)}
-        className={`flex flex-col items-center rounded-lg p-1.5 outline-none transition ${
-          selected ? "bg-primary/10 ring-2 ring-primary shadow-sm" : "hover:bg-primary/5"
-        }`}
+        className={`flex flex-col items-center rounded-lg p-1.5 outline-none transition ${selected ? "bg-primary/10 ring-2 ring-primary shadow-sm" : "hover:bg-primary/5"
+          }`}
       >
         {imageSrc ? (
           <img
@@ -333,7 +332,7 @@ function Tooth({
         ) : (
           <div className="h-20 w-20 rounded-lg bg-gray-100" />
         )}
-        <span className="mt-1 text-xs font-semibold text-gray-700">
+        <span className="mt-1 text-xs font-semibold text-foreground">
           {toothNumber}
         </span>
       </button>
@@ -432,9 +431,8 @@ function DentitionToggle({ view, onChange }: DentitionToggleProps) {
             className="flex cursor-pointer items-center gap-2"
           >
             <span
-              className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
-                selected ? "border-primary" : "border-gray-300"
-              }`}
+              className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${selected ? "border-primary" : "border-gray-300"
+                }`}
             >
               {selected && <span className="h-2 w-2 rounded-full bg-primary" />}
             </span>
@@ -445,9 +443,8 @@ function DentitionToggle({ view, onChange }: DentitionToggleProps) {
               onChange={() => onChange(option.value)}
             />
             <span
-              className={`text-sm ${
-                selected ? "font-semibold text-primary" : "text-gray-700"
-              }`}
+              className={`text-sm ${selected ? "font-semibold text-primary" : "text-foreground"
+                }`}
             >
               {option.label}
             </span>
@@ -497,7 +494,7 @@ export function HPIDentalChart({ visitId, isReadOnly }: HPIDentalChartProps) {
 
   const handleToggleTooth = (toothNumber: string) => {
     const ALL_REGIONS: ToothRegionId[] = ["leftTop", "rightTop", "leftBottom", "rightBottom", "center"];
-    
+
     setSelectedTeeth((prev) => {
       if (prev.includes(toothNumber)) {
         // Deselect tooth - remove all its regions
@@ -713,6 +710,14 @@ export function HPIDentalChart({ visitId, isReadOnly }: HPIDentalChartProps) {
                 toothRegions,
                 handleToggleRegion
               )}
+
+              {renderArch(
+                PERMANENT_LOWER,
+                selectedTeethSet,
+                handleToggleTooth,
+                toothRegions,
+                handleToggleRegion
+              )}
             </div>
           )}
         </div>
@@ -721,124 +726,123 @@ export function HPIDentalChart({ visitId, isReadOnly }: HPIDentalChartProps) {
           {!isReadOnly && (
             <>
               {/* Selected Teeth Badge */}
-          <div className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5">
-            <span className="text-xs font-semibold text-gray-700">Selected:</span>
-            <span className="text-xs font-medium text-primary">
-              {selectedTeeth.length ? [...selectedTeeth].sort().join(", ") : "None"}
-            </span>
-          </div>
-
-          {/* Compact Two-Column Layout */}
-          <div className="grid gap-3 md:grid-cols-2">
-            {/* Chief Complaints */}
-            <div className="rounded-lg border border-border bg-muted/30 p-2">
-              <div className="mb-1.5 text-xs font-semibold text-primary">Chief Complaints</div>
-              <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-                {CHIEF_COMPLAINT_OPTIONS.map((option) => (
-                  <label
-                    key={option.id}
-                    className="flex cursor-pointer items-center gap-1.5"
-                  >
-                    <input
-                      type="checkbox"
-                      className="h-3 w-3 rounded border-gray-300 text-primary focus:ring-primary"
-                      checked={selectedComplaints.includes(option.id)}
-                      onChange={() => handleToggleComplaint(option.id)}
-                    />
-                    <span className="text-[11px] text-gray-700">{option.label}</span>
-                  </label>
-                ))}
+              <div className="inline-flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5">
+                <span className="text-xs font-semibold text-foreground">Selected:</span>
+                <span className="text-xs font-medium text-primary">
+                  {selectedTeeth.length ? [...selectedTeeth].sort().join(", ") : "None"}
+                </span>
               </div>
-            </div>
 
-            {/* Severity & Duration */}
-            <div className="space-y-2">
-              {/* Severity */}
-              <div className="rounded-lg border border-border bg-muted/30 p-2">
-                <div className="mb-1 text-xs font-semibold text-primary">Severity</div>
-                <div className="flex gap-3">
-                  {(["mild", "moderate", "severe"] as SeverityOption[]).map((level) => {
-                    const label = level.charAt(0).toUpperCase() + level.slice(1);
-                    const selected = severity === level;
-                    return (
+              {/* Compact Two-Column Layout */}
+              <div className="grid gap-3 md:grid-cols-2">
+                {/* Chief Complaints */}
+                <div className="rounded-lg border border-border bg-muted/30 p-2">
+                  <div className="mb-1.5 text-xs font-semibold text-primary">Chief Complaints</div>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+                    {CHIEF_COMPLAINT_OPTIONS.map((option) => (
                       <label
-                        key={level}
-                        className="flex cursor-pointer items-center gap-1"
-                        onClick={() => setSeverity(selected ? "" : level)}
+                        key={option.id}
+                        className="flex cursor-pointer items-center gap-1.5"
                       >
-                        <span
-                          className={`flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 ${
-                            selected ? "border-primary" : "border-gray-300"
-                          }`}
-                        >
-                          {selected && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
-                        </span>
-                        <span className={`text-[11px] ${selected ? "font-semibold text-primary" : "text-gray-700"}`}>
-                          {label}
-                        </span>
+                        <input
+                          type="checkbox"
+                          className="h-3 w-3 rounded border-gray-300 text-primary focus:ring-primary"
+                          checked={selectedComplaints.includes(option.id)}
+                          onChange={() => handleToggleComplaint(option.id)}
+                        />
+                        <span className="text-[11px] text-foreground">{option.label}</span>
                       </label>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Duration */}
-              <div className="rounded-lg border border-border bg-muted/30 p-2">
-                <div className="mb-1 text-xs font-semibold text-primary">Duration</div>
-                <div className="grid grid-cols-4 gap-1">
-                  {(["years", "months", "weeks", "days"] as (keyof Duration)[]).map((field) => (
-                    <div key={field} className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-gray-500 capitalize">{field.slice(0, 1).toUpperCase()}</span>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={duration[field]}
-                        onChange={(e) => handleDurationChange(field, e.target.value)}
-                        className="h-6 w-full rounded border border-gray-300 px-1 text-center text-[11px] text-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        placeholder="0"
-                      />
+                {/* Severity & Duration */}
+                <div className="space-y-2">
+                  {/* Severity */}
+                  <div className="rounded-lg border border-border bg-muted/30 p-2">
+                    <div className="mb-1 text-xs font-semibold text-primary">Severity</div>
+                    <div className="flex gap-3">
+                      {(["mild", "moderate", "severe"] as SeverityOption[]).map((level) => {
+                        const label = level.charAt(0).toUpperCase() + level.slice(1);
+                        const selected = severity === level;
+                        return (
+                          <label
+                            key={level}
+                            className="flex cursor-pointer items-center gap-1"
+                            onClick={() => setSeverity(selected ? "" : level)}
+                          >
+                            <span
+                              className={`flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 ${selected ? "border-primary" : "border-gray-300"
+                                }`}
+                            >
+                              {selected && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                            </span>
+                            <span className={`text-[11px] ${selected ? "font-semibold text-primary" : "text-foreground"}`}>
+                              {label}
+                            </span>
+                          </label>
+                        );
+                      })}
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Duration */}
+                  <div className="rounded-lg border border-border bg-muted/30 p-2">
+                    <div className="mb-1 text-xs font-semibold text-primary">Duration</div>
+                    <div className="grid grid-cols-4 gap-1">
+                      {(["years", "months", "weeks", "days"] as (keyof Duration)[]).map((field) => (
+                        <div key={field} className="flex flex-col gap-0.5">
+                          <span className="text-[10px] text-muted-foreground capitalize">{field.slice(0, 1).toUpperCase()}</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={duration[field]}
+                            onChange={(e) => handleDurationChange(field, e.target.value)}
+                            className="h-6 w-full rounded border border-input bg-background px-1 text-center text-[11px] text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            placeholder="0"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Notes - More Compact */}
-          <div className="rounded-lg border border-border bg-muted/30 p-2">
-            <div className="mb-1 text-xs font-semibold text-primary">Notes</div>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="w-full rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              placeholder="Additional notes..."
-            />
-          </div>
+              {/* Notes - More Compact */}
+              <div className="rounded-lg border border-border bg-muted/30 p-2">
+                <div className="mb-1 text-xs font-semibold text-primary">Notes</div>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                  className="w-full rounded border border-input bg-background px-2 py-1 text-[11px] text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Additional notes..."
+                />
+              </div>
 
-          {/* Action Buttons - Inline */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleSaveEntry}
-              disabled={!selectedTeeth.length || createMutation.isPending || updateMutation.isPending}
-              className="rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {createMutation.isPending || updateMutation.isPending
-                ? "Saving..."
-                : editingId
-                ? "Update"
-                : "Save"}
-            </button>
-            <button
-              type="button"
-              onClick={handleClearForm}
-              className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
-            >
-              Clear
-            </button>
-          </div>
-          </>
+              {/* Action Buttons - Inline */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveEntry}
+                  disabled={!selectedTeeth.length || createMutation.isPending || updateMutation.isPending}
+                  className="rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {createMutation.isPending || updateMutation.isPending
+                    ? "Saving..."
+                    : editingId
+                      ? "Update"
+                      : "Save"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearForm}
+                  className="rounded-md border border-input bg-background px-3 py-1 text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
+                >
+                  Clear
+                </button>
+              </div>
+            </>
           )}
 
           <div className="mt-2 overflow-x-auto rounded border border-primary/30">
@@ -863,7 +867,7 @@ export function HPIDentalChart({ visitId, isReadOnly }: HPIDentalChartProps) {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-2 py-3 text-center text-gray-400"
+                      className="px-2 py-3 text-center text-muted-foreground"
                     >
                       Loading...
                     </td>
@@ -872,14 +876,15 @@ export function HPIDentalChart({ visitId, isReadOnly }: HPIDentalChartProps) {
                   <tr>
                     <td
                       colSpan={isReadOnly ? 4 : 5}
-                      className="px-2 py-3 text-center text-gray-400"
+                      className="px-2 py-3 text-center text-muted-foreground"
                     >
                       No entries added yet.
                     </td>
                   </tr>
                 ) : (
                   apiEntries.map((entry) => {
-                    const complaintLabels = (entry.chief_complaints as string[])
+                    const teeth = Object.keys(entry.teeth_surfaces).sort();
+                    const complaintsText = (entry.chief_complaints as string[])
                       .map(
                         (id) =>
                           CHIEF_COMPLAINT_OPTIONS.find(
@@ -887,11 +892,11 @@ export function HPIDentalChart({ visitId, isReadOnly }: HPIDentalChartProps) {
                           )?.label
                       )
                       .filter((label): label is string => Boolean(label))
-                      .join(", ");
+                      .join(", ") || "-";
 
                     const severityLabel = entry.severity
                       ? entry.severity.charAt(0).toUpperCase() +
-                        entry.severity.slice(1)
+                      entry.severity.slice(1)
                       : "-";
 
                     const durationValue = {
@@ -900,23 +905,24 @@ export function HPIDentalChart({ visitId, isReadOnly }: HPIDentalChartProps) {
                       weeks: entry.duration_weeks?.toString() || "",
                       days: entry.duration_days?.toString() || "",
                     };
+                    const durationText = renderDurationText(durationValue);
 
                     return (
                       <tr
                         key={entry.hpi_id}
-                        className="odd:bg-muted/40 even:bg-card"
+                        className="odd:bg-muted/40 even:bg-card border-b border-border/50"
                       >
-                        <td className="px-2 py-1 align-top text-gray-800">
-                          {Object.keys(entry.teeth_surfaces).sort().join(", ")}
+                        <td className="px-2 py-1 align-top text-foreground">
+                          {teeth.join(", ")}
                         </td>
-                        <td className="px-2 py-1 align-top text-gray-800">
-                          {complaintLabels || "-"}
+                        <td className="px-2 py-1 align-top text-foreground">
+                          {complaintsText}
                         </td>
-                        <td className="px-2 py-1 align-top text-gray-800">
+                        <td className="px-2 py-1 align-top text-foreground capitalize">
                           {severityLabel}
                         </td>
-                        <td className="px-2 py-1 align-top text-gray-800">
-                          {renderDurationText(durationValue)}
+                        <td className="px-2 py-1 align-top text-foreground">
+                          {durationText}
                         </td>
                         {!isReadOnly && (
                           <td className="px-2 py-1 align-top">

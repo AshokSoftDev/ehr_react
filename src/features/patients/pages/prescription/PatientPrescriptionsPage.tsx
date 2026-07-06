@@ -18,7 +18,6 @@ import { patientService } from "@/features/patients/services/patient.service";
 import { visitService } from "@/features/visits/services/visit.service";
 import type { VisitItem } from "@/features/visits/types/visit.types";
 import { usePrescriptions } from "@/features/visits/hooks/usePrescriptions";
-import { PrescriptionCard } from "@/features/patients/components/PrescriptionCard";
 
 /**
  * PatientPrescriptionsPage
@@ -172,14 +171,83 @@ export function PatientPrescriptionsPage() {
           </div>
         ) : (
           <ScrollArea className="max-h-[500px]">
-            <div className="space-y-2 pr-1">
-              {prescriptions.map((prescription) => (
-                <PrescriptionCard
-                  key={prescription.prescription_id}
-                  prescription={prescription}
-                // No edit/delete - read-only view
-                />
-              ))}
+            <div className="divide-y divide-border border rounded-lg bg-card overflow-hidden">
+              {prescriptions.map((prescription) => {
+                const times: string[] = [];
+                if (prescription.morning_bf) times.push("Morning (BF)");
+                if (prescription.morning_af) times.push("Morning (AF)");
+                if (prescription.noon_bf) times.push("Noon (BF)");
+                if (prescription.noon_af) times.push("Noon (AF)");
+                if (prescription.evening_bf) times.push("Evening (BF)");
+                if (prescription.evening_af) times.push("Evening (AF)");
+                if (prescription.night_bf) times.push("Night (BF)");
+                if (prescription.night_af) times.push("Night (AF)");
+                const schedule = times.length > 0 ? times.join(", ") : "No schedule";
+                const notes = prescription.instruction || prescription.notes;
+
+                return (
+                  <div
+                    key={prescription.prescription_id}
+                    className="flex flex-col p-3 hover:bg-muted/30 transition-colors gap-2"
+                  >
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Pill className="h-4 w-4 text-emerald-500" />
+                          <h4 className="font-semibold text-sm text-foreground">
+                            {prescription.drug_name}
+                          </h4>
+                          {prescription.drug_type && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 border-none bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                              {prescription.drug_type}
+                            </Badge>
+                          )}
+                          {prescription.drug_generic && (
+                            <span className="text-xs text-muted-foreground">
+                              ({prescription.drug_generic})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                        {prescription.drug_dosage && (
+                          <span className="font-medium text-foreground">
+                            {prescription.drug_dosage}{prescription.drug_measure}
+                          </span>
+                        )}
+
+                        {(prescription.quantity || prescription.duration) && (
+                          <>
+                            {prescription.drug_dosage && <span className="text-muted-foreground/40 hidden sm:inline">|</span>}
+                            <span>
+                              <strong className="text-foreground font-medium">Qty:</strong> {prescription.quantity || '-'}
+                              {prescription.duration && ` (${prescription.duration} ${prescription.duration_type || 'Days'})`}
+                            </span>
+                          </>
+                        )}
+
+                        <span className="text-muted-foreground/40 hidden sm:inline">|</span>
+                        <span>
+                          <strong className="text-foreground font-medium">Schedule:</strong> {schedule}
+                        </span>
+
+                        {notes && (
+                          <span
+                            className="text-xs text-muted-foreground italic border-l pl-2 border-border/50 line-clamp-1 max-w-[250px] mt-0.5 sm:mt-0"
+                            title={notes}
+                          >
+                            <strong className="text-foreground font-medium not-italic">
+                              Notes:
+                            </strong>{" "}
+                            {notes}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </ScrollArea>
         )}

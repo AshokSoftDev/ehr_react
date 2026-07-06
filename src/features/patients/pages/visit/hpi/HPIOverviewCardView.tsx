@@ -1,5 +1,4 @@
 import { useDentalHpiList } from "@/features/visits/hooks/useDentalHpi";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Stethoscope, Calendar } from "lucide-react";
@@ -30,23 +29,31 @@ export function HPIOverviewCardView({ visitId }: { visitId?: number }) {
       {hpiList.map((record) => {
         const teethAffected = Object.keys(record.teeth_surfaces || {});
         return (
-          <div 
-            key={record.hpi_id} 
-            className="flex flex-col p-4 hover:bg-muted/30 transition-colors gap-2"
+          <div
+            key={record.hpi_id}
+            className="flex flex-col p-3 hover:bg-muted/30 transition-colors gap-2"
           >
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1.5">
               {/* Line 1: Title, Date */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-sm flex items-center gap-1.5 text-foreground">
-                    <Stethoscope className="h-4 w-4 text-muted-foreground" />
-                    {record.dentition_type.toUpperCase()} DENTITION
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <h4 className="font-semibold text-sm flex items-center gap-1.5 text-foreground truncate">
+                    <Stethoscope className="h-4 w-4 text-muted-foreground shrink-0" />
+                    {teethAffected.length > 0 && (
+                      <>
+                        <span className="truncate" title={`Teeth: ${teethAffected.join(', ')}`}>
+                          {teethAffected.join(', ')}
+                        </span>
+                        <span className="text-muted-foreground/40 shrink-0 font-normal">|</span>
+                      </>
+                    )}
+                    <span className="shrink-0">{record.dentition_type.toUpperCase()} DENTITION</span>
+                    <span className="text-muted-foreground/40 shrink-0 font-normal">|</span>
                   </h4>
                   {record.severity && (
-                    <Badge variant="outline" className={`text-[9px] h-4 px-1.5 py-0 border-none ${
-                      record.severity === 'severe' ? 'bg-red-100 text-red-800' :
+                    <Badge variant="outline" className={`text-[9px] h-4 px-1.5 py-0 border-none ${record.severity === 'severe' ? 'bg-red-100 text-red-800' :
                       record.severity === 'moderate' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
-                    }`}>
+                      }`}>
                       {record.severity}
                     </Badge>
                   )}
@@ -58,13 +65,11 @@ export function HPIOverviewCardView({ visitId }: { visitId?: number }) {
               </div>
 
               {/* Line 2: Details inline */}
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                 {record.chief_complaints?.length > 0 && (
-                  <>
-                    <span className="truncate max-w-[250px]" title={record.chief_complaints.join(', ')}>
-                      <strong className="text-foreground font-medium">Complaints:</strong> {record.chief_complaints.join(', ')}
-                    </span>
-                  </>
+                  <span className="truncate max-w-[250px]" title={record.chief_complaints.join(', ')}>
+                    <strong className="text-foreground font-medium">Complaints:</strong> {record.chief_complaints.join(', ')}
+                  </span>
                 )}
 
                 {/* Duration */}
@@ -83,16 +88,13 @@ export function HPIOverviewCardView({ visitId }: { visitId?: number }) {
                   </>
                 )}
 
-                {/* Teeth */}
-                {teethAffected.length > 0 && (
-                  <>
-                    {((record.duration_years || record.duration_months || record.duration_weeks || record.duration_days) || record.chief_complaints?.length > 0) && (
-                      <span className="text-muted-foreground/40">|</span>
-                    )}
-                    <span className="truncate max-w-[200px]" title={teethAffected.join(', ')}>
-                      <strong className="text-foreground font-medium">Teeth:</strong> {teethAffected.join(', ')}
-                    </span>
-                  </>
+
+
+                {/* Notes */}
+                {record.notes && (
+                  <span className="text-xs text-muted-foreground italic border-l pl-2 border-border/50 line-clamp-1 max-w-[250px] mt-0.5 sm:mt-0" title={record.notes}>
+                    <strong className="text-foreground font-medium not-italic">Notes:</strong> {record.notes}
+                  </span>
                 )}
               </div>
             </div>
