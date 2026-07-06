@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,6 @@ import { HPIOverviewCardView } from "./hpi/HPIOverviewCardView";
 import { PatientVisitPrescriptionPage } from "./pages/PatientVisitPrescriptionPage";
 import { PatientVisitClinicalNotesPage } from "./pages/PatientVisitClinicalNotesPage";
 import { PatientVisitDocumentPage } from "./pages/PatientVisitDocumentPage";
-import { CreateInvoiceSheet } from "@/features/billing/components/CreateInvoiceSheet";
 import { CreateVisitSheet } from "@/features/visits/components/CreateVisitSheet";
 
 const tabs = [
@@ -43,13 +42,13 @@ export function PatientVisitPage() {
   const { id } = useParams<{ id: string }>();
   const patientId = Number(id);
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const initialVisitId = searchParams.get("visitId");
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(
     initialVisitId ? Number(initialVisitId) : null
   );
   const currentTab = (searchParams.get("tab") as TabId) || "overview";
-  const [showInvoiceSheet, setShowInvoiceSheet] = useState(false);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
 
   const { data: patient } = useQuery({
@@ -198,7 +197,7 @@ export function PatientVisitPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowInvoiceSheet(true)}
+            onClick={() => navigate(`/main/billing/invoice?patientId=${patientId}&visitId=${selectedVisit.visit_id}`)}
             className="h-7 px-2 text-xs gap-1"
           >
             <Receipt className="h-3 w-3" />
@@ -320,14 +319,6 @@ export function PatientVisitPage() {
         {currentTab === "document" && <PatientVisitDocumentPage />}
         {currentTab === "notes" && <PatientVisitClinicalNotesPage />}
       </CardContent>
-
-      {/* Invoice Sheet */}
-      <CreateInvoiceSheet
-        open={showInvoiceSheet}
-        onOpenChange={setShowInvoiceSheet}
-        visitId={selectedVisitId}
-        patientId={patientId}
-      />
     </Card>
   );
 }

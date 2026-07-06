@@ -453,10 +453,9 @@ export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boo
                           {!isReadOnly && (
                             <>
                               {/* Edit Button */}
-                              <div
-                                role="button"
-                                tabIndex={0}
-                                className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 cursor-pointer"
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
@@ -464,9 +463,10 @@ export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boo
                                 }}
                                 onKeyDown={(e) => e.key === 'Enter' && setEditingId(note.cn_id)}
                                 title="Edit"
+                                className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/50"
                               >
                                 <Edit3 className="h-3.5 w-3.5" />
-                              </div>
+                              </Button>
                               {/* Delete Button */}
                               <div
                                 role="button"

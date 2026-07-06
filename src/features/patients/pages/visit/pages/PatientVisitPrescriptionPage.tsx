@@ -424,6 +424,7 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
               size="sm"
               variant="outline"
               onClick={startEditing}
+              className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/50"
             >
               <Edit2 className="h-4 w-4 mr-2" />
               Edit Prescriptions
@@ -445,6 +446,11 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
           </div>
         ) : (
           <div className={`divide-y divide-border ${isReadOnly ? "-mx-4 border-b" : "-mx-3 border-y bg-card overflow-hidden"}`}>
+            {!isReadOnly && (
+              <div className="text-[11px] font-medium text-muted-foreground p-3 pb-2 bg-muted/20">
+                {prescriptions.length} prescription{prescriptions.length !== 1 ? "s" : ""}
+              </div>
+            )}
             {prescriptions.map((prescription) => {
               const times: string[] = [];
               if (prescription.morning_bf) times.push("Morning (BF)");
@@ -784,12 +790,14 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
                       <Checkbox
                         checked={row.morning_af}
                         onCheckedChange={(c) => updateRow(row.id, { morning_af: !!c })}
+                        className="border-slate-400 dark:border-slate-500"
                       />
                     </td>
                     <td className="px-1 py-1.5 text-center">
                       <Checkbox
                         checked={row.morning_bf}
                         onCheckedChange={(c) => updateRow(row.id, { morning_bf: !!c })}
+                        className="border-slate-400 dark:border-slate-500"
                       />
                     </td>
                     {/* Afternoon (noon) */}
@@ -797,12 +805,14 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
                       <Checkbox
                         checked={row.noon_af}
                         onCheckedChange={(c) => updateRow(row.id, { noon_af: !!c })}
+                        className="border-slate-400 dark:border-slate-500"
                       />
                     </td>
                     <td className="px-1 py-1.5 text-center">
                       <Checkbox
                         checked={row.noon_bf}
                         onCheckedChange={(c) => updateRow(row.id, { noon_bf: !!c })}
+                        className="border-slate-400 dark:border-slate-500"
                       />
                     </td>
                     {/* Night */}
@@ -810,12 +820,14 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
                       <Checkbox
                         checked={row.night_af}
                         onCheckedChange={(c) => updateRow(row.id, { night_af: !!c })}
+                        className="border-slate-400 dark:border-slate-500"
                       />
                     </td>
                     <td className="px-1 py-1.5 text-center">
                       <Checkbox
                         checked={row.night_bf}
                         onCheckedChange={(c) => updateRow(row.id, { night_bf: !!c })}
+                        className="border-slate-400 dark:border-slate-500"
                       />
                     </td>
                     <td className="px-2 py-1.5">
