@@ -87,7 +87,7 @@ export function PatientClinicalNotesPage() {
   // Visits List View
   if (!selectedVisit) {
     return (
-      <Card className="border-border shadow-sm overflow-hidden">
+      <Card className="border-border shadow-sm overflow-hidden py-0">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-blue-500" />
@@ -95,49 +95,55 @@ export function PatientClinicalNotesPage() {
           </div>
           {visitsLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </div>
-        <CardContent className="p-3">
-          <p className="text-xs text-muted-foreground mb-3">
-            Select a visit to view its clinical notes
-          </p>
-
+        <CardContent className="px-0">
           {visitsLoading ? (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 p-3">
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
             </div>
           ) : visits.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
+            <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 m-3 text-center">
               <CalendarDays className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm font-medium">No visits found</p>
             </div>
           ) : (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="divide-y divide-border">
               {visits.map((v) => {
                 const date = new Date(v.visit_date);
                 return (
                   <button
                     key={v.visit_id}
                     onClick={() => setSelectedVisitId(v.visit_id)}
-                    className="group rounded-lg border border-border bg-card p-3 text-left transition-all hover:border-primary/50 hover:shadow-md"
+                    className="w-full flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-muted/30 transition-colors gap-2 text-left group"
                   >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <Badge variant={v.status === 1 ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
-                        {v.status === 1 ? "Active" : "Done"}
-                      </Badge>
-                      <span className="text-[10px] text-muted-foreground">#{v.visit_id}</span>
-                    </div>
-                    <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {v.visit_type}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
-                      <CalendarDays className="h-3 w-3" />
-                      <span>{date.toLocaleDateString()}</span>
-                    </div>
-                    {v.doctor?.displayName && (
-                      <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-muted-foreground">
-                        <User className="h-3 w-3" />
-                        <span>{v.doctor.displayName}</span>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm group-hover:text-primary transition-colors">
+                          {v.visit_type}
+                        </span>
+                        <span className="text-xs text-muted-foreground">|</span>
+                        <Badge variant={v.status === 1 ? "default" : "secondary"} className="text-[10px] uppercase font-semibold">
+                          {v.status === 1 ? "Active" : "Done"}
+                        </Badge>
                       </div>
-                    )}
+                      <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {date.toLocaleDateString()}
+                        </span>
+                        {v.doctor?.displayName && (
+                          <span className="flex items-center gap-1 border-l pl-2 border-border/50">
+                            <User className="h-3.5 w-3.5" />
+                            {v.doctor.displayName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 sm:self-start">
+                      <span className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                        #{v.visit_id}
+                      </span>
+                    </div>
                   </button>
                 );
               })}
