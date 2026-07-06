@@ -845,7 +845,7 @@ export function HPIDentalChart({ visitId, isReadOnly }: HPIDentalChartProps) {
             </>
           )}
 
-          <div className="mt-2 overflow-x-auto rounded border border-primary/30">
+          <div className="mt-2 overflow-x-auto rounded border border-primary/30 pb-2">
             <table className="min-w-full text-xs">
               <thead className="bg-primary text-primary-foreground">
                 <tr>

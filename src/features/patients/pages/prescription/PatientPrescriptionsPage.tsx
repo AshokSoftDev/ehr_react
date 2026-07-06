@@ -197,6 +197,14 @@ export function PatientPrescriptionsPage() {
                           <h4 className="font-semibold text-sm text-foreground">
                             {prescription.drug_name}
                           </h4>
+                          {prescription.drug_dosage && (
+                            <>
+                              <span className="text-muted-foreground/40 font-normal">|</span>
+                              <span className="font-medium text-xs text-foreground">
+                                {prescription.drug_dosage} {prescription.drug_measure}
+                              </span>
+                            </>
+                          )}
                           {prescription.drug_type && (
                             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 border-none bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
                               {prescription.drug_type}
@@ -211,15 +219,8 @@ export function PatientPrescriptionsPage() {
                       </div>
 
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                        {prescription.drug_dosage && (
-                          <span className="font-medium text-foreground">
-                            {prescription.drug_dosage}{prescription.drug_measure}
-                          </span>
-                        )}
-
                         {(prescription.quantity || prescription.duration) && (
                           <>
-                            {prescription.drug_dosage && <span className="text-muted-foreground/40 hidden sm:inline">|</span>}
                             <span>
                               <strong className="text-foreground font-medium">Qty:</strong> {prescription.quantity || '-'}
                               {prescription.duration && ` (${prescription.duration} ${prescription.duration_type || 'Days'})`}
@@ -229,7 +230,7 @@ export function PatientPrescriptionsPage() {
 
                         <span className="text-muted-foreground/40 hidden sm:inline">|</span>
                         <span>
-                          <strong className="text-foreground font-medium">Schedule:</strong> {schedule}
+                          <strong className="text-foreground font-medium">Freq:</strong> {schedule}
                         </span>
 
                         {notes && (

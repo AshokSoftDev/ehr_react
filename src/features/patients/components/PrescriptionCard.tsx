@@ -57,6 +57,14 @@ export function PrescriptionCard({
               <Pill className="h-4 w-4 text-emerald-500" />
               <span className="font-semibold text-foreground">{prescription.drug_name}</span>
             </div>
+            {prescription.drug_dosage && (
+              <>
+                <span className="text-muted-foreground/40 font-normal">|</span>
+                <span className="font-medium text-xs text-foreground">
+                  {prescription.drug_dosage} {prescription.drug_measure}
+                </span>
+              </>
+            )}
             {prescription.drug_generic && (
               <span className="text-xs text-muted-foreground">({prescription.drug_generic})</span>
             )}
@@ -70,12 +78,6 @@ export function PrescriptionCard({
           <div className="mt-1.5 flex flex-col gap-y-1 text-[11px] text-muted-foreground">
             {/* Row 1 */}
             <div className="flex items-center gap-x-3 overflow-hidden whitespace-nowrap">
-              {prescription.drug_dosage && (
-                <div className="truncate">
-                  <span className="font-medium text-foreground">Dosage:</span> {prescription.drug_dosage}
-                  {prescription.drug_measure && ` ${prescription.drug_measure}`}
-                </div>
-              )}
               {prescription.duration && (
                 <div className="truncate">
                   <span className="font-medium text-foreground">Duration:</span> {prescription.duration}
@@ -88,7 +90,7 @@ export function PrescriptionCard({
                 </div>
               )}
               <div className="truncate flex-1">
-                <span className="font-medium text-foreground">Schedule:</span> {formatDosage(prescription)}
+                <span className="font-medium text-foreground">Freq:</span> {formatDosage(prescription)}
               </div>
             </div>
 

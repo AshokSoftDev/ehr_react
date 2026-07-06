@@ -256,6 +256,39 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
     });
   }, [updateRow]);
 
+  const startEditing = useCallback(() => {
+    if (prescriptions.length > 0) {
+      setRows(
+        prescriptions.map((p) => ({
+          id: generateId(),
+          prescription_id: p.prescription_id,
+          drug_id: p.drug_id ?? undefined,
+          drug_name: p.drug_name,
+          drug_generic: p.drug_generic || "",
+          drug_type: p.drug_type || "",
+          drug_dosage: p.drug_dosage || "",
+          drug_measure: p.drug_measure || "mg",
+          duration: p.duration ?? 1,
+          duration_type: p.duration_type || "Days",
+          quantity: p.quantity ?? 1,
+          instruction: p.instruction || "",
+          morning_bf: p.morning_bf,
+          morning_af: p.morning_af,
+          noon_bf: p.noon_bf,
+          noon_af: p.noon_af,
+          evening_bf: p.evening_bf,
+          evening_af: p.evening_af,
+          night_bf: p.night_bf,
+          night_af: p.night_af,
+        }))
+      );
+    } else {
+      setRows([emptyRow()]);
+    }
+    setDeletedPrescriptionIds([]);
+    setIsEditing(true);
+  }, [prescriptions]);
+
   const handleSave = async () => {
     const validRows = rows.filter((r) => r.drug_name.trim());
     if (validRows.length === 0 && deletedPrescriptionIds.length === 0) return;
@@ -390,7 +423,7 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setIsEditing(true)}
+              onClick={startEditing}
             >
               <Edit2 className="h-4 w-4 mr-2" />
               Edit Prescriptions
@@ -404,7 +437,7 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
             <p className="text-sm font-medium">No prescriptions</p>
             <p className="text-xs text-muted-foreground mb-3">This visit has no prescriptions yet</p>
             {!isReadOnly && (
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="h-8">
+              <Button variant="outline" size="sm" onClick={startEditing} className="h-8">
                 <Plus className="h-3.5 w-3.5 mr-1" />
                 Add Prescription
               </Button>
@@ -437,6 +470,14 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
                         <h4 className="font-semibold text-sm text-foreground">
                           {prescription.drug_name}
                         </h4>
+                        {prescription.drug_dosage && (
+                          <>
+                            <span className="text-muted-foreground/40 font-normal">|</span>
+                            <span className="font-medium text-xs text-foreground">
+                              {prescription.drug_dosage} {prescription.drug_measure}
+                            </span>
+                          </>
+                        )}
                         {prescription.drug_type && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 border-none bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
                             {prescription.drug_type}
@@ -451,15 +492,8 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                      {prescription.drug_dosage && (
-                        <span className="font-medium text-foreground">
-                          {prescription.drug_dosage}{prescription.drug_measure}
-                        </span>
-                      )}
-
                       {(prescription.quantity || prescription.duration) && (
                         <>
-                          {prescription.drug_dosage && <span className="text-muted-foreground/40 hidden sm:inline">|</span>}
                           <span>
                             <strong className="text-foreground font-medium">Qty:</strong> {prescription.quantity || '-'}
                             {prescription.duration && ` (${prescription.duration} ${prescription.duration_type || 'Days'})`}
@@ -469,7 +503,7 @@ export function PatientVisitPrescriptionPage({ isReadOnly }: { isReadOnly?: bool
 
                       <span className="text-muted-foreground/40 hidden sm:inline">|</span>
                       <span>
-                        <strong className="text-foreground font-medium">Schedule:</strong> {schedule}
+                        <strong className="text-foreground font-medium">Freq:</strong> {schedule}
                       </span>
 
 
