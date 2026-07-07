@@ -51,15 +51,20 @@ export function PatientVitalsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[90vw] sm:max-w-[700px] p-0 flex flex-col">
-        <SheetHeader className="px-6 py-4 border-b">
+      <SheetContent 
+        side="right" 
+        className="w-[90vw] sm:max-w-[450px] p-0 flex flex-col text-foreground"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <SheetHeader className="px-2 py-4 border-b">
           <SheetTitle>{isEditing ? 'Edit Vitals' : 'Add Vitals'}</SheetTitle>
         </SheetHeader>
-        
+
         <div className="flex-1 overflow-hidden relative">
           <PatientVitalsForm
             initialData={vitalToEdit}
             onSubmit={handleSubmit}
+            onCancel={() => onOpenChange(false)}
             isLoading={isLoading}
           />
         </div>

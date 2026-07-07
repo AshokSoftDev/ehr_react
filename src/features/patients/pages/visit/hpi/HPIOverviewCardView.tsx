@@ -58,10 +58,10 @@ export function HPIOverviewCardView({ visitId }: { visitId?: number }) {
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 font-medium text-xs text-muted-foreground">
+                {/* <div className="flex items-center gap-1.5 font-medium text-xs text-muted-foreground">
                   <Calendar className="h-3.5 w-3.5" />
                   {format(new Date(record.createdAt), "MMM d, yyyy")}
-                </div>
+                </div> */}
               </div>
 
               {/* Line 2: Details inline */}

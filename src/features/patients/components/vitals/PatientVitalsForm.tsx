@@ -12,28 +12,31 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { FormFloatingInput } from '@/components/form/form-floating-input';
+import { FormFloatingDatePicker } from '@/components/form/FormFloatingDatePicker';
+import { Badge } from '@/components/ui/badge';
 import type { CreateVitalPayload, PatientVital } from '../../types/vital.types';
 import { format } from 'date-fns';
-
-const emptyToNull = (val: unknown) => {
-  if (val === '') return null;
-  return val;
-};
 
 const vitalSchema = z.object({
   vital_date: z.string().min(1, 'Date is required'),
   vital_time: z.string().optional().nullable(),
-  weight: z.preprocess(emptyToNull, z.coerce.number().nullable().optional()),
+  weight: z.preprocess(
+    (val) => (val === '' || val == null ? undefined : Number(val)),
+    z.number({ message: 'Weight is required' }).min(0.1, 'Weight must be > 0')
+  ),
   weight_unit: z.string(),
-  height: z.preprocess(emptyToNull, z.coerce.number().nullable().optional()),
+  height: z.preprocess(
+    (val) => (val === '' || val == null ? undefined : Number(val)),
+    z.number({ message: 'Height is required' }).min(0.1, 'Height must be > 0')
+  ),
   height_unit: z.string(),
-  bmi: z.preprocess(emptyToNull, z.coerce.number().nullable().optional()),
-  temperature: z.preprocess(emptyToNull, z.coerce.number().nullable().optional()),
+  bmi: z.preprocess((val) => (val === '' || val == null ? null : Number(val)), z.number().nullable().optional()),
+  temperature: z.preprocess((val) => (val === '' || val == null ? null : Number(val)), z.number().nullable().optional()),
   temperature_unit: z.string(),
-  pulse: z.preprocess(emptyToNull, z.coerce.number().nullable().optional()),
-  rr: z.preprocess(emptyToNull, z.coerce.number().nullable().optional()),
-  bp_systolic: z.preprocess(emptyToNull, z.coerce.number().nullable().optional()),
-  bp_diastolic: z.preprocess(emptyToNull, z.coerce.number().nullable().optional()),
+  pulse: z.preprocess((val) => (val === '' || val == null ? null : Number(val)), z.number().nullable().optional()),
+  rr: z.preprocess((val) => (val === '' || val == null ? null : Number(val)), z.number().nullable().optional()),
+  bp_systolic: z.preprocess((val) => (val === '' || val == null ? null : Number(val)), z.number().nullable().optional()),
+  bp_diastolic: z.preprocess((val) => (val === '' || val == null ? null : Number(val)), z.number().nullable().optional()),
 });
 
 type VitalFormValues = z.infer<typeof vitalSchema>;
@@ -41,10 +44,11 @@ type VitalFormValues = z.infer<typeof vitalSchema>;
 interface PatientVitalsFormProps {
   initialData?: PatientVital | null;
   onSubmit: (data: CreateVitalPayload) => void;
+  onCancel?: () => void;
   isLoading?: boolean;
 }
 
-export function PatientVitalsForm({ initialData, onSubmit, isLoading }: PatientVitalsFormProps) {
+export function PatientVitalsForm({ initialData, onSubmit, onCancel, isLoading }: PatientVitalsFormProps) {
 
   const form = useForm<VitalFormValues>({
     resolver: zodResolver(vitalSchema) as Resolver<VitalFormValues>, defaultValues: {
@@ -52,17 +56,17 @@ export function PatientVitalsForm({ initialData, onSubmit, isLoading }: PatientV
         ? format(new Date(initialData.vital_date), 'yyyy-MM-dd')
         : format(new Date(), 'yyyy-MM-dd'),
       vital_time: initialData?.vital_time || null,
-      weight: initialData?.weight ?? null,
+      weight: (initialData?.weight ?? '') as any,
       weight_unit: initialData?.weight_unit || 'kg',
-      height: initialData?.height ?? null,
+      height: (initialData?.height ?? '') as any,
       height_unit: initialData?.height_unit || 'cm',
-      bmi: initialData?.bmi ?? null,
-      temperature: initialData?.temperature ?? null,
+      bmi: (initialData?.bmi ?? '') as any,
+      temperature: (initialData?.temperature ?? '') as any,
       temperature_unit: initialData?.temperature_unit || 'celsius',
-      pulse: initialData?.pulse ?? null,
-      rr: initialData?.rr ?? null,
-      bp_systolic: initialData?.bp_systolic ?? null,
-      bp_diastolic: initialData?.bp_diastolic ?? null,
+      pulse: (initialData?.pulse ?? '') as any,
+      rr: (initialData?.rr ?? '') as any,
+      bp_systolic: (initialData?.bp_systolic ?? '') as any,
+      bp_diastolic: (initialData?.bp_diastolic ?? '') as any,
     },
   });
 
@@ -126,15 +130,14 @@ export function PatientVitalsForm({ initialData, onSubmit, isLoading }: PatientV
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="flex h-full flex-col">
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-2">
           <div className="grid grid-cols-1 gap-8 max-w-xl">
             {/* Form Fields */}
             <div className="space-y-4 pt-2">
-              <FormFloatingInput
+              <FormFloatingDatePicker
                 control={form.control}
                 name="vital_date"
                 label="Date"
-                type="date"
                 required
               />
 
@@ -204,8 +207,29 @@ export function PatientVitalsForm({ initialData, onSubmit, isLoading }: PatientV
                   required
                 />
                 {bmiStatus && (
-                  <span className={`h-3 w-3 rounded-full ${bmiStatus.color} mt-2`} title={bmiStatus.label} />
+                  <Badge variant="outline" className={`${bmiStatus.color} text-white border-0 mt-2 whitespace-nowrap`}>
+                    {bmiStatus.label}
+                  </Badge>
                 )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FormFloatingInput
+                  control={form.control}
+                  name="bp_systolic"
+                  label="Systolic"
+                  type="number"
+                  className="flex-1"
+                />
+                <span className="text-muted-foreground">/</span>
+                <FormFloatingInput
+                  control={form.control}
+                  name="bp_diastolic"
+                  label="Diastolic"
+                  type="number"
+                  className="flex-1"
+                />
+                <span className="text-sm text-muted-foreground pr-2">mmHg</span>
               </div>
 
               <div className="flex gap-2 items-start">
@@ -247,25 +271,6 @@ export function PatientVitalsForm({ initialData, onSubmit, isLoading }: PatientV
                 label="RR (Respiration Rate)"
                 type="number"
               />
-
-              <div className="flex items-center gap-2">
-                <FormFloatingInput
-                  control={form.control}
-                  name="bp_systolic"
-                  label="Systolic"
-                  type="number"
-                  className="flex-1"
-                />
-                <span className="text-muted-foreground">/</span>
-                <FormFloatingInput
-                  control={form.control}
-                  name="bp_diastolic"
-                  label="Diastolic"
-                  type="number"
-                  className="flex-1"
-                />
-                <span className="text-sm text-muted-foreground pr-2">mmHg</span>
-              </div>
             </div>
           </div>
         </div>
@@ -274,14 +279,17 @@ export function PatientVitalsForm({ initialData, onSubmit, isLoading }: PatientV
           <Button
             type="button"
             variant="outline"
-            onClick={() => form.reset()}
+            onClick={() => {
+              form.reset();
+              if (onCancel) onCancel();
+            }}
             className="h-8"
           >
-            Clear
+            Cancel
           </Button>
           <Button
             type="submit"
-            className="h-8 bg-orange-500 hover:bg-orange-600 text-white"
+            className="h-8"
             disabled={isLoading}
           >
             {isLoading ? 'Saving...' : 'Save'}
