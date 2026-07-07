@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { startOfDay, endOfDay } from "date-fns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,11 +19,10 @@ import AppointmentFormSheet, {
   type AppointmentFormValues,
 } from "../components/AppointmentFormSheet";
 import AppointmentsCalendar from "../components/AppointmentsCalendar";
-import { createAppointmentColumns } from "../components/AppointmentTableColumns";
 import { CancelAppointmentDialog } from "../components/CancelAppointmentDialog";
 import { AppointmentDashboardStats } from "../components/AppointmentDashboardStats";
 import { AppointmentList } from "../components/AppointmentList";
-import { CalendarDays, Table, X, Plus, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, List, X, Plus, RefreshCw } from "lucide-react";
 
 const filterSchema = z.object({
   search: z.string().optional(),
@@ -36,9 +34,7 @@ type FilterValues = z.infer<typeof filterSchema>;
 export function AppointmentsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [view, setView] = useState<"table" | "calendar">("table");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [view, setView] = useState<"list" | "calendar">("list");
 
   const filterForm = useForm<FilterValues>({
     resolver: zodResolver(filterSchema),
@@ -54,10 +50,9 @@ export function AppointmentsPage() {
         ? new Date(vals.appointment_date as string).toISOString()
         : undefined,
       status: vals.status && vals.status !== "ALL" ? vals.status : undefined,
-      page,
-      limit,
+
     };
-  }, [filterForm, _watch, page, limit]);
+  }, [filterForm, _watch]);
 
   const listQuery = useQuery({
     queryKey: ["appointments", filters],
@@ -161,24 +156,30 @@ export function AppointmentsPage() {
     <div className="h-full flex flex-col bg-background">
       {/* Header Section */}
       <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Appointments
-            </h1>
-            <p className="text-muted-foreground text-xs mt-0.5">
-              Manage patient appointments and scheduling
-            </p>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-8">
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                Appointments
+              </h1>
+              <p className="text-muted-foreground text-xs mt-0.5">
+                Manage patient appointments and scheduling
+              </p>
+            </div>
+            <AppointmentDashboardStats
+              filters={filters}
+              onCardClick={(status) => filterForm.setValue("status", status)}
+            />
           </div>
           <div className="flex items-center gap-2">
             <Button
-              variant={view === "table" ? "default" : "ghost"}
+              variant={view === "list" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setView("table")}
+              onClick={() => setView("list")}
               className="gap-2"
             >
-              <Table className="h-4 w-4" />
-              Table
+              <List className="h-4 w-4" />
+              List
             </Button>
             <Button
               variant={view === "calendar" ? "default" : "ghost"}
@@ -203,78 +204,79 @@ export function AppointmentsPage() {
         </div>
 
         {/* Filters */}
-        <Form {...filterForm}>
-          <form className="grid gap-3 md:grid-cols-5 items-end">
-            <div className="md:col-span-1">
-              <FormFloatingInput
-                control={filterForm.control}
-                name="search"
-                label="Search by patient, doctor, or type..."
-                className="h-10"
-              />
-            </div>
-            <div>
-              <FormFloatingDatePicker
-                control={filterForm.control}
-                name="appointment_date"
-                label="Date"
-                className="h-10"
-              />
-            </div>
-            <div>
-              <FormFloatingSelect
-                control={filterForm.control}
-                name="status"
-                label="Status"
-                placeholder="All Statuses"
-                options={[
-                  { value: "ALL", label: "All" },
-                  { value: "SCHEDULED", label: "Scheduled" },
-                  { value: "CONFIRMED", label: "Confirmed" },
-                  { value: "CHECKED-IN", label: "Checked-In" },
-                  { value: "WITH DOCTOR", label: "With Doctor" },
-                  { value: "CHECKED-OUT", label: "Checked-Out" },
-                  { value: "RESCHEDULED", label: "Rescheduled" },
-                  { value: "NO-SHOW", label: "No-Show" },
-                  { value: "CANCELLED", label: "Cancelled" },
-                  { value: "WAIT LIST", label: "Wait List" },
-                ]}
-              />
-            </div>
-            <div className="flex gap-2">
-             <Button 
-                type="button" 
-                variant="outline" 
-                size="icon"
-                onClick={clearAllFilters}
-                className="h-10 w-10 shrink-0"
-                title="Clear Filters"
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Clear</span>
-              </Button>
-             <Button 
-                type="button" 
-                variant="outline" 
-                size="icon"
-                onClick={() => queryClient.invalidateQueries({ queryKey: ["appointments"] })}
-                className="h-10 w-10 shrink-0"
-                title="Refresh"
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span className="sr-only">Refresh</span>
-              </Button>
-            </div>
-          </form>
-        </Form>
+        <div className="px-0 pb-0">
+          <Form {...filterForm}>
+            <form className="grid gap-3 md:grid-cols-5 items-end">
+              <div className="md:col-span-1">
+                <FormFloatingInput
+                  control={filterForm.control}
+                  name="search"
+                  label="Search by patient, doctor, or type..."
+                  className="h-10"
+                />
+              </div>
+              <div>
+                <FormFloatingDatePicker
+                  control={filterForm.control}
+                  name="appointment_date"
+                  label="Date"
+                  className="h-10"
+                />
+              </div>
+              <div>
+                <FormFloatingSelect
+                  control={filterForm.control}
+                  name="status"
+                  label="Status"
+                  placeholder="All Statuses"
+                  options={[
+                    { value: "ALL", label: "All" },
+                    { value: "SCHEDULED", label: "Scheduled" },
+                    { value: "CONFIRMED", label: "Confirmed" },
+                    { value: "CHECKED-IN", label: "Checked-In" },
+                    { value: "WITH DOCTOR", label: "With Doctor" },
+                    { value: "CHECKED-OUT", label: "Checked-Out" },
+                    { value: "RESCHEDULED", label: "Rescheduled" },
+                    { value: "NO-SHOW", label: "No-Show" },
+                    { value: "CANCELLED", label: "Cancelled" },
+                    { value: "WAIT LIST", label: "Wait List" },
+                  ]}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={clearAllFilters}
+                  className="h-10 w-10 shrink-0"
+                  title="Clear Filters"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Clear</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ["appointments"] })}
+                  className="h-10 w-10 shrink-0"
+                  title="Refresh"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  <span className="sr-only">Refresh</span>
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
       </div>
 
       {/* Main Content */}
       <ScrollArea className="flex-1">
-        <div className="p-4">
-          {view === "table" ? (
+        <div className="py-2">
+          {view === "list" ? (
             <div className="flex flex-col gap-2">
-              <AppointmentDashboardStats filters={filters} />
               <AppointmentList
                 appointments={listQuery.data?.appointments ?? []}
                 isLoading={listQuery.isLoading}
@@ -293,7 +295,7 @@ export function AppointmentsPage() {
                 navigate={navigate}
               />
               {/* Pagination */}
-              {listQuery.data && listQuery.data.total > 0 && (
+              {/* {listQuery.data && listQuery.data.total > 0 && (
                 <div className="flex justify-between items-center px-4 py-3 mt-4 border-t">
                   <span className="text-sm text-muted-foreground">
                     Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, listQuery.data.total)} of {listQuery.data.total}
@@ -307,7 +309,7 @@ export function AppointmentsPage() {
                     </Button>
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
           ) : (
             <AppointmentsCalendar
@@ -343,9 +345,9 @@ export function AppointmentsPage() {
         appointment={cancelAppointmentItem}
         onConfirm={(reason, cancelledBy) => {
           if (cancelAppointmentItem !== null) {
-            statusUpdateMutation.mutate({ 
-              id: cancelAppointmentItem.appointment_id, 
-              status: 'CANCELLED', 
+            statusUpdateMutation.mutate({
+              id: cancelAppointmentItem.appointment_id,
+              status: 'CANCELLED',
               cancellation_reason: reason,
               cancelled_by: cancelledBy
             });
