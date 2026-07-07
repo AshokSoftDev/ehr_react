@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Activity } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { PatientVitalsList } from '../../components/vitals/PatientVitalsList';
 import { PatientVitalsSheet } from '../../components/vitals/PatientVitalsSheet';
 import { usePatientVitals, useDeleteVital } from '../../hooks/useVitals';

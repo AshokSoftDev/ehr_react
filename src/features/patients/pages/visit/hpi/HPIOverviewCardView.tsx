@@ -1,8 +1,8 @@
 import { useDentalHpiList } from "@/features/visits/hooks/useDentalHpi";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Stethoscope, Calendar } from "lucide-react";
-import { format } from "date-fns";
+import { Stethoscope } from "lucide-react";
+
 
 export function HPIOverviewCardView({ visitId }: { visitId?: number }) {
   const { data: hpiList, isLoading } = useDentalHpiList(visitId);
