@@ -22,7 +22,7 @@ type FormFloatingInputProps<
   placeholder?: string;
   value?: string;
   onValueChange?: (value: string) => void;
-  control?: Control<TFieldValues, any>;
+  control?: Control<TFieldValues, any, any>;
   name?: TName;
   required?: boolean;
 } & Omit<
@@ -135,7 +135,7 @@ export function FormFloatingInput<
                     "border border-input bg-background rounded-md",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     hasError &&
-                      "border-destructive focus-visible:ring-destructive",
+                    "border-destructive focus-visible:ring-destructive",
                     inputClassName
                   )}
                   disabled={disabled}

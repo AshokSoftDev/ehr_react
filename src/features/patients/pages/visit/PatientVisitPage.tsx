@@ -16,6 +16,7 @@ import {
   Stethoscope,
   User,
   Plus,
+  Activity,
 } from "lucide-react";
 import { patientService } from "@/features/patients/services/patient.service";
 import { visitService } from "@/features/visits/services/visit.service";
@@ -25,6 +26,7 @@ import { HPIOverviewCardView } from "./hpi/HPIOverviewCardView";
 import { PatientVisitPrescriptionPage } from "./pages/PatientVisitPrescriptionPage";
 import { PatientVisitClinicalNotesPage } from "./pages/PatientVisitClinicalNotesPage";
 import { PatientVisitDocumentPage } from "./pages/PatientVisitDocumentPage";
+import { PatientVisitVitalsPage } from "./pages/PatientVisitVitalsPage";
 import { CreateVisitSheet } from "@/features/visits/components/CreateVisitSheet";
 
 const tabs = [
@@ -33,6 +35,7 @@ const tabs = [
   // { id: "treatment", label: "Treatment", icon: Stethoscope },
   { id: "prescription", label: "Prescription", icon: Pill },
   { id: "document", label: "Document", icon: FileText },
+  { id: "vitals", label: "Vitals", icon: Activity },
   { id: "notes", label: "Clinical Notes", icon: NotebookPen },
 ] as const;
 
@@ -290,6 +293,18 @@ export function PatientVisitPage() {
                 </AccordionContent>
               </AccordionItem>
 
+              <AccordionItem value="vitals" className="border-t border-b-0">
+                <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 data-[state=open]:bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">Vitals</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-0">
+                  <PatientVisitVitalsPage isReadOnly={true} />
+                </AccordionContent>
+              </AccordionItem>
+
               <AccordionItem value="notes" className="border-t border-b-0">
                 <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 data-[state=open]:bg-muted/50">
                   <div className="flex items-center gap-2">
@@ -317,6 +332,7 @@ export function PatientVisitPage() {
 
         {currentTab === "prescription" && <PatientVisitPrescriptionPage />}
         {currentTab === "document" && <PatientVisitDocumentPage />}
+        {currentTab === "vitals" && <PatientVisitVitalsPage />}
         {currentTab === "notes" && <PatientVisitClinicalNotesPage />}
       </CardContent>
     </Card>
