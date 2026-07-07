@@ -35,6 +35,7 @@ export function AppointmentsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [view, setView] = useState<"list" | "calendar">("list");
+  const [calendarRange, setCalendarRange] = useState<{ start?: Date; end?: Date }>({});
 
   const filterForm = useForm<FilterValues>({
     resolver: zodResolver(filterSchema),
@@ -55,8 +56,19 @@ export function AppointmentsPage() {
   }, [filterForm, _watch]);
 
   const listQuery = useQuery({
-    queryKey: ["appointments", filters],
-    queryFn: () => appointmentService.list(filters),
+    queryKey: ["appointments", filters, view, calendarRange],
+    queryFn: () => {
+      if (view === "calendar") {
+        return appointmentService.list({
+          ...filters,
+          appointment_date: undefined, // Ignore single date in calendar view
+          startDate: calendarRange.start ? calendarRange.start.toISOString() : undefined,
+          endDate: calendarRange.end ? calendarRange.end.toISOString() : undefined,
+          limit: 500, // Fetch enough to populate the calendar
+        });
+      }
+      return appointmentService.list(filters);
+    },
   });
 
   const doctorsQuery = useQuery({
@@ -318,6 +330,12 @@ export function AppointmentsPage() {
               onStatusChange={(id, status) =>
                 statusUpdateMutation.mutate({ id, status })
               }
+              onDateRangeChange={(start, end) => setCalendarRange(prev => {
+                if (prev.start?.getTime() === start.getTime() && prev.end?.getTime() === end.getTime()) {
+                  return prev;
+                }
+                return { start, end };
+              })}
             />
           )}
         </div>

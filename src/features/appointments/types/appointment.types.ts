@@ -70,6 +70,8 @@ export interface AppointmentFilters {
   patientName?: string;
   doctorName?: string;
   appointment_date?: string;
+  startDate?: string;
+  endDate?: string;
   status?: string;
   page?: number;
   limit?: number;

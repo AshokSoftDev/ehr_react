@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
-import { addMonths, addWeeks, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, startOfMonth, startOfWeek } from 'date-fns';
+import React, { useMemo, useState } from 'react';
+import { addMonths, addWeeks, addDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, startOfMonth, startOfWeek, startOfDay, endOfDay } from 'date-fns';
 import type { AppointmentItem } from '../types/appointment.types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger, PopoverArrow } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -13,14 +13,15 @@ interface AppointmentsCalendarProps {
   items: AppointmentItem[];
   onReschedule: (id: number, targetDate: Date) => void;
   onStatusChange?: (id: number, status: string) => void;
+  onDateRangeChange?: (start: Date, end: Date) => void;
 }
 
-export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: AppointmentsCalendarProps) {
+export function AppointmentsCalendar({ items, onReschedule, onStatusChange, onDateRangeChange }: AppointmentsCalendarProps) {
   const [current, setCurrent] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
   });
-  const [mode, setMode] = useState<'month' | 'week'>('month');
+  const [mode, setMode] = useState<'month' | 'week' | 'day'>('month');
   const [pendingDrop, setPendingDrop] = useState<{ id: number; date: Date } | null>(null);
   const [details, setDetails] = useState<AppointmentItem | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -29,6 +30,14 @@ export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: Ap
   const [draggedAppointmentId, setDraggedAppointmentId] = useState<number | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [targetMonth, setTargetMonth] = useState<Date | null>(null);
+
+  React.useEffect(() => {
+    if (onDateRangeChange) {
+      if (mode === 'month') onDateRangeChange(startOfMonth(current), endOfMonth(current));
+      else if (mode === 'week') onDateRangeChange(startOfWeek(current, { weekStartsOn: 0 }), endOfWeek(current, { weekStartsOn: 0 }));
+      else if (mode === 'day') onDateRangeChange(startOfDay(current), endOfDay(current));
+    }
+  }, [current, mode, onDateRangeChange]);
 
   const monthDays = useMemo(() => {
     const start = startOfMonth(current);
@@ -70,14 +79,15 @@ export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: Ap
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 rounded-lg p-4 border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Today button commented out */}
-            {/* <Button variant="outline" onClick={() => { 
-              const today = new Date();
-              const newCurrent = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
-              setCurrent(newCurrent);
-              setForceRender(prev => prev + 1);
-            }}>Today</Button> */}
             <div className="flex items-center gap-2 bg-white/60 dark:bg-gray-800/60 rounded-lg p-1">
+              <Button 
+                variant={mode === 'day' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setMode('day')}
+                className={mode === 'day' ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-white/80'}
+              >
+                Day
+              </Button>
               <Button 
                 variant={mode === 'week' ? 'default' : 'ghost'} 
                 size="sm"
@@ -99,11 +109,12 @@ export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: Ap
           
           <div className="text-center">
             <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {mode === 'month' ? format(current, 'MMMM yyyy') : `Week of ${format(startOfWeek(current, { weekStartsOn: 0 }), 'dd/MM')}`}
+              {mode === 'month' ? format(current, 'MMMM yyyy') : mode === 'week' ? `Week of ${format(startOfWeek(current, { weekStartsOn: 0 }), 'dd/MM')}` : format(current, 'EEEE, dd MMMM yyyy')}
             </div>
             <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
               {mode === 'month' ? `${format(startOfMonth(current), 'dd/MM')} - ${format(endOfMonth(current), 'dd/MM/yyyy')}` : 
-               `${format(startOfWeek(current, { weekStartsOn: 0 }), 'dd/MM')} - ${format(endOfWeek(current, { weekStartsOn: 0 }), 'dd/MM/yyyy')}`}
+               mode === 'week' ? `${format(startOfWeek(current, { weekStartsOn: 0 }), 'dd/MM')} - ${format(endOfWeek(current, { weekStartsOn: 0 }), 'dd/MM/yyyy')}` :
+               format(current, 'dd/MM/yyyy')}
             </div>
             {draggedAppointmentId && (
               <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium">
@@ -116,7 +127,7 @@ export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: Ap
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => setCurrent(mode === 'month' ? addMonths(current, -1) : addWeeks(current, -1))}
+              onClick={() => setCurrent(mode === 'month' ? addMonths(current, -1) : mode === 'week' ? addWeeks(current, -1) : addDays(current, -1))}
               className="bg-white/60 hover:bg-white border-gray-300 shadow-sm"
               onDragOver={(e) => {
                 if (draggedAppointmentId) {
@@ -131,9 +142,9 @@ export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: Ap
                 e.preventDefault();
                 e.currentTarget.classList.remove('bg-blue-100', 'border-blue-400');
                 if (draggedAppointmentId) {
-                  const prevMonth = mode === 'month' ? addMonths(current, -1) : addWeeks(current, -1);
-                  setCurrent(prevMonth);
-                  setTargetMonth(prevMonth);
+                  const prevDate = mode === 'month' ? addMonths(current, -1) : mode === 'week' ? addWeeks(current, -1) : addDays(current, -1);
+                  setCurrent(prevDate);
+                  setTargetMonth(prevDate);
                   setShowDatePicker(true);
                 }
               }}
@@ -143,7 +154,7 @@ export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: Ap
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => setCurrent(mode === 'month' ? addMonths(current, 1) : addWeeks(current, 1))}
+              onClick={() => setCurrent(mode === 'month' ? addMonths(current, 1) : mode === 'week' ? addWeeks(current, 1) : addDays(current, 1))}
               className="bg-white/60 hover:bg-white border-gray-300 shadow-sm"
               onDragOver={(e) => {
                 if (draggedAppointmentId) {
@@ -158,9 +169,9 @@ export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: Ap
                 e.preventDefault();
                 e.currentTarget.classList.remove('bg-blue-100', 'border-blue-400');
                 if (draggedAppointmentId) {
-                  const nextMonth = mode === 'month' ? addMonths(current, 1) : addWeeks(current, 1);
-                  setCurrent(nextMonth);
-                  setTargetMonth(nextMonth);
+                  const nextDate = mode === 'month' ? addMonths(current, 1) : mode === 'week' ? addWeeks(current, 1) : addDays(current, 1);
+                  setCurrent(nextDate);
+                  setTargetMonth(nextDate);
                   setShowDatePicker(true);
                 }
               }}
@@ -172,8 +183,8 @@ export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: Ap
       </div>
       <div className="bg-white dark:bg-gray-900 rounded-lg border shadow-sm overflow-hidden" key={`calendar-${forceRender}`}>
         {/* Day headers */}
-        <div className="grid grid-cols-7 bg-gray-50 dark:bg-gray-800 border-b">
-          {['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((d) => (
+        <div className={`grid ${mode === 'day' ? 'grid-cols-1' : 'grid-cols-7'} bg-gray-50 dark:bg-gray-800 border-b`}>
+          {(mode === 'day' ? [format(current, 'EEEE')] : ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']).map((d) => (
             <div key={d} className="p-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300 border-r last:border-r-0">
               <div className="hidden sm:block">{d}</div>
               <div className="sm:hidden">{d.slice(0, 3)}</div>
@@ -182,7 +193,7 @@ export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: Ap
         </div>
         
         {/* Calendar grid */}
-        <div className="grid grid-cols-7">{(mode === 'month' ? monthDays : weekDays).map((day, idx) => {
+        <div className={`grid ${mode === 'day' ? 'grid-cols-1' : 'grid-cols-7'}`}>{(mode === 'month' ? monthDays : mode === 'week' ? weekDays : [current]).map((day, idx) => {
           const key = day ? day.toDateString() : `empty-${idx}`;
           const todays = day ? (grouped.get(key) ?? []) : [];
           return (
@@ -288,76 +299,27 @@ export function AppointmentsCalendar({ items, onReschedule, onStatusChange }: Ap
           }
         }}>
           <PopoverTrigger asChild>
-            <button 
+            <div 
               style={{ 
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                width: 0,
-                height: 0,
-                border: 'none',
-                background: 'none',
-                padding: 0,
+                position: 'fixed',
+                left: popoverAnchor.getBoundingClientRect().left,
+                top: popoverAnchor.getBoundingClientRect().top,
+                width: popoverAnchor.getBoundingClientRect().width,
+                height: popoverAnchor.getBoundingClientRect().height,
                 pointerEvents: 'none'
               }}
             />
           </PopoverTrigger>
           <PopoverContent 
-            className="w-80 p-0 max-w-[90vw] border shadow-lg rounded-lg relative" 
+            className="w-80 p-0 max-w-[90vw] border shadow-lg rounded-lg relative z-50" 
             side="bottom" 
             align="center"
             alignOffset={0}
             sideOffset={8}
             avoidCollisions={true}
             collisionPadding={16}
-            style={{
-              position: 'fixed',
-              left: (() => {
-                const rect = popoverAnchor.getBoundingClientRect();
-                const popoverWidth = 320; // w-80 = 320px
-                const viewportWidth = window.innerWidth;
-                const centerPosition = rect.left + rect.width / 2 - popoverWidth / 2;
-                
-                // Ensure popover doesn't go off the left edge
-                if (centerPosition < 16) return 16;
-                
-                // Ensure popover doesn't go off the right edge
-                if (centerPosition + popoverWidth > viewportWidth - 16) {
-                  return viewportWidth - popoverWidth - 16;
-                }
-                
-                return centerPosition;
-              })(),
-              top: (() => {
-                const rect = popoverAnchor.getBoundingClientRect();
-                const popoverHeight = 255; // adjusted estimated height
-                const viewportHeight = window.innerHeight;
-                const bottomPosition = rect.bottom + 8;
-                
-                // Always try to show below first
-                if (bottomPosition + popoverHeight <= viewportHeight - 16) {
-                  return bottomPosition;
-                }
-                
-                // If there's not enough space below, show above
-                const topPosition = rect.top - popoverHeight - 8;
-                if (topPosition >= 16) {
-                  return topPosition;
-                }
-                
-                // If neither above nor below works well, show below with scroll
-                return bottomPosition;
-              })(),
-              zIndex: 50
-            }}
           >
-          {/* Popover Arrow - lotus flower design at bottom */}
-          <div 
-            className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-r border-b rotate-45 rounded-br-sm"
-            style={{
-              boxShadow: '1px 1px 1px rgba(0, 0, 0, 0.1)'
-            }}
-          ></div>
+          <PopoverArrow className="fill-white drop-shadow-md w-4 h-2" />
           {details && (
             <div className="space-y-3 relative bg-white rounded-lg p-4">
               <div className="border-b pb-2 pr-8">
