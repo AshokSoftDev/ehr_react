@@ -80,6 +80,21 @@ export const useDoctor = (id?: string, options?: UseDoctorOptions) => {
     },
   });
 
+  // Sync Appointment Types mutation
+  const syncAppointmentTypesMutation = useMutation({
+    mutationFn: ({ id, types }: { id: string; types: { appointment_type: string; duration_minutes: number }[] }) =>
+      doctorService.syncAppointmentTypes(id, types),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['doctor', variables.id] });
+      toast.success('Appointment types updated successfully');
+    },
+    onError: (error: ApiError) => {
+      const message = error.response?.data?.message || 'Failed to sync appointment types';
+      toast.error(message);
+      options?.onError?.(error);
+    },
+  });
+
   // Helper functions
   const createDoctor = useCallback((data: CreateDoctorDto) => {
     return createMutation.mutate(data);
@@ -93,6 +108,10 @@ export const useDoctor = (id?: string, options?: UseDoctorOptions) => {
     return deleteMutation.mutate(id);
   }, [deleteMutation]);
 
+  const syncAppointmentTypes = useCallback((id: string, types: { appointment_type: string; duration_minutes: number }[]) => {
+    return syncAppointmentTypesMutation.mutateAsync({ id, types });
+  }, [syncAppointmentTypesMutation]);
+
   return {
     // Query state
     doctor: doctorQuery.data,
@@ -104,15 +123,18 @@ export const useDoctor = (id?: string, options?: UseDoctorOptions) => {
     createDoctor,
     updateDoctor,
     deleteDoctor,
+    syncAppointmentTypes,
     
     // Mutation states
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isSyncingAppointmentTypes: syncAppointmentTypesMutation.isPending,
     
     // Mutation errors
     createError: createMutation.error,
     updateError: updateMutation.error,
     deleteError: deleteMutation.error,
+    syncAppointmentTypesError: syncAppointmentTypesMutation.error,
   };
 };

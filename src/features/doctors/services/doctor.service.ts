@@ -7,6 +7,7 @@ import type {
   PaginationParams,
   DoctorListResponse,
   DoctorFiltersType,
+  DoctorAppointmentType,
 } from '../types/doctor.types';
 
 export class DoctorService {
@@ -53,6 +54,14 @@ export class DoctorService {
   async deleteDoctor(id: string): Promise<Doctor> {
     const response = await api.delete<{ status: string; data: Doctor }>(
       `${this.baseUrl}/${id}`
+    );
+    return response.data.data;
+  }
+
+  async syncAppointmentTypes(id: string, types: { appointment_type: string; duration_minutes: number }[]): Promise<DoctorAppointmentType[]> {
+    const response = await api.put<{ status: string; data: DoctorAppointmentType[] }>(
+      `${this.baseUrl}/${id}/appointment-types`,
+      { types }
     );
     return response.data.data;
   }

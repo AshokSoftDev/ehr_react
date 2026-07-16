@@ -1,3 +1,10 @@
+export interface DoctorAppointmentType {
+  id: number;
+  doctor_id: string;
+  appointment_type: string;
+  duration_minutes: number;
+}
+
 export interface Doctor {
     id: string;
     title: string;
@@ -24,6 +31,7 @@ export interface Doctor {
     updatedBy?: string;
     deletedAt?: string;
     deletedBy?: string;
+    appointmentTypes?: DoctorAppointmentType[];
   }
   
   export interface CreateDoctorDto {
