@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,13 +6,12 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { FormFloatingInput } from '@/components/form/form-floating-input';
-import { AdvancedDataTable } from '@/components/ui/advanced-data-table';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus } from "lucide-react";
 import type { DrugItem } from '../types/drug.types';
 import { drugService } from '../services/drug.service';
 import { DrugFormSheet, type DrugFormValues } from '../components/DrugFormSheet';
-import { createDrugColumns } from '../components/DrugTableColumns';
+import { DrugList } from '../components/DrugList';
 import { ConfirmDeleteDialog } from '@/components/common/ConfirmDeleteDialog';
 
 const filterSchema = z.object({
@@ -23,10 +22,10 @@ type FilterValues = z.infer<typeof filterSchema>;
 
 export function DrugsPage() {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [displayCount, setDisplayCount] = useState(15);
   const [openForm, setOpenForm] = useState(false);
   const [editItem, setEditItem] = useState<DrugItem | null>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<DrugItem | null>(null);
 
@@ -52,10 +51,30 @@ export function DrugsPage() {
   const drugs = listQuery.data ?? [];
   const total = drugs.length;
 
+  useEffect(() => {
+    setDisplayCount(15);
+  }, [filters]);
+
   const pagedDrugs = useMemo(() => {
-    const startIndex = (page - 1) * limit;
-    return drugs.slice(startIndex, startIndex + limit);
-  }, [drugs, page, limit]);
+    return drugs.slice(0, displayCount);
+  }, [drugs, displayCount]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && displayCount < total) {
+          setDisplayCount((prev) => Math.min(prev + 15, total));
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [displayCount, total]);
 
   const createMutation = useMutation({
     mutationFn: (values: DrugFormValues) =>
@@ -101,23 +120,18 @@ export function DrugsPage() {
     },
   });
 
-  const columns = useMemo(
-    () =>
-      createDrugColumns({
-        onEdit: (drug) => {
-          setEditItem(drug);
-          setOpenForm(true);
-        },
-        onDelete: (drug) => {
-          setDeleteItem(drug);
-          setDeleteDialogOpen(true);
-        },
-      }),
-    [],
-  );
+  const handleEdit = (drug: DrugItem) => {
+    setEditItem(drug);
+    setOpenForm(true);
+  };
+
+  const handleDelete = (drug: DrugItem) => {
+    setDeleteItem(drug);
+    setDeleteDialogOpen(true);
+  };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="bg-card h-full flex flex-col bg-background">
       <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center justify-between mb-2">
           <div>
@@ -147,20 +161,17 @@ export function DrugsPage() {
         </Form>
       </div>
 
-      <ScrollArea className="flex-1 mt-4">
-        <AdvancedDataTable
-          columns={columns}
-          data={pagedDrugs}
-          isLoading={listQuery.isLoading}
-          page={page}
-          limit={limit}
-          total={total}
-          onPageChange={setPage}
-          onLimitChange={(value) => {
-            setLimit(value);
-            setPage(1);
-          }}
-        />
+      <ScrollArea className="flex-1 mt-2">
+        <div className="">
+          <DrugList
+            drugs={pagedDrugs}
+            isLoading={listQuery.isLoading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+
+          <div ref={observerTarget} className="h-4 w-full" />
+        </div>
       </ScrollArea>
 
       <DrugFormSheet

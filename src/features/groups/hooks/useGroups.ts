@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { groupService } from '../services/group.service';
 
@@ -17,11 +17,27 @@ interface ErrorResponse {
 }
 
 export const useGroups = (params?: QueryParams) => {
-  console.log(params);
-  
   return useQuery({
     queryKey: ['groups', params],
     queryFn: () => groupService.getGroups(params || {}),
+  });
+};
+
+export const useInfiniteGroups = (params?: QueryParams) => {
+  return useInfiniteQuery({
+    queryKey: ['groups', 'infinite', params],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await groupService.getGroups({ ...params, page: pageParam as number });
+      return response as any;
+    },
+    getNextPageParam: (lastPage) => {
+      const pagination = lastPage?.data?.pagination;
+      if (pagination && pagination.page < pagination.totalPages) {
+        return pagination.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
   });
 };
 

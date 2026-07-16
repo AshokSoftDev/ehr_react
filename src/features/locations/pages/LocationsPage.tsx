@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { FormFloatingInput } from "@/components/form/form-floating-input";
-import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus } from "lucide-react";
 import type { LocationItem } from "../types/location.types";
@@ -15,7 +14,7 @@ import {
   LocationFormSheet,
   type LocationFormValues,
 } from "../components/LocationFormSheet";
-import { createLocationColumns } from "../components/LocationTableColumns";
+import { LocationList } from "../components/LocationList";
 import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 
 const filterSchema = z.object({
@@ -26,10 +25,10 @@ type FilterValues = z.infer<typeof filterSchema>;
 
 export function LocationsPage() {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [displayCount, setDisplayCount] = useState(15);
   const [openForm, setOpenForm] = useState(false);
   const [editItem, setEditItem] = useState<LocationItem | null>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const filterForm = useForm<FilterValues>({
     resolver: zodResolver(filterSchema),
@@ -53,10 +52,30 @@ export function LocationsPage() {
   const locations = listQuery.data ?? [];
   const total = locations.length;
 
+  useEffect(() => {
+    setDisplayCount(15);
+  }, [filters]);
+
   const pagedLocations = useMemo(() => {
-    const startIndex = (page - 1) * limit;
-    return locations.slice(startIndex, startIndex + limit);
-  }, [locations, page, limit]);
+    return locations.slice(0, displayCount);
+  }, [locations, displayCount]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && displayCount < total) {
+          setDisplayCount((prev) => Math.min(prev + 15, total));
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [displayCount, total]);
 
   const createMutation = useMutation({
     mutationFn: (values: LocationFormValues) =>
@@ -102,23 +121,18 @@ export function LocationsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<LocationItem | null>(null);
 
-  const columns = useMemo(
-    () =>
-      createLocationColumns({
-        onEdit: (location) => {
-          setEditItem(location);
-          setOpenForm(true);
-        },
-        onDelete: (location) => {
-          setDeleteItem(location);
-          setDeleteDialogOpen(true);
-        },
-      }),
-    [deleteMutation]
-  );
+  const handleEdit = (location: LocationItem) => {
+    setEditItem(location);
+    setOpenForm(true);
+  };
+
+  const handleDelete = (location: LocationItem) => {
+    setDeleteItem(location);
+    setDeleteDialogOpen(true);
+  };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="bg-card h-full flex flex-col bg-background">
       <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center justify-between mb-2">
           <div>
@@ -153,20 +167,17 @@ export function LocationsPage() {
         </Form>
       </div>
 
-      <ScrollArea className="flex-1 mt-0">
-        <AdvancedDataTable
-          columns={columns}
-          data={pagedLocations}
-          isLoading={listQuery.isLoading}
-          page={page}
-          limit={limit}
-          total={total}
-          onPageChange={setPage}
-          onLimitChange={(value) => {
-            setLimit(value);
-            setPage(1);
-          }}
-        />
+      <ScrollArea className="flex-1 mt-2">
+        <div className="">
+          <LocationList
+            locations={pagedLocations}
+            isLoading={listQuery.isLoading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+
+          <div ref={observerTarget} className="h-4 w-full" />
+        </div>
       </ScrollArea>
 
       <LocationFormSheet

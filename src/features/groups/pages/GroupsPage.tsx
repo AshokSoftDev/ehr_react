@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Plus, Search } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 import { GroupForm } from "../components/GroupForm";
 import {
-  useGroups,
+  useInfiniteGroups,
   useCreateGroup,
   useUpdateGroup,
   useDeleteGroup,
@@ -13,10 +13,8 @@ import {
 } from "../hooks/useGroups";
 import { useDebounce } from "../../../hooks/use-debounce";
 import { ScrollArea } from "../../../components/ui/scroll-area";
-import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
-import type { ColumnDef } from "@tanstack/react-table";
 import type { GroupData } from "./GroupsPage.types";
-import { groupColumns } from "./groupColumns";
+import { GroupList } from "../components/GroupList";
 import type { GroupFormData } from "../../shared/types/form.types";
 
 interface ModuleData {
@@ -48,17 +46,16 @@ interface ModulesResponse {
 
 export const GroupsPage: React.FC = () => {
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
   const [formOpen, setFormOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupData | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState<GroupData | null>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const debouncedSearch = useDebounce(search, 500);
 
-  const { data, isLoading } = useGroups({
-    page,
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteGroups({
     limit,
     search: debouncedSearch,
   });
@@ -106,9 +103,7 @@ export const GroupsPage: React.FC = () => {
     }
   };
 
-  const responseData = data as GroupsResponse;
-  const groups = responseData?.data?.groups || [];
-  // const pagination = responseData?.data?.pagination;
+  const groups = data?.pages.flatMap((page) => (page as GroupsResponse)?.data?.groups || []) || [];
   const modules = (modulesData as ModulesResponse)?.data || [];
 
   // Hide system group (root-only) from UI list/edit/delete
@@ -117,13 +112,25 @@ export const GroupsPage: React.FC = () => {
     [groups]
   );
 
-  const columns: ColumnDef<GroupData, unknown>[] = useMemo(
-    () => groupColumns(handleEdit, handleDelete),
-    [handleEdit, handleDelete]
-  );
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="bg-card h-full flex flex-col bg-background">
       {/* Header Section */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="mx-auto">
@@ -155,10 +162,7 @@ export const GroupsPage: React.FC = () => {
               <Input
                 placeholder="Search groups by name or description..."
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 bg-background/50 border-primary/20 focus:border-primary/40"
               />
             </div>
@@ -167,21 +171,19 @@ export const GroupsPage: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <ScrollArea className="flex-1">
-        <div className="container mx-auto">
-          <AdvancedDataTable<GroupData, unknown>
-            columns={columns}
-            data={visibleGroups}
-            isLoading={isLoading}
-            page={page}
-            limit={limit}
-            total={visibleGroups.length ?? 0}
-            onPageChange={setPage}
-            onLimitChange={(newLimit) => {
-              setLimit(newLimit);
-              setPage(1);
-            }}
+      <ScrollArea className="flex-1 mt-2">
+        <div className="">
+          <GroupList
+            groups={visibleGroups}
+            isLoading={isLoading && visibleGroups.length === 0}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
+
+          {/* Infinite scroll trigger */}
+          <div ref={observerTarget} className="h-4 w-full flex items-center justify-center mb-4">
+            {isFetchingNextPage && <span className="text-xs text-muted-foreground">Loading more...</span>}
+          </div>
         </div>
       </ScrollArea>
 
