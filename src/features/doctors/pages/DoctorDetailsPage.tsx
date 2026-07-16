@@ -426,42 +426,48 @@ export const DoctorDetailsPage: React.FC = () => {
             <CardContent className="pt-6">
               {isMastersLoading ? (
                 <div className="space-y-4">
-                  <Skeleton className="h-16 w-full rounded-xl" />
-                  <Skeleton className="h-16 w-full rounded-xl" />
-                  <Skeleton className="h-16 w-full rounded-xl" />
+                  <Skeleton className="h-12 w-full rounded-lg" />
+                  <Skeleton className="h-12 w-full rounded-lg" />
+                  <Skeleton className="h-12 w-full rounded-lg" />
                 </div>
               ) : masters?.length ? (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2">
                   {masters.map((m) => {
                     const config = doctorApptTypes[m.code] || { enabled: false, duration: m.duration_minutes };
                     return (
-                      <div key={m.code} className={cn("p-4 rounded-xl border transition-colors", config.enabled ? "bg-muted/20 border-primary/20 shadow-sm" : "bg-background border-muted")}>
-                        <div className="flex items-start justify-between gap-4 mb-4">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              {m.color_code && <span className="w-3 h-3 rounded-full" style={{ backgroundColor: m.color_code }}></span>}
-                              <h4 className="font-semibold text-base">{m.name}</h4>
+                      <div key={m.code} className={cn("flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 rounded-xl border transition-colors", config.enabled ? "bg-muted/10 border-primary/20 shadow-sm" : "bg-background border-muted")}>
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              {m.color_code && <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: m.color_code }}></span>}
+                              <h4 className="font-semibold text-sm truncate">{m.name}</h4>
                             </div>
-                            <p className="text-sm text-muted-foreground line-clamp-1">{m.description || "No description"}</p>
+                            {m.description && <p className="text-xs text-muted-foreground truncate">{m.description}</p>}
                           </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 shrink-0">
+                          <div className={cn("flex items-center gap-2 transition-opacity duration-200", config.enabled ? "opacity-100" : "opacity-40 pointer-events-none")}>
+                            <Label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Duration</Label>
+                            <div className="relative w-24">
+                              <Input
+                                type="number"
+                                min={1}
+                                value={config.duration}
+                                onChange={(e) => setDoctorApptTypes(prev => ({ ...prev, [m.code]: { ...prev[m.code], duration: parseInt(e.target.value) || 0 } }))}
+                                className="h-8 pl-8 pr-2 rounded-md bg-background text-sm"
+                              />
+                              <Clock className="w-3.5 h-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
+                            </div>
+                            <span className="text-xs text-muted-foreground">min</span>
+                          </div>
+                          
+                          <div className="w-px h-6 bg-border hidden sm:block"></div>
+                          
                           <Switch
                             checked={config.enabled}
                             onCheckedChange={(checked) => setDoctorApptTypes(prev => ({ ...prev, [m.code]: { ...prev[m.code], enabled: checked } }))}
                           />
-                        </div>
-
-                        <div className={cn("flex flex-col gap-2 transition-opacity duration-200", config.enabled ? "opacity-100" : "opacity-40 pointer-events-none")}>
-                          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Custom Duration (Minutes)</Label>
-                          <div className="relative">
-                            <Input
-                              type="number"
-                              min={1}
-                              value={config.duration}
-                              onChange={(e) => setDoctorApptTypes(prev => ({ ...prev, [m.code]: { ...prev[m.code], duration: parseInt(e.target.value) || 0 } }))}
-                              className="pl-9 rounded-lg bg-background"
-                            />
-                            <Clock className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-                          </div>
                         </div>
                       </div>
                     );
