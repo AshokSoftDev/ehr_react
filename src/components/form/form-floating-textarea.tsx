@@ -25,6 +25,7 @@ type FormFloatingTextareaProps<
   control?: Control<TFieldValues, any>;
   name?: TName;
   autoCapitalize?: boolean;
+  required?: boolean;
 };
 
 export function FormFloatingTextarea<
@@ -43,6 +44,7 @@ export function FormFloatingTextarea<
     control,
     name,
     autoCapitalize = true,
+    required,
   } = props;
 
   // External controlled mode
@@ -64,6 +66,7 @@ export function FormFloatingTextarea<
             )}
           >
             {label}
+            {required && <span className="text-destructive ml-0.5">*</span>}
           </label>
 
           <Textarea
@@ -115,6 +118,7 @@ export function FormFloatingTextarea<
                 )}
               >
                 {label}
+                {required && <span className="text-destructive ml-0.5">*</span>}
               </label>
 
               <FormControl>

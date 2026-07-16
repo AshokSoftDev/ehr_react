@@ -19,6 +19,7 @@ import { PatientFormSheet } from '@/features/patients/components/PatientFormShee
 import { patientService } from '@/features/patients/services/patient.service';
 import type { PatientFormData } from '@/features/patients/schemas/patient.schema';
 import { useAppointmentTypes } from '@/features/masters/hooks/useAppointmentTypes';
+import { useDoctor } from '@/features/doctors/hooks/useDoctor';
 
 const schema = z.object({
   patient_id: z.coerce.number().int().min(1, "Please select a patient"),
@@ -28,7 +29,7 @@ const schema = z.object({
   end_time: z.string().min(1, "End time is required"),
   duration: z.coerce.number().int().positive("Duration must be positive").min(1, "Duration is required"),
   appointment_type: z.string().min(1, "Please select appointment type"),
-  reason_for_visit: z.string().optional(),
+  reason_for_visit: z.string().min(1, "Reason for visit is required"),
   appointment_status: z.string().min(1, "Status is required"),
   notes: z.string().optional(),
   patient_mrn: z.string().optional(),
@@ -90,6 +91,8 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
 
   const [searchText, setSearchText] = useState('');
   const { data: typesData } = useAppointmentTypes('', 1);
+  const selectedDoctorId = form.watch('doctor_id');
+  const { doctor: selectedDoctor } = useDoctor(selectedDoctorId);
 
   const [patients, setPatients] = useState<AppointmentPatientLite[]>([]);
   const [showPatientSheet, setShowPatientSheet] = useState(false);
@@ -100,24 +103,24 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
   useEffect(() => {
     let active = true;
     const run = async () => {
-       // Don't search if we are in the middle of selecting/setting a patient
+      // Don't search if we are in the middle of selecting/setting a patient
       if (isSelecting) return;
-      
+
       if (!searchText || searchText.length < 2) { setPatients([]); setHasSearched(false); return; }
 
       // Skip search if the text matches the currently selected patient
       // This prevents "No patients found" from showing immediately after selection
       if (form.getValues('patient_id') && searchText === form.getValues('patient_mrn')) {
-         setPatients([]);
-         setHasSearched(false);
-         return;
+        setPatients([]);
+        setHasSearched(false);
+        return;
       }
-      
+
       // If the search text exactly matches the currently selected patient's display format, likely don't search?
       // But user might type exactly that name. 
       // Safe guard: If patient_id is set and text matches, avoid search? 
       // We'll rely on clearing patient_id when text changes to something else.
-      
+
       const list = await appointmentService.searchMrn(searchText);
       if (active) {
         setPatients(list);
@@ -151,11 +154,11 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
       const apptDate = initial?.appointment_date ? format(new Date(initial.appointment_date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
       const startT = initial?.start_time ? format(new Date(initial.start_time), 'HH:mm') : format(new Date(), 'HH:mm');
       const endT = initial?.end_time ? format(new Date(initial.end_time), 'HH:mm') : format(addMinutes(new Date(), 15), 'HH:mm');
-      
+
       // If editing, patient name needs to be populated correctly? 
       // Initial object usually has patient name? logic might need adjustment if initial.patient_name exists. 
       // Assuming initial.patient_mrn might be just MRN. We might display just MRN if name unavailable.
-      
+
       form.reset({
         patient_id: initial?.patient_id ?? 0,
         doctor_id: initial?.doctor_id ?? '',
@@ -177,49 +180,95 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
     }
   }, [open, initial, form, defaultStatus]);
 
-  // ... (keep auto-calc effect)
+  const selectedApptType = form.watch('appointment_type');
+  const selectedStartTime = form.watch('start_time');
+  const selectedDate = form.watch('appointment_date');
+
+  useEffect(() => {
+    if (selectedApptType && selectedStartTime && selectedDate) {
+      let duration = 15; // default
+      if (selectedDoctor?.appointmentTypes?.length) {
+        const doctorType = selectedDoctor.appointmentTypes.find(t => t.appointment_type === selectedApptType);
+        if (doctorType) {
+          duration = doctorType.duration_minutes;
+        } else {
+          const masterType = typesData?.find(t => t.code === selectedApptType);
+          if (masterType) duration = masterType.duration_minutes;
+        }
+      } else {
+        const masterType = typesData?.find(t => t.code === selectedApptType);
+        if (masterType) duration = masterType.duration_minutes;
+      }
+
+      form.setValue('duration', duration, { shouldValidate: true });
+
+      try {
+        const dateStr = typeof selectedDate === 'string' ? selectedDate : format(selectedDate as Date, 'yyyy-MM-dd');
+        const startDateObj = new Date(`${dateStr}T${selectedStartTime}:00`);
+        if (!isNaN(startDateObj.getTime())) {
+          const endDateObj = addMinutes(startDateObj, duration);
+          form.setValue('end_time', format(endDateObj, 'HH:mm'), { shouldValidate: true });
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [selectedApptType, selectedStartTime, selectedDate, selectedDoctor, typesData, form]);
 
   // Reflect patient_mrn input into search text
   const mrnValue = form.watch('patient_mrn') as string | undefined;
   useEffect(() => {
     if (!isSelecting) {
-        setSearchText(mrnValue ?? '');
-        // If user is typing and clears the exact match, we should probably clear patient_id?
-        // But simply clearing it here might be aggressive. 
-        // Let's rely on validation: if patient_id is set but user changed text, form submit will still use old ID?
-        // We really should clear ID if text changes.
-        // For now, let's just sync text.
+      setSearchText(mrnValue ?? '');
+      // If user is typing and clears the exact match, we should probably clear patient_id?
+      // But simply clearing it here might be aggressive. 
+      // Let's rely on validation: if patient_id is set but user changed text, form submit will still use old ID?
+      // We really should clear ID if text changes.
+      // For now, let's just sync text.
     }
   }, [mrnValue, isSelecting]);
 
   // If user changes text significantly, clear patient_id?
   useEffect(() => {
-      // Logic to clear ID if text changed? 
-      // Keep it simple for now to avoid side effects.
+    // Logic to clear ID if text changed? 
+    // Keep it simple for now to avoid side effects.
   }, [mrnValue]);
-  
+
   // Update: If patient_id is set, ensure we show error if validation failed? 
   // RHF errors for patient_id won't point to patient_mrn field.
   // We can just rely on FormFloatingInput showing error for 'patient_mrn' if we manually set it,
   // or use `form.setError` on submit if patient_id is 0.
-  
+
   const handleSelectPatient = (p: AppointmentPatientLite) => {
-      setIsSelecting(true);
-      form.setValue('patient_id', p.patient_id);
-      form.setValue('patient_mrn', `${p.firstName} ${p.lastName} (${p.mrn})`, { shouldValidate: true });
-      if (p.patientInfo?.primaryDoctorId) {
-        form.setValue('doctor_id', p.patientInfo.primaryDoctorId);
-      }
-      setPatients([]);
-      setHasSearched(false);
-      // Allow effect to clear 'isSelecting' after text update propagates
-      setTimeout(() => setIsSelecting(false), 300);
+    setIsSelecting(true);
+    form.setValue('patient_id', p.patient_id);
+    form.setValue('patient_mrn', `${p.firstName} ${p.lastName} (${p.mrn})`, { shouldValidate: true });
+    if (p.patientInfo?.primaryDoctorId) {
+      form.setValue('doctor_id', p.patientInfo.primaryDoctorId);
+    }
+    setPatients([]);
+    setHasSearched(false);
+    // Allow effect to clear 'isSelecting' after text update propagates
+    setTimeout(() => setIsSelecting(false), 300);
   };
 
   const doctorOptions = doctors.map(d => ({ label: `${d.displayName}`, value: d.id }));
-  
-  const appointmentTypeOptions = typesData 
-    ? typesData.map(t => ({ label: t.name, value: t.code }))
+
+  const availableTypes = selectedDoctor?.appointmentTypes?.length
+    ? typesData?.filter(t => selectedDoctor.appointmentTypes?.some(da => da.appointment_type === t.code))
+    : typesData;
+
+  const appointmentTypeOptions = availableTypes
+    ? availableTypes.map(t => {
+      let duration = t.duration_minutes;
+      if (selectedDoctor?.appointmentTypes?.length) {
+        const custom = selectedDoctor.appointmentTypes.find(da => da.appointment_type === t.code);
+        if (custom) {
+          duration = custom.duration_minutes;
+        }
+      }
+      return { label: `${t.name} (${duration} mins)`, value: t.code };
+    })
     : [];
 
 
@@ -246,70 +295,70 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
   };
 
   const validNextStatuses = allowedTransitions[currentStatus] || [];
-  const appointmentStatusOptions = initial?.appointment_id 
+  const appointmentStatusOptions = initial?.appointment_id
     ? allStatusOptions.filter(opt => opt.value === currentStatus || validNextStatuses.includes(opt.value))
     : allStatusOptions;
 
   return (
     <>
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" preventClose className="gap-0 w-full sm:w-[500px] lg:w-[600px] sm:max-w-none p-0 flex flex-col h-full">
-        <SheetHeader className="px-4 py-3 border-b shrink-0 flex flex-row items-center justify-between space-y-0">
-          <SheetTitle>{initial?.appointment_id ? 'Edit Appointment' : 'Add Appointment'}</SheetTitle>
-        </SheetHeader>
-        
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(
-              (vals) => {
-                // Check if patient_id is valid
-                if (!vals.patient_id) {
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="right" preventClose className="gap-0 w-full sm:w-[500px] lg:w-[600px] sm:max-w-none p-0 flex flex-col h-full">
+          <SheetHeader className="px-4 py-3 border-b shrink-0 flex flex-row items-center justify-between space-y-0">
+            <SheetTitle>{initial?.appointment_id ? 'Edit Appointment' : 'Add Appointment'}</SheetTitle>
+          </SheetHeader>
+
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(
+                (vals) => {
+                  // Check if patient_id is valid
+                  if (!vals.patient_id) {
                     form.setError('patient_mrn', { message: "Please select a valid patient" });
                     return;
-                }
-                console.log("Form validated, submitting:", vals);
-                const datePart = typeof vals.appointment_date === 'string' ? vals.appointment_date : format(vals.appointment_date as Date, 'yyyy-MM-dd');
-                const toISO = (time: string) => new Date(`${datePart}T${time}:00`).toISOString();
-                const payload: AppointmentFormValues = {
-                  ...vals,
-                  appointment_date: datePart,
-                  start_time: toISO(vals.start_time),
-                  end_time: toISO(vals.end_time),
-                  duration: Number(vals.duration),
-                };
-                onSubmit(payload);
-              },
-              (errors) => {
-                // Manually handle patient_id error if needed
-                if (errors.patient_id && !errors.patient_mrn) {
+                  }
+                  console.log("Form validated, submitting:", vals);
+                  const datePart = typeof vals.appointment_date === 'string' ? vals.appointment_date : format(vals.appointment_date as Date, 'yyyy-MM-dd');
+                  const toISO = (time: string) => new Date(`${datePart}T${time}:00`).toISOString();
+                  const payload: AppointmentFormValues = {
+                    ...vals,
+                    appointment_date: datePart,
+                    start_time: toISO(vals.start_time),
+                    end_time: toISO(vals.end_time),
+                    duration: Number(vals.duration),
+                  };
+                  onSubmit(payload);
+                },
+                (errors) => {
+                  // Manually handle patient_id error if needed
+                  if (errors.patient_id && !errors.patient_mrn) {
                     form.setError('patient_mrn', { message: errors.patient_id.message });
+                  }
+                  console.log("Form validation errors:", errors);
                 }
-                console.log("Form validation errors:", errors);
-              }
-            )}
-            className="flex-1 flex flex-col overflow-hidden"
-          >
-            <div className="flex-1 overflow-y-auto">
+              )}
+              className="flex-1 flex flex-col overflow-hidden"
+            >
+              <div className="flex-1 overflow-y-auto">
                 <div className="space-y-4 px-3 py-4">
-                
-                {/* Patient lookup */}
-                <div className="grid gap-2">
-                   <div className="flex items-end gap-2">
+
+                  {/* Patient lookup */}
+                  <div className="grid gap-2">
+                    <div className="flex items-end gap-2">
                       <div className="flex-1">
-                          <FormFloatingInput 
-                            control={form.control} 
-                            name="patient_mrn" 
-                            label="Patient (Name or MRN)" 
-                            required 
-                            autoComplete="off"
-                            disabled={fixedPatient}
-                          />
+                        <FormFloatingInput
+                          control={form.control}
+                          name="patient_mrn"
+                          label="Patient (Name or MRN)"
+                          required
+                          autoComplete="off"
+                          disabled={fixedPatient}
+                        />
                       </div>
                       {!fixedPatient && (
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="icon" 
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
                           className="h-10 w-10 shrink-0"
                           title="Add New Patient"
                           onClick={() => setShowPatientSheet(true)}
@@ -317,121 +366,120 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
                           <Plus className="h-5 w-5" />
                         </Button>
                       )}
-                   </div>
-                  
-                  {patients.length > 0 && (
-                    <div className="rounded-md border bg-card max-h-48 overflow-auto shadow-sm">
-                      {patients.map(p => (
-                        <button 
-                            type="button" 
-                            key={p.patient_id} 
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors" 
+                    </div>
+
+                    {patients.length > 0 && (
+                      <div className="rounded-md border bg-card max-h-48 overflow-auto shadow-sm">
+                        {patients.map(p => (
+                          <button
+                            type="button"
+                            key={p.patient_id}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors"
                             onClick={() => handleSelectPatient(p)}
-                        >
-                          <span className="font-medium">{p.firstName} {p.lastName}</span> <span className="text-muted-foreground">({p.mrn})</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {hasSearched && patients.length === 0 && searchText.length >= 2 && !isSelecting && (
-                    <div className="text-xs text-muted-foreground px-1">
-                      No patients found. Click + to add.
-                    </div>
-                  )}
-                </div>
+                          >
+                            <span className="font-medium">{p.firstName} {p.lastName}</span> <span className="text-muted-foreground">({p.mrn})</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {hasSearched && patients.length === 0 && searchText.length >= 2 && !isSelecting && (
+                      <div className="text-xs text-muted-foreground px-1">
+                        No patients found. Click + to add.
+                      </div>
+                    )}
+                  </div>
 
-                <FormFloatingSelect control={form.control} name="doctor_id" label="Doctor" options={doctorOptions} placeholder="Select a doctor" required />
-                <div className="grid gap-3 md:grid-cols-3">
-                  <FormFloatingDatePicker control={form.control} name="appointment_date" label="Appointment Date" required />
-                  <FormFloatingInput control={form.control} name="start_time" label="Start Time" type="time" required />
-                  <FormFloatingInput control={form.control} name="end_time" label="End Time" type="time" required />
-                </div>
-                <FormFloatingInput control={form.control} name="duration" label="Duration (mins)" inputMode="numeric" type="number" required />
-                <FormFloatingSelect control={form.control} name="appointment_type" label="Appointment Type" options={appointmentTypeOptions} placeholder="Select type" required />
-                
-                <FormFloatingTextarea control={form.control} name="reason_for_visit" label="Reason for Visit" className="min-h-[80px]" />
-                
-                {!hideStatus && (
-                  <FormFloatingSelect 
-                    control={form.control} 
-                    name="appointment_status" 
-                    label="Status" 
-                    options={appointmentStatusOptions} 
-                    placeholder="Select status" 
-                    required 
-                    disabled={!initial?.appointment_id}
-                  />
-                )}
-                
-                {form.watch('appointment_status') === 'CANCELLED' && (
-                  <>
-                    <FormField
+                  <FormFloatingSelect control={form.control} name="doctor_id" label="Doctor" options={doctorOptions} placeholder="Select a doctor" required />
+                  <FormFloatingSelect control={form.control} name="appointment_type" label="Appointment Type" options={appointmentTypeOptions} placeholder="Select type" required />
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <FormFloatingDatePicker control={form.control} name="appointment_date" label="Appointment Date" required />
+                    <FormFloatingInput control={form.control} name="start_time" label="Start Time" type="time" required />
+                    <FormFloatingInput control={form.control} name="end_time" label="End Time" type="time" required />
+                  </div>
+
+                  <FormFloatingTextarea control={form.control} name="reason_for_visit" label="Reason for Visit" className="min-h-[80px]" required />
+
+                  {!hideStatus && initial?.appointment_id && (
+                    <FormFloatingSelect
                       control={form.control}
-                      name="cancelled_by"
-                      render={({ field }) => (
-                        <FormItem className="space-y-3 pt-2">
-                          <FormLabel className="text-sm font-medium">Cancelled By <span className="text-red-500">*</span></FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="flex flex-row space-x-4"
-                            >
-                              <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value="PATIENT" />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  Patient
-                                </FormLabel>
-                              </FormItem>
-                              <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value="DOCTOR" />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  Doctor/Clinic
-                                </FormLabel>
-                              </FormItem>
-                            </RadioGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      name="appointment_status"
+                      label="Status"
+                      options={appointmentStatusOptions}
+                      placeholder="Select status"
+                      required
+                      disabled={!initial?.appointment_id}
                     />
-                    
-                    <FormFloatingTextarea 
-                      control={form.control} 
-                      name="cancellation_reason" 
-                      label="Cancellation Reason *" 
-                      className="min-h-[80px]"
-                    />
-                  </>
-                )}
-                <FormFloatingTextarea control={form.control} name="notes" label="Notes" />
-                
+                  )}
+
+                  {form.watch('appointment_status') === 'CANCELLED' && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="cancelled_by"
+                        render={({ field }) => (
+                          <FormItem className="space-y-3 pt-2">
+                            <FormLabel className="text-sm font-medium">Cancelled By <span className="text-red-500">*</span></FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex flex-row space-x-4"
+                              >
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="PATIENT" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    Patient
+                                  </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="DOCTOR" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    Doctor/Clinic
+                                  </FormLabel>
+                                </FormItem>
+                              </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormFloatingTextarea
+                        control={form.control}
+                        name="cancellation_reason"
+                        label="Cancellation Reason *"
+                        className="min-h-[80px]"
+                      />
+                    </>
+                  )}
+                  <FormFloatingTextarea control={form.control} name="notes" label="Notes" />
+
                 </div>
-            </div>
+              </div>
 
-            <div className="flex justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">
-               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>Cancel</Button>
-               <Button type="submit" className="bg-primary-gradient hover:opacity-90" disabled={isLoading}>
-                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                 {initial?.appointment_id ? 'Update Appointment' : 'Create Appointment'}
-               </Button>
-            </div>
-          </form>
-        </Form>
-      </SheetContent>
-    </Sheet>
+              <div className="flex justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>Cancel</Button>
+                <Button type="submit" className="bg-primary-gradient hover:opacity-90" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {initial?.appointment_id ? 'Update Appointment' : 'Create Appointment'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </SheetContent>
+      </Sheet>
 
-    {/* Patient Form Sheet */}
-    <PatientFormSheet
-      open={showPatientSheet}
-      onOpenChange={setShowPatientSheet}
-      onSubmit={handleCreatePatient}
-      isLoading={isCreatingPatient}
-    />
+      {/* Patient Form Sheet */}
+      <PatientFormSheet
+        open={showPatientSheet}
+        onOpenChange={setShowPatientSheet}
+        onSubmit={handleCreatePatient}
+        isLoading={isCreatingPatient}
+      />
     </>
   );
 }

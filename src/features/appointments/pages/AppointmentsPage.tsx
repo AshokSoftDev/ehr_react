@@ -28,6 +28,7 @@ const filterSchema = z.object({
   search: z.string().optional(),
   appointment_date: z.union([z.string(), z.date()]).optional(),
   status: z.string().optional(),
+  doctor_id: z.string().optional(),
 });
 type FilterValues = z.infer<typeof filterSchema>;
 
@@ -39,7 +40,7 @@ export function AppointmentsPage() {
 
   const filterForm = useForm<FilterValues>({
     resolver: zodResolver(filterSchema),
-    defaultValues: { search: "", appointment_date: new Date(), status: "ALL" },
+    defaultValues: { search: "", appointment_date: new Date(), status: "ALL", doctor_id: "ALL" },
   });
   const _watch = filterForm.watch();
 
@@ -51,6 +52,7 @@ export function AppointmentsPage() {
         ? new Date(vals.appointment_date as string).toISOString()
         : undefined,
       status: vals.status && vals.status !== "ALL" ? vals.status : undefined,
+      doctor_id: vals.doctor_id && vals.doctor_id !== "ALL" ? vals.doctor_id : undefined,
 
     };
   }, [filterForm, _watch]);
@@ -195,6 +197,14 @@ export function AppointmentsPage() {
     },
   });
 
+  const doctorOptions = useMemo(() => {
+    if (!doctorsQuery.data) return [{ value: "ALL", label: "All Doctors" }];
+    return [
+      { value: "ALL", label: "All Doctors" },
+      ...doctorsQuery.data.map(d => ({ value: d.id, label: d.displayName }))
+    ];
+  }, [doctorsQuery.data]);
+
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header Section */}
@@ -264,6 +274,15 @@ export function AppointmentsPage() {
                   name="appointment_date"
                   label="Date"
                   className="h-10"
+                />
+              </div>
+              <div>
+                <FormFloatingSelect
+                  control={filterForm.control}
+                  name="doctor_id"
+                  label="Doctor"
+                  placeholder="All Doctors"
+                  options={doctorOptions}
                 />
               </div>
               <div>
