@@ -1,7 +1,7 @@
 // Document type returned from API
 export interface VisitDocument {
   document_id: number;
-  visit_id: number;
+  visit_id: number | null;
   patient_id: number;
   document_type_id: number;
   file_name: string;
@@ -16,6 +16,12 @@ export interface VisitDocument {
   documentType?: {
     document_type_id: number;
     type_name: string;
+  };
+  visit?: {
+    visit_id: number;
+    visit_type: string;
+    visit_date: string;
+    doctor?: { displayName: string };
   };
 }
 
