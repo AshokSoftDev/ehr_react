@@ -1,26 +1,23 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Form } from "@/components/ui/form";
 import { FormFloatingInput } from "@/components/form/form-floating-input";
 import { FormFloatingDatePicker } from "@/components/form/FormFloatingDatePicker";
 import { Button } from "@/components/ui/button";
-import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
-import type { ColumnDef } from "@tanstack/react-table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, X } from "lucide-react";
 import type {
   VisitFilters as VisitFiltersType,
-  VisitItem,
 } from "../types/visit.types";
 import { visitService } from "../services/visit.service";
-import { createVisitColumns } from "./visitColumns";
 import { FormFloatingSelect } from "@/components/form/FormFloatingSelect";
 import { useNavigate } from "react-router-dom";
 import { appointmentService } from "../../appointments/services/appointment.service";
 import { CreateVisitSheet } from "../components/CreateVisitSheet";
+import { VisitList } from "../components/VisitList";
 
 const filterSchema = z.object({
   dateFrom: z.union([z.string(), z.date()]).optional(),
@@ -28,13 +25,11 @@ const filterSchema = z.object({
   doctor: z.string().optional(),
   patient: z.string().optional(),
   reason: z.string().optional(),
-  status: z.string().optional(), // '1' or '0'
+  status: z.string().optional(),
 });
 type FilterValues = z.infer<typeof filterSchema>;
 
 export function VisitsPage() {
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const navigate = useNavigate();
 
@@ -64,15 +59,43 @@ export function VisitsPage() {
       patient: vals.patient || undefined,
       reason: vals.reason || undefined,
       status: vals.status && vals.status !== "none" ? vals.status : undefined,
-      page,
-      limit,
     };
-  }, [filterForm, _watch, page, limit]);
+  }, [filterForm, _watch]);
 
-  const { data, isLoading } = useQuery({
+  const listQuery = useInfiniteQuery({
     queryKey: ["visits", filters],
-    queryFn: () => visitService.list(filters),
+    queryFn: ({ pageParam = 1 }) => visitService.list({ ...filters, limit: 15, page: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < lastPage.totalPages) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
   });
+
+  const visits = useMemo(() => {
+    return listQuery.data?.pages.flatMap(page => page.visits) || [];
+  }, [listQuery.data]);
+
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && listQuery.hasNextPage && !listQuery.isFetchingNextPage && !listQuery.isLoading) {
+          listQuery.fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [listQuery.hasNextPage, listQuery.isFetchingNextPage, listQuery.isLoading, listQuery.fetchNextPage]);
 
   const doctorsQuery = useQuery({
     queryKey: ["appointment-doctors"],
@@ -92,26 +115,11 @@ export function VisitsPage() {
     filterForm.reset();
   };
 
-  const columns: ColumnDef<VisitItem, unknown>[] = useMemo(
-    () =>
-      createVisitColumns((item) => {
-        if (item.patient_id && item.visit_id) {
-          const params = new URLSearchParams();
-          params.set("tab", "notes");
-          params.set("visitId", String(item.visit_id));
-          navigate(`/main/patients/${item.patient_id}/visit?${params.toString()}`);
-        } else if (item.patient_id) {
-          navigate(`/main/patients/${item.patient_id}/visit`);
-        }
-      }),
-    [navigate]
-  );
-
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header Section */}
-      <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="flex items-center justify-between mb-2">
+      <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10 px-2 py-2">
+        <div className="flex items-center justify-between mb-4 mt-2">
           <div>
             <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               Visits
@@ -201,18 +209,19 @@ export function VisitsPage() {
       </div>
 
        {/* Main Content */}
-      <ScrollArea className="flex-1">
-        <div className="">
-          <AdvancedDataTable<VisitItem, unknown>
-            columns={columns}
-            data={data?.visits ?? []}
-            isLoading={isLoading}
-            page={page}
-            limit={limit}
-            total={data?.total ?? 0}
-            onPageChange={setPage}
-            onLimitChange={setLimit}
+      <ScrollArea className="flex-1 px-2 pb-6">
+        <div className="pt-2">
+          <VisitList
+            visits={visits}
+            isLoading={listQuery.isLoading}
+            navigate={navigate}
           />
+          
+          {listQuery.hasNextPage && (
+            <div ref={observerTarget} className="flex justify-center p-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          )}
         </div>
       </ScrollArea>
 
