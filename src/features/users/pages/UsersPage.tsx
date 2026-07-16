@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Button } from "../../../components/ui/button";
 import { Plus } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 import { UserForm } from "../components/UserForm";
 import { UserFilters } from "../components/UserFilters";
 import {
-  useUsers,
+  useInfiniteUsers,
   useCreateUser,
   useUpdateUser,
   useDeleteUser,
@@ -15,17 +15,14 @@ import type { User, CreateUserDto, UpdateUserDto } from "../types/user.types";
 import { useDebounce } from "../../../hooks/use-debounce";
 
 import { ScrollArea } from "../../../components/ui/scroll-area";
-import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
-import type { ColumnDef } from "@tanstack/react-table";
-import { userColumns } from "./userColumns";
+import { UserList } from "../components/UserList";
 
 export const UsersPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [groupFilter, setGroupFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [accountTypeFilter, setAccountTypeFilter] = useState<string>("");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(15);
   const [formOpen, setFormOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -34,8 +31,7 @@ export const UsersPage: React.FC = () => {
   const debouncedSearch = useDebounce(search, 500);
 
   const { data: groupsData } = useGroups();
-  const { data, isLoading } = useUsers({
-    page,
+  const listQuery = useInfiniteUsers({
     limit,
     search: debouncedSearch,
     groupId: groupFilter || undefined,
@@ -81,7 +77,6 @@ export const UsersPage: React.FC = () => {
     setGroupFilter("");
     setStatusFilter("");
     setAccountTypeFilter("");
-    setPage(1);
   };
 
   const hasActiveFilters = !!(
@@ -91,10 +86,28 @@ export const UsersPage: React.FC = () => {
     accountTypeFilter
   );
 
+  const users = useMemo(() => {
+    return listQuery.data?.pages.flatMap((page: any) => page.data.users) || [];
+  }, [listQuery.data]);
 
+  const observerTarget = useRef<HTMLDivElement>(null);
 
-  const users = data?.data.users || [];
-  const pagination = data?.data.pagination;
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && listQuery.hasNextPage && !listQuery.isFetchingNextPage && !listQuery.isLoading) {
+          listQuery.fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [listQuery.hasNextPage, listQuery.isFetchingNextPage, listQuery.isLoading, listQuery.fetchNextPage]);
 
   interface GroupsResponse {
     data: {
@@ -109,18 +122,12 @@ export const UsersPage: React.FC = () => {
     (groupsData as GroupsResponse | undefined)?.data?.groups || []
   ).filter((group) => group.id && group.id !== "");
 
-  const columns: ColumnDef<User, unknown>[] = useMemo(
-    () => userColumns(handleEdit, handleDelete),
-    // handleEdit/handleDelete are stable enough here; they only depend on setters
-    [handleEdit, handleDelete]
-  );
-
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header Section */}
-      <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+      <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10 px-2 py-2">
         <div className="">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-4 mt-2">
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 User Management
@@ -148,22 +155,18 @@ export const UsersPage: React.FC = () => {
             search={search}
             onSearchChange={(value) => {
               setSearch(value);
-              setPage(1);
             }}
             groupId={groupFilter}
             onGroupChange={(value) => {
               setGroupFilter(value);
-              setPage(1);
             }}
             status={statusFilter}
             onStatusChange={(value) => {
               setStatusFilter(value);
-              setPage(1);
             }}
             accountType={accountTypeFilter}
             onAccountTypeChange={(value) => {
               setAccountTypeFilter(value);
-              setPage(1);
             }}
             groups={groups}
             onReset={resetFilters}
@@ -173,21 +176,20 @@ export const UsersPage: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <ScrollArea className="flex-1">
-        <div className="">
-          <AdvancedDataTable<User, unknown>
-            columns={columns}
-            data={users}
-            isLoading={isLoading}
-            page={page}
-            limit={limit}
-            total={pagination?.total ?? 0}
-            onPageChange={setPage}
-            onLimitChange={(newLimit) => {
-              setLimit(newLimit);
-              setPage(1);
-            }}
+      <ScrollArea className="flex-1 px-2 pb-6">
+        <div className="pt-2">
+          <UserList
+            users={users}
+            isLoading={listQuery.isLoading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
+
+          {listQuery.hasNextPage && (
+            <div ref={observerTarget} className="flex justify-center p-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          )}
         </div>
       </ScrollArea>
 

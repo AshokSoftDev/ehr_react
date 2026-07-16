@@ -1,31 +1,50 @@
 import { useNavigate } from "react-router-dom";
-import { usePatients } from "../hooks/usePatients";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useInfinitePatients } from "../hooks/usePatients";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { PatientFormSheet } from "../components/PatientFormSheet";
 import { usePatientManagement } from "../hooks/usePatientManagement";
 import type { Patient } from "../types/patient.types";
 import type { PatientFormData } from "../schemas/patient.schema";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { AdvancedDataTable } from "@/components/ui/advanced-data-table";
-import { patientColumns } from "./patientColumns";
 import { PatientFilters } from "../components/PatientFilters";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { ColumnDef } from "@tanstack/react-table";
-
+import { PatientList } from "../components/PatientList";
 import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 
 export function PatientsPage() {
   const navigate = useNavigate();
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(15);
   const [search, setSearch] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [patientToDelete, setPatientToDelete] = useState<Patient | undefined>();
 
-  const { data, isLoading } = usePatients(page, limit, search);
+  const listQuery = useInfinitePatients(limit, search);
+
+  const patients = useMemo(() => {
+    return listQuery.data?.pages.flatMap(page => page.patients) || [];
+  }, [listQuery.data]);
+
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && listQuery.hasNextPage && !listQuery.isFetchingNextPage && !listQuery.isLoading) {
+          listQuery.fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [listQuery.hasNextPage, listQuery.isFetchingNextPage, listQuery.isLoading, listQuery.fetchNextPage]);
 
   const {
     createPatient,
@@ -69,21 +88,12 @@ export function PatientsPage() {
     }
   };
 
-  const columns: ColumnDef<Patient, unknown>[] = useMemo(
-    () => patientColumns(handleEdit, handleDelete),
-    [handleEdit, handleDelete]
-  );
-
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
-
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header Section */}
-      <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+      <div className="bg-card/50 backdrop-blur-sm sticky top-0 z-10 px-2 py-2">
         <div className="">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-2 mt-2">
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 Patients
@@ -104,7 +114,6 @@ export function PatientsPage() {
             search={search}
             onSearchChange={(value) => {
               setSearch(value);
-              setPage(1);
             }}
             onReset={() => setSearch("")}
             hasActiveFilters={!!search}
@@ -112,26 +121,25 @@ export function PatientsPage() {
         </div>
       </div>
 
-      {/* Table Section */}
-      <ScrollArea className="flex-1">
-        <AdvancedDataTable<Patient, unknown>
-          columns={columns}
-          data={data?.patients ?? []}
-          isLoading={isLoading}
-          page={page}
-          limit={limit}
-          total={data?.total ?? 0}
-          onPageChange={setPage}
-          onLimitChange={(newLimit) => {
-            setLimit(newLimit);
-            setPage(1);
-          }}
-          onRowClick={(row: Patient) =>
-            navigate(`/main/patients/${row.patient_id}/dashboard`)
-          }
-        />
+      {/* Main Content */}
+      <ScrollArea className="flex-1 px-2 pb-6">
+        <div className="pt-2">
+          <PatientList
+            patients={patients}
+            isLoading={listQuery.isLoading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            navigate={navigate}
+          />
+
+          {listQuery.hasNextPage && (
+            <div ref={observerTarget} className="flex justify-center p-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          )}
+        </div>
       </ScrollArea>
-      
+
       <PatientFormSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
@@ -163,3 +171,5 @@ export function PatientsPage() {
     </div>
   );
 }
+
+export default PatientsPage;

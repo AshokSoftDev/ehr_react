@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { userService } from '../services/user.service';
 import type{ UserFilters, CreateUserDto, UpdateUserDto } from '../types/user.types';
@@ -20,6 +20,22 @@ export const useUsers = (params?: QueryParams) => {
   return useQuery({
     queryKey: ['users', params],
     queryFn: () => userService.getUsers(params || {}),
+  });
+};
+
+export const useInfiniteUsers = (params?: QueryParams) => {
+  return useInfiniteQuery({
+    queryKey: ['users', params],
+    queryFn: ({ pageParam = 1 }) => userService.getUsers({ ...params, page: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const page = lastPage?.data?.pagination?.page || 1;
+      const totalPages = lastPage?.data?.pagination?.totalPages || 1;
+      if (page < totalPages) {
+        return page + 1;
+      }
+      return undefined;
+    },
   });
 };
 
