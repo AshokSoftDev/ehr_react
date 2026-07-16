@@ -51,7 +51,7 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
   });
 
   const specialtyOptions = [
-    { label: "All specialties", value: "" },
+    { label: "All specialties", value: "all" },
     ...specialties.map((specialty) => ({
       label: specialty,
       value: specialty,
@@ -59,7 +59,7 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
   ];
 
   const statusOptions = [
-    { label: "All statuses", value: "" },
+    { label: "All statuses", value: "all" },
     { label: "Active", value: "1" },
     { label: "Inactive", value: "0" },
   ];
@@ -99,7 +99,7 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
 
   return (
     <>
-      <form className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+      <form className="grid gap-3 md:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] items-start">
         <FormFloatingInput
           control={form.control}
           name="search"
@@ -114,9 +114,9 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
           name="specialty"
           label="Specialty"
           options={specialtyOptions}
-          value={filters.specialty ?? ""}
+          value={filters.specialty ?? "all"}
           onValueChange={(value) =>
-            handleChange({ specialty: value || undefined })
+            handleChange({ specialty: value === "all" ? undefined : value })
           }
           triggerClassName="bg-background/50 h-12"
         />
@@ -127,11 +127,11 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
           label="Status"
           options={statusOptions}
           value={
-            filters.status !== undefined ? filters.status.toString() : ""
+            filters.status !== undefined ? filters.status.toString() : "all"
           }
           onValueChange={(value) =>
             handleChange({
-              status: value ? parseInt(value, 10) : undefined,
+              status: value === "all" ? undefined : parseInt(value, 10),
             })
           }
           triggerClassName="bg-background/50 h-12"
@@ -149,23 +149,23 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
           inputClassName="bg-background/50 border-primary/20 focus-visible:ring-ring"
         />
 
-        <div className="flex items-end gap-3">
-          <FormFloatingInput
-            control={form.control}
-            name="licenceNo"
-            label="License"
-            value={filters.licenceNo ?? ""}
-            onValueChange={(value) =>
-              handleChange({ licenceNo: value || undefined })
-            }
-            inputClassName="bg-background/50 border-primary/20 focus-visible:ring-ring"
-          />
+        <FormFloatingInput
+          control={form.control}
+          name="licenceNo"
+          label="License"
+          value={filters.licenceNo ?? ""}
+          onValueChange={(value) =>
+            handleChange({ licenceNo: value || undefined })
+          }
+          inputClassName="bg-background/50 border-primary/20 focus-visible:ring-ring"
+        />
+        <div className="h-12 flex items-center">
           <Button
             type="button"
             variant="secondary"
             size="sm"
             onClick={handleReset}
-            className="gap-1 h-10 mb-1 bg-muted hover:bg-muted/80 text-muted-foreground"
+            className="gap-1 h-10 w-full bg-muted hover:bg-muted/80 text-muted-foreground"
             disabled={activeFiltersCount === 0}
           >
             <RotateCcw className="h-3 w-3" />
@@ -174,56 +174,6 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
         </div>
       </form>
 
-      {activeFiltersCount > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mt-3">
-          <span className="text-sm text-muted-foreground">Active filters:</span>
-          {filters.search && (
-            <Badge variant="secondary" className="gap-1">
-              Search: {filters.search}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => handleClearFilter("search")}
-              />
-            </Badge>
-          )}
-          {filters.specialty && (
-            <Badge variant="secondary" className="gap-1">
-              Specialty: {filters.specialty}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => handleClearFilter("specialty")}
-              />
-            </Badge>
-          )}
-          {filters.status !== undefined && (
-            <Badge variant="secondary" className="gap-1">
-              Status: {filters.status === 1 ? "Active" : "Inactive"}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => handleClearFilter("status")}
-              />
-            </Badge>
-          )}
-          {filters.email && (
-            <Badge variant="secondary" className="gap-1">
-              Email: {filters.email}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => handleClearFilter("email")}
-              />
-            </Badge>
-          )}
-          {filters.licenceNo && (
-            <Badge variant="secondary" className="gap-1">
-              License: {filters.licenceNo}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => handleClearFilter("licenceNo")}
-              />
-            </Badge>
-          )}
-        </div>
-      )}
     </>
   );
 };

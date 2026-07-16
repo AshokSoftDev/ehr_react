@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, useCallback, useEffect } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
 import { doctorService } from '../services/doctor.service';
 import type { DoctorFiltersType, PaginationParams } from '../types/doctor.types';
 
@@ -10,64 +10,34 @@ interface UseDoctorsOptions {
 }
 
 export const useDoctors = (options?: UseDoctorsOptions) => {
-  const queryClient = useQueryClient();
-  
   const [filters, setFilters] = useState<DoctorFiltersType>(
     options?.initialFilters || {}
   );
-  
-  const [pagination, setPagination] = useState<PaginationParams>(
-    options?.initialPagination || { page: 1, limit: 10 }
-  );
 
-  // Query for doctors list
-  const doctorsQuery = useQuery({
-    queryKey: ['doctors', filters, pagination],
-    queryFn: () => doctorService.getAllDoctors(filters, pagination),
+  const limit = options?.initialPagination?.limit || 10;
+
+  // Query for doctors list using infinite query
+  const doctorsQuery = useInfiniteQuery({
+    queryKey: ['doctors', filters, limit],
+    queryFn: ({ pageParam = 1 }) => doctorService.getAllDoctors(filters, { page: pageParam as number, limit }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < lastPage.totalPages) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
     refetchInterval: options?.refetchInterval,
   });
 
-  // Prefetch next page
-  useEffect(() => {
-    const { page = 1 } = pagination;
-    const totalPages = doctorsQuery.data?.totalPages || 1;
-    
-    if (page < totalPages) {
-      queryClient.prefetchQuery({
-        queryKey: ['doctors', filters, { ...pagination, page: page + 1 }],
-        queryFn: () => doctorService.getAllDoctors(filters, { ...pagination, page: page + 1 }),
-      });
-    }
-  }, [pagination, filters, doctorsQuery.data?.totalPages, queryClient]);
+  // Flatten the doctors array from all pages
+  const doctors = doctorsQuery.data?.pages.flatMap((page) => page.doctors) || [];
+  const total = doctorsQuery.data?.pages[0]?.total || 0;
 
   // Helper functions
   const updateFilters = useCallback((newFilters: DoctorFiltersType) => {
     setFilters(newFilters);
-    setPagination({ ...pagination, page: 1 }); // Reset to page 1 when filters change
-  }, [pagination]);
-
-  const updatePagination = useCallback((newPagination: PaginationParams) => {
-    setPagination(newPagination);
   }, []);
-
-  const goToPage = useCallback((page: number) => {
-    setPagination(prev => ({ ...prev, page }));
-  }, []);
-
-  const nextPage = useCallback(() => {
-    const currentPage = pagination.page || 1;
-    const totalPages = doctorsQuery.data?.totalPages || 1;
-    if (currentPage < totalPages) {
-      goToPage(currentPage + 1);
-    }
-  }, [pagination.page, doctorsQuery.data?.totalPages, goToPage]);
-
-  const previousPage = useCallback(() => {
-    const currentPage = pagination.page || 1;
-    if (currentPage > 1) {
-      goToPage(currentPage - 1);
-    }
-  }, [pagination.page, goToPage]);
 
   const refetch = useCallback(() => {
     return doctorsQuery.refetch();
@@ -75,31 +45,25 @@ export const useDoctors = (options?: UseDoctorsOptions) => {
 
   return {
     // Data
-    doctors: doctorsQuery.data?.doctors || [],
-    total: doctorsQuery.data?.total || 0,
-    page: doctorsQuery.data?.page || 1,
-    totalPages: doctorsQuery.data?.totalPages || 1,
-    
+    doctors,
+    total,
+
     // State
     filters,
-    pagination,
-    
+
     // Query state
     isLoading: doctorsQuery.isLoading,
     isFetching: doctorsQuery.isFetching,
+    isFetchingNextPage: doctorsQuery.isFetchingNextPage,
     isError: doctorsQuery.isError,
     error: doctorsQuery.error,
-    
+
     // Actions
     updateFilters,
-    updatePagination,
-    goToPage,
-    nextPage,
-    previousPage,
+    fetchNextPage: doctorsQuery.fetchNextPage,
     refetch,
-    
+
     // Computed
-    hasNextPage: (pagination.page || 1) < (doctorsQuery.data?.totalPages || 1),
-    hasPreviousPage: (pagination.page || 1) > 1,
+    hasNextPage: !!doctorsQuery.hasNextPage,
   };
 };

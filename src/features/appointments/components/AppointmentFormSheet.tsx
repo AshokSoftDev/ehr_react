@@ -18,6 +18,7 @@ import { appointmentService } from '../services/appointment.service';
 import { PatientFormSheet } from '@/features/patients/components/PatientFormSheet';
 import { patientService } from '@/features/patients/services/patient.service';
 import type { PatientFormData } from '@/features/patients/schemas/patient.schema';
+import { useAppointmentTypes } from '@/features/masters/hooks/useAppointmentTypes';
 
 const schema = z.object({
   patient_id: z.coerce.number().int().min(1, "Please select a patient"),
@@ -88,6 +89,8 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
   });
 
   const [searchText, setSearchText] = useState('');
+  const { data: typesData } = useAppointmentTypes('', 1);
+
   const [patients, setPatients] = useState<AppointmentPatientLite[]>([]);
   const [showPatientSheet, setShowPatientSheet] = useState(false);
   const [isCreatingPatient, setIsCreatingPatient] = useState(false);
@@ -215,14 +218,10 @@ export function AppointmentFormSheet({ open, onOpenChange, onSubmit, doctors, in
 
   const doctorOptions = doctors.map(d => ({ label: `${d.displayName}`, value: d.id }));
   
-  const appointmentTypeOptions = [
-    'Consultation',
-    'Follow-up',
-    'Procedure',
-    'Surgery',
-    'Teleconsultation',
-    'Checkup',
-  ].map(t => ({ label: t, value: t }));
+  const appointmentTypeOptions = typesData 
+    ? typesData.map(t => ({ label: t.name, value: t.code }))
+    : [];
+
 
   const allStatusOptions = [
     { label: 'Scheduled', value: 'SCHEDULED' },
