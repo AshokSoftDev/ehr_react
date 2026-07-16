@@ -285,21 +285,26 @@ export const DoctorForm: React.FC<DoctorFormProps> = ({
                 <div className="space-y-2">
                   <Label>Display Color</Label>
                   <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <FormFloatingInput
-                        control={form.control}
-                        name="displayColor"
-                        label="Color Code"
+                    <div className="shrink-0 relative h-[48px] w-[60px]">
+                      <div 
+                        className="w-full h-full rounded-md border shadow-sm"
+                        style={{ backgroundColor: form.watch("displayColor") || "#6366F1" }}
                       />
-                    </div>
-                    <div className="shrink-0 h-[48px] w-[60px] rounded-md border overflow-hidden">
                       <input
                         type="color"
                         value={form.watch("displayColor")}
                         onChange={(e) =>
                           form.setValue("displayColor", e.target.value)
                         }
-                        className="w-full h-full p-0 border-0 cursor-pointer scale-150"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        title="Choose color"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <FormFloatingInput
+                        control={form.control}
+                        name="displayColor"
+                        label="Color Code"
                       />
                     </div>
                   </div>

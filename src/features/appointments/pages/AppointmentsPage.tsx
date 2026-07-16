@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState, useEffect, useRef } from "react";
+import { useMutation, useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -22,7 +22,7 @@ import AppointmentsCalendar from "../components/AppointmentsCalendar";
 import { CancelAppointmentDialog } from "../components/CancelAppointmentDialog";
 import { AppointmentDashboardStats } from "../components/AppointmentDashboardStats";
 import { AppointmentList } from "../components/AppointmentList";
-import { CalendarDays, List, X, Plus, RefreshCw } from "lucide-react";
+import { CalendarDays, List, X, Plus, RefreshCw, Loader2 } from "lucide-react";
 
 const filterSchema = z.object({
   search: z.string().optional(),
@@ -55,9 +55,9 @@ export function AppointmentsPage() {
     };
   }, [filterForm, _watch]);
 
-  const listQuery = useQuery({
+  const listQuery = useInfiniteQuery({
     queryKey: ["appointments", filters, view, calendarRange],
-    queryFn: () => {
+    queryFn: ({ pageParam = 1 }) => {
       if (view === "calendar") {
         return appointmentService.list({
           ...filters,
@@ -65,11 +65,42 @@ export function AppointmentsPage() {
           startDate: calendarRange.start ? calendarRange.start.toISOString() : undefined,
           endDate: calendarRange.end ? calendarRange.end.toISOString() : undefined,
           limit: 500, // Fetch enough to populate the calendar
+          page: pageParam as number,
         });
       }
-      return appointmentService.list(filters);
+      return appointmentService.list({ ...filters, limit: 15, page: pageParam as number });
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < lastPage.totalPages) {
+        return lastPage.page + 1;
+      }
+      return undefined;
     },
   });
+
+  const appointments = useMemo(() => {
+    return listQuery.data?.pages.flatMap(page => page.appointments) || [];
+  }, [listQuery.data]);
+
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && listQuery.hasNextPage && !listQuery.isFetchingNextPage && !listQuery.isLoading) {
+          listQuery.fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [listQuery.hasNextPage, listQuery.isFetchingNextPage, listQuery.isLoading, listQuery.fetchNextPage]);
 
   const doctorsQuery = useQuery({
     queryKey: ["appointment-doctors"],
@@ -123,7 +154,7 @@ export function AppointmentsPage() {
 
 
   const onReschedule = (id: number, targetDate: Date) => {
-    const appt = listQuery.data?.appointments.find(
+    const appt = appointments.find(
       (a) => a.appointment_id === id
     );
     if (!appt) return;
@@ -290,7 +321,7 @@ export function AppointmentsPage() {
           {view === "list" ? (
             <div className="flex flex-col gap-2">
               <AppointmentList
-                appointments={listQuery.data?.appointments ?? []}
+                appointments={appointments}
                 isLoading={listQuery.isLoading}
                 onEdit={(appt) => {
                   setEditItem(appt);
@@ -298,7 +329,7 @@ export function AppointmentsPage() {
                 }}
                 onStatusChange={(id, status) => {
                   if (status.toUpperCase() === 'CANCELLED') {
-                    const appt = listQuery.data?.appointments.find(a => a.appointment_id === id);
+                    const appt = appointments.find(a => a.appointment_id === id);
                     if (appt) setCancelAppointmentItem(appt);
                   } else {
                     statusUpdateMutation.mutate({ id, status: status.toUpperCase() });
@@ -306,26 +337,29 @@ export function AppointmentsPage() {
                 }}
                 navigate={navigate}
               />
-              {/* Pagination */}
-              {/* {listQuery.data && listQuery.data.total > 0 && (
-                <div className="flex justify-between items-center px-4 py-3 mt-4 border-t">
-                  <span className="text-sm text-muted-foreground">
-                    Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, listQuery.data.total)} of {listQuery.data.total}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-                      <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= listQuery.data.totalPages}>
-                      Next <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
+
+              {/* Infinite Scroll Target */}
+              <div ref={observerTarget} className="h-10 flex items-center justify-center">
+                {listQuery.isFetchingNextPage && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading more...
                   </div>
+                )}
+              </div>
+              {!listQuery.hasNextPage && appointments.length > 0 && (
+                <div className="py-6 flex items-center justify-center gap-4 opacity-70">
+                  <div className="h-px bg-border flex-1 max-w-[60px]"></div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                    End of list
+                  </span>
+                  <div className="h-px bg-border flex-1 max-w-[60px]"></div>
                 </div>
-              )} */}
+              )}
             </div>
           ) : (
             <AppointmentsCalendar
-              items={listQuery.data?.appointments ?? []}
+              items={appointments}
               onReschedule={onReschedule}
               onStatusChange={(id, status) =>
                 statusUpdateMutation.mutate({ id, status })

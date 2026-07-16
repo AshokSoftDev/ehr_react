@@ -16,8 +16,7 @@ export const DoctorsPage: React.FC = () => {
   const {
     // Data
     doctors,
-    total,
-    
+
     // State
     filters,
     isFormOpen,
@@ -191,22 +190,26 @@ export const DoctorsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Infinite Scroll Target */}
-            <div ref={observerTarget} className="h-10 flex items-center justify-center">
-              {isFetchingNextPage && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading more...
-                </div>
-              )}
-            </div>
-            {!hasNextPage && doctors.length > 0 && (
-              <div className="pb-4 pt-2 text-center text-sm text-muted-foreground">
-                You've reached the end of the list
-              </div>
-            )}
           </CardContent>
         </Card>
+        {/* Infinite Scroll Target */}
+        <div ref={observerTarget} className="h-10 flex items-center justify-center">
+          {isFetchingNextPage && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading more...
+            </div>
+          )}
+        </div>
+        {!hasNextPage && doctors.length > 0 && (
+          <div className="py-6 flex items-center justify-center gap-4 opacity-70">
+            <div className="h-px bg-border flex-1 max-w-[60px]"></div>
+            <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+              End of list
+            </span>
+            <div className="h-px bg-border flex-1 max-w-[60px]"></div>
+          </div>
+        )}
       </ScrollArea>
 
       {/* Form Sheet */}
