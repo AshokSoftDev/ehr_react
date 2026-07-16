@@ -107,7 +107,7 @@ export function PatientBillingDashboard() {
           </nav>
         </div>
 
-        <CardContent className="p-4 sm:p-6">
+        <CardContent className="p-0">
           {currentTab === "invoice" && <InvoiceTab patientId={patientId} />}
           {currentTab === "payment" && <PaymentTab patientId={patientId} advanceBalance={advanceBalance} />}
           {currentTab === "ledger" && <LedgerTab patientId={patientId} />}

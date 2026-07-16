@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { billingService } from '../services/billing.service';
 import type {
   InvoiceFilters,
@@ -22,7 +22,22 @@ export const billingQueryKeys = {
   advanceLedger: (patientId: number) => ['advance-ledger', patientId] as const,
   pendingInvoices: (patientId: number) => ['pending-invoices', patientId] as const,
   invoicePayments: (invoiceId: number) => ['invoice-payments', invoiceId] as const,
+  billingVisits: ['billing-visits'] as const,
 };
+
+export function useInfiniteBillingVisits(filters?: import('../types/billing.types').BillingVisitsFilters) {
+  return useInfiniteQuery({
+    queryKey: [...billingQueryKeys.billingVisits, filters],
+    queryFn: ({ pageParam = 1 }) => billingService.listBillingVisits({ ...filters, page: pageParam as number }),
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < lastPage.totalPages) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+  });
+}
 
 // Invoice Hooks
 export function useInvoices(filters?: InvoiceFilters) {

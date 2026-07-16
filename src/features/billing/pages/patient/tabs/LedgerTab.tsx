@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Printer, Receipt as ReceiptIcon, Eye } from "lucide-react";
 import { billingService } from "@/features/billing/services/billing.service";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { type Receipt } from "@/features/billing/types/billing.types";
+import { ReceiptList } from "@/features/billing/components/ReceiptList";
 
 interface Props {
   patientId: number;
@@ -119,82 +117,12 @@ export default function LedgerTab({ patientId }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="border rounded-md overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-muted-foreground border-b">
-            <tr>
-              <th className="font-medium text-left p-3">Receipt No.</th>
-              <th className="font-medium text-left p-3">Date</th>
-              <th className="font-medium text-left p-3">Invoice No.</th>
-              <th className="font-medium text-left p-3">Type</th>
-              <th className="font-medium text-right p-3">Amount</th>
-              <th className="font-medium text-center p-3">Method</th>
-              <th className="font-medium text-left p-3">Notes</th>
-              <th className="font-medium text-right p-3">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {isLoading ? (
-              <tr>
-                <td colSpan={8} className="p-8 text-center text-muted-foreground">Loading ledger...</td>
-              </tr>
-            ) : data?.receipts.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="p-8 text-center text-muted-foreground">No receipts found for this patient.</td>
-              </tr>
-            ) : (
-              data?.receipts.map((receipt) => (
-                <tr key={receipt.receipt_id} className="hover:bg-muted/30">
-                  <td className="p-3 font-medium">
-                    <div className="flex items-center gap-2">
-                      <ReceiptIcon className="h-4 w-4 text-muted-foreground" />
-                      {receipt.receipt_number}
-                    </div>
-                  </td>
-                  <td className="p-3 text-muted-foreground">{format(new Date(receipt.payment_date), "dd MMM yyyy")}</td>
-                  <td className="p-3 text-muted-foreground">
-                    {receipt.invoice?.invoice_number ? (
-                      <Badge variant="outline" className="bg-muted font-normal">{receipt.invoice.invoice_number}</Badge>
-                    ) : "-"}
-                  </td>
-                  <td className="p-3 text-muted-foreground">
-                    {receipt.receipt_type === 'advance_deposit' ? (
-                      <Badge variant="outline" className="text-blue-600 bg-blue-50 border-blue-200">Advance Deposit</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-green-600 bg-green-50 border-green-200">Payment</Badge>
-                    )}
-                  </td>
-                  <td className="p-3 text-right font-medium">₹{Number(receipt.amount).toFixed(2)}</td>
-                  <td className="p-3 text-center capitalize text-muted-foreground">{receipt.payment_method?.replace("_", " ")}</td>
-                  <td className="p-3 text-muted-foreground text-xs max-w-[150px] truncate" title={receipt.notes || ""}>
-                    {receipt.notes || "-"}
-                  </td>
-                  <td className="p-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1 text-primary h-8"
-                        onClick={() => setSelectedReceipt(receipt)}
-                      >
-                        <Eye className="h-3.5 w-3.5" /> View
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1 text-primary h-8"
-                        onClick={() => handlePrintReceipt(receipt)}
-                      >
-                        <Printer className="h-3.5 w-3.5" /> Print
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ReceiptList
+        receipts={data?.receipts || []}
+        isLoading={isLoading}
+        onViewReceipt={(receipt) => setSelectedReceipt(receipt)}
+        onPrintReceipt={handlePrintReceipt}
+      />
 
       <Dialog open={!!selectedReceipt} onOpenChange={(open) => !open && setSelectedReceipt(null)}>
         <DialogContent className="sm:max-w-[425px]">

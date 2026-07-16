@@ -11,14 +11,9 @@ import {
   Banknote,
   Smartphone,
   Building,
-  Eye,
   Printer,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -41,9 +36,10 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { format } from "date-fns";
-import { billingService } from "../services/billing.service";
 import { patientService } from "@/features/patients/services/patient.service";
 import type { Invoice, Receipt as ReceiptType, BillingVisit, BillingVisitsFilters } from "../types/billing.types";
+import { BillingVisitList } from "../components/BillingVisitList";
+import { useInfiniteBillingVisits } from "../hooks/useBilling";
 
 // Payment method icon mapping
 const paymentIcons: Record<string, typeof Banknote> = {
@@ -67,10 +63,10 @@ export function BillingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [patientSearchQuery, setPatientSearchQuery] = useState("");
   const [patientDropdownOpen, setPatientDropdownOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptType | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   // Debounced patient search
   const [debouncedPatientQuery, setDebouncedPatientQuery] = useState("");
@@ -95,20 +91,37 @@ export function BillingPage() {
   // Consolidated billing visits filters
   const filters: BillingVisitsFilters = useMemo(() => ({
     status: "1",
-    page: currentPage,
     limit: PAGE_SIZE,
     ...(searchQuery && { search: searchQuery }),
-  }), [searchQuery, currentPage]);
+  }), [searchQuery]);
 
-  // Single API call for visits with invoice + receipt + patient
-  const { data: visitsData, isLoading: visitsLoading } = useQuery({
-    queryKey: ["billing-visits", filters],
-    queryFn: () => billingService.listBillingVisits(filters),
-  });
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: visitsLoading,
+  } = useInfiniteBillingVisits(filters);
 
-  const visits = visitsData?.visits ?? [];
-  const totalPages = visitsData?.totalPages ?? 1;
-  const totalVisits = visitsData?.total ?? 0;
+  const visits = data?.pages.flatMap((page) => page.visits) || [];
+  const totalVisits = data?.pages[0]?.total || 0;
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Handle patient selection from searchable dropdown
   const handlePatientSelect = (patientId: number) => {
@@ -458,7 +471,7 @@ export function BillingPage() {
             <Input
               placeholder="Filter visits..."
               value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-10"
             />
           </div>
@@ -486,212 +499,22 @@ export function BillingPage() {
               </p>
             </div>
           ) : (
-            <>
-              <div className="rounded-lg border overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-muted/50">
-                    <tr className="text-left text-xs font-medium text-muted-foreground">
-                      <th className="px-3 py-2">#</th>
-                      <th className="px-3 py-2">Patient</th>
-                      <th className="px-3 py-2">Visit Date</th>
-                      <th className="px-3 py-2">Visit Type</th>
-                      <th className="px-3 py-2">Doctor</th>
-                      <th className="px-3 py-2">Status</th>
-                      <th className="px-3 py-2 text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {visits.map((visit) => {
-                      const invoice = visit.invoices?.[0] ?? null;
-                      const receipt = invoice?.receipts?.[0] ?? null;
-                      const hasInvoice = !!invoice;
-                      const isPaid = invoice?.status === "paid";
-                      const isPartial = invoice?.status === "partial";
-                      const isDraft = hasInvoice && !isPaid && !isPartial;
-                      const visitDate = new Date(visit.visit_date);
-
-                      return (
-                        <tr
-                          key={visit.visit_id}
-                          className="hover:bg-muted/30 transition-colors"
-                        >
-                          <td className="px-3 py-1.5">
-                            <span className="text-xs text-muted-foreground">
-                              #{visit.visit_id}
-                            </span>
-                          </td>
-                          <td className="px-3 py-1.5">
-                            <div>
-                              <p className="text-sm font-medium">
-                                {visit.patient?.firstName} {visit.patient?.lastName}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                MRN: {visit.patient?.mrn}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-3 py-1.5">
-                            <div className="text-sm">
-                              <p>{format(visitDate, "dd MMM yyyy")}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {format(visitDate, "hh:mm a")}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-3 py-1.5">
-                            <Badge variant="outline" className="text-xs">
-                              {visit.visit_type}
-                            </Badge>
-                          </td>
-                          <td className="px-3 py-1.5">
-                            <span className="text-sm">
-                              {visit.doctor?.displayName
-                                ? `${visit.doctor.displayName}`
-                                : "-"}
-                            </span>
-                          </td>
-                          <td className="px-3 py-1.5">
-                            {isPaid ? (
-                              <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs">
-                                Paid
-                              </Badge>
-                            ) : isPartial ? (
-                              <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 text-xs">
-                                Partial
-                              </Badge>
-                            ) : isDraft ? (
-                              <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 text-xs">
-                                Draft
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs">
-                                No Invoice
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="px-3 py-1.5">
-                            <div className="flex items-center justify-center gap-1">
-                              {/* No invoice - show Generate Invoice */}
-                              {!hasInvoice && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleGenerateInvoice(visit)}
-                                  className="h-8 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                  Generate Invoice
-                                </Button>
-                              )}
-
-                              {/* Has invoice (draft/partial) - View/Pay */}
-                              {(isDraft || isPartial) && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleViewInvoice(visit)}
-                                  className="h-8 text-xs gap-1.5 text-orange-600 border-orange-300 hover:bg-orange-50"
-                                >
-                                  <FileText className="h-3.5 w-3.5" />
-                                  View / Pay
-                                </Button>
-                              )}
-
-                              {/* Paid - View Receipt */}
-                              {isPaid && receipt && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleViewReceipt(receipt)}
-                                    className="h-8 w-8 p-0 hover:bg-blue-50"
-                                    title="View Receipt"
-                                  >
-                                    <Eye className="h-4 w-4 text-blue-600" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handlePrintReceipt(receipt)}
-                                    className="h-8 w-8 p-0 hover:bg-green-50"
-                                    title="Print Receipt"
-                                  >
-                                    <Printer className="h-4 w-4 text-green-600" />
-                                  </Button>
-                                  {invoice && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handlePrintInvoice(invoice)}
-                                      className="h-8 w-8 p-0 hover:bg-purple-50"
-                                      title="Print Invoice"
-                                    >
-                                      <FileText className="h-4 w-4 text-purple-600" />
-                                    </Button>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            <div className="flex flex-col gap-4">
+              <BillingVisitList 
+                visits={visits}
+                isLoading={visitsLoading}
+                onGenerateInvoice={handleGenerateInvoice}
+                onViewInvoice={handleViewInvoice}
+                onViewReceipt={handleViewReceipt}
+                onPrintReceipt={handlePrintReceipt}
+                onPrintInvoice={handlePrintInvoice}
+              />
+              
+              {/* Infinite scroll trigger */}
+              <div ref={observerTarget} className="h-4 w-full flex items-center justify-center">
+                {isFetchingNextPage && <span className="text-xs text-muted-foreground">Loading more...</span>}
               </div>
-
-              {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/30 rounded-b-lg">
-                  <span className="text-xs text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 w-7 p-0"
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage <= 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      let pageNum: number;
-                      if (totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i;
-                      } else {
-                        pageNum = currentPage - 2 + i;
-                      }
-                      return (
-                        <Button
-                          key={pageNum}
-                          variant={pageNum === currentPage ? "default" : "outline"}
-                          size="sm"
-                          className="h-7 w-7 p-0 text-xs"
-                          onClick={() => setCurrentPage(pageNum)}
-                        >
-                          {pageNum}
-                        </Button>
-                      );
-                    })}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 w-7 p-0"
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={currentPage >= totalPages}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
+            </div>
           )}
         </div>
       </div>
