@@ -38,7 +38,6 @@ const allergyTypes = [
   { label: "Drug", value: "Drug" },
   { label: "Food", value: "Food" },
   { label: "Environmental", value: "Environmental" },
-  { label: "Insect", value: "Insect" },
   { label: "Other", value: "Other" }
 ];
 

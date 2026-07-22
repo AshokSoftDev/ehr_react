@@ -7,7 +7,7 @@ export const patientAllergyService = {
     return data.data;
   },
 
-  async create(patientId: number, payload: PatientAllergyPayload): Promise<PatientAllergyItem> {
+  async create(patientId: number, payload: PatientAllergyPayload | PatientAllergyPayload[]): Promise<PatientAllergyItem | { count: number }> {
     const { data } = await api.post(`/patients/${patientId}/allergies`, payload);
     return data.data;
   },
@@ -19,5 +19,10 @@ export const patientAllergyService = {
 
   async remove(patientId: number, paId: number): Promise<void> {
     await api.delete(`/patients/${patientId}/allergies/${paId}`);
+  },
+
+  async sync(patientId: number, payloads: import('../types/patientAllergy.types').SyncPatientAllergyPayload[]): Promise<{ success: boolean }> {
+    const { data } = await api.put(`/patients/${patientId}/allergies/sync`, payloads);
+    return data;
   },
 };

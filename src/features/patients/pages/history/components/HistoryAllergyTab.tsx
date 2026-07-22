@@ -1,53 +1,38 @@
-import { useState } from "react";
-import { Plus, ShieldAlert, Pencil, Trash2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, ShieldAlert, Pencil, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   usePatientAllergies,
-  useCreatePatientAllergy,
-  useUpdatePatientAllergy,
-  useDeletePatientAllergy
+  useSyncPatientAllergies
 } from "@/features/patients/hooks/usePatientAllergies";
-import { PatientAllergyFormSheet, type PatientAllergyFormValues } from "./PatientAllergyFormSheet";
-import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
-import type { PatientAllergyItem } from "@/features/patients/types/patientAllergy.types";
+import { PatientAllergyFormSheet } from "./PatientAllergyFormSheet";
+import type { PatientAllergyPayload } from "@/features/patients/types/patientAllergy.types";
+import { SyncPatientAllergyPayload } from "@/features/patients/types/patientAllergy.types";
 
 export default function HistoryAllergyTab({ patientId }: { patientId: number }) {
   const [openForm, setOpenForm] = useState(false);
-  const [editItem, setEditItem] = useState<PatientAllergyItem | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteItem, setDeleteItem] = useState<PatientAllergyItem | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: allergies = [], isLoading } = usePatientAllergies(patientId);
-  
-  const createMutation = useCreatePatientAllergy(patientId);
-  const updateMutation = useUpdatePatientAllergy(patientId);
-  const deleteMutation = useDeletePatientAllergy(patientId);
+  const syncMutation = useSyncPatientAllergies(patientId);
 
-  const handleEdit = (allergy: PatientAllergyItem) => {
-    setEditItem(allergy);
-    setOpenForm(true);
-  };
-
-  const handleDelete = (allergy: PatientAllergyItem) => {
-    setDeleteItem(allergy);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleSubmit = (values: PatientAllergyFormValues) => {
-    const payload = {
-      allergyName: values.allergyName,
-      allergyId: values.allergyId && values.allergyId !== "none" ? Number(values.allergyId) : undefined,
-    };
-
-    if (editItem) {
-      updateMutation.mutate({ paId: editItem.id, payload });
-      setEditItem(null);
-    } else {
-      createMutation.mutate(payload);
-    }
+  const handleSubmit = (values: SyncPatientAllergyPayload[]) => {
+    syncMutation.mutate(values);
     setOpenForm(false);
   };
+
+  const filteredAllergies = useMemo(() => {
+    if (!searchQuery.trim()) return allergies;
+    const query = searchQuery.toLowerCase();
+    return allergies.filter(
+      (a) =>
+        a.allergyName.toLowerCase().includes(query) ||
+        a.notes?.toLowerCase().includes(query) ||
+        a.allergy?.allergyType.toLowerCase().includes(query)
+    );
+  }, [allergies, searchQuery]);
 
   return (
     <div className="p-4 sm:p-6 flex flex-col h-full gap-4">
@@ -56,9 +41,22 @@ export default function HistoryAllergyTab({ patientId }: { patientId: number }) 
           <h3 className="text-lg font-medium">Allergies</h3>
           <p className="text-muted-foreground text-sm">Manage patient allergies and reactions</p>
         </div>
-        <Button onClick={() => setOpenForm(true)} size="sm" className="bg-primary-gradient">
-          <Plus className="h-4 w-4 mr-1" /> Add Allergy
+        <Button onClick={() => setOpenForm(true)} size="sm" variant="outline" className="border-primary/20 text-primary hover:bg-primary/10">
+          <Pencil className="h-4 w-4 mr-1" /> Edit Allergies
         </Button>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search allergies..."
+            className="pl-8 bg-card"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto rounded-md border">
@@ -68,25 +66,29 @@ export default function HistoryAllergyTab({ patientId }: { patientId: number }) 
               <div key={i} className="h-16 w-full bg-muted animate-pulse rounded-md"></div>
             ))}
           </div>
-        ) : allergies.length === 0 ? (
+        ) : filteredAllergies.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
             <ShieldAlert className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="font-semibold text-lg mb-1">No allergies recorded</h3>
-            <p className="text-sm">Click "Add Allergy" to add one</p>
+            <h3 className="font-semibold text-lg mb-1">
+              {searchQuery ? "No matching allergies found" : "No allergies recorded"}
+            </h3>
+            <p className="text-sm">
+              {searchQuery ? "Try adjusting your search filter" : 'Click "Edit Allergies" to add one'}
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {allergies.map((allergy) => (
-              <div key={allergy.id} className="group/item relative flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/30 transition-colors gap-4 bg-card">
-                <div className="flex-1 flex flex-col gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center">
-                      <ShieldAlert className="h-5 w-5 text-red-600" />
-                    </div>
-                    <div className="min-w-0 flex items-center gap-3">
+            {filteredAllergies.map((allergy) => (
+              <div key={allergy.id} className="group/item relative flex flex-col sm:flex-row justify-between p-4 transition-colors gap-4 bg-card items-start sm:items-center">
+                <div className="flex-1 flex gap-3 min-w-0 items-start">
+                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center mt-1">
+                    <ShieldAlert className="h-5 w-5 text-red-600" />
+                  </div>
+                  <div className="min-w-0 flex flex-col gap-1">
+                    <div className="flex items-center gap-3">
                       <h3 className="font-semibold text-base truncate">{allergy.allergyName}</h3>
                       {allergy.status === 1 ? (
-                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none shadow-none text-[10px] h-5 px-1.5 rounded-sm">Active</Badge>
+                        <Badge className="bg-green-100 text-green-700 border-none shadow-none text-[10px] h-5 px-1.5 rounded-sm">Active</Badge>
                       ) : (
                         <Badge variant="secondary" className="shadow-none text-[10px] h-5 px-1.5 rounded-sm">Inactive</Badge>
                       )}
@@ -94,28 +96,12 @@ export default function HistoryAllergyTab({ patientId }: { patientId: number }) 
                         <Badge variant="outline" className="text-[10px] h-5 px-1.5 rounded-sm text-muted-foreground">Master: {allergy.allergy.allergyType}</Badge>
                       )}
                     </div>
+                    {allergy.notes && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                        <span className="font-medium text-foreground">Notes:</span> {allergy.notes}
+                      </p>
+                    )}
                   </div>
-                </div>
-                
-                <div className="flex items-center sm:pl-4 sm:border-l border-border/50 shrink-0 gap-2 opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-primary hover:bg-blue-50 hover:text-blue-600 rounded-full"
-                    onClick={() => handleEdit(allergy)}
-                    title="Edit Allergy"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:bg-red-50 rounded-full"
-                    onClick={() => handleDelete(allergy)}
-                    title="Delete Allergy"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
             ))}
@@ -125,35 +111,10 @@ export default function HistoryAllergyTab({ patientId }: { patientId: number }) 
 
       <PatientAllergyFormSheet
         open={openForm}
-        onOpenChange={(open) => {
-          setOpenForm(open);
-          if (!open) setEditItem(null);
-        }}
+        onOpenChange={setOpenForm}
         onSubmit={handleSubmit}
-        initial={editItem || undefined}
-        isLoading={createMutation.isPending || updateMutation.isPending}
-      />
-
-      <ConfirmDeleteDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={() => {
-          if (deleteItem) {
-            deleteMutation.mutate(deleteItem.id);
-            setDeleteDialogOpen(false);
-          }
-        }}
-        title="Delete Patient Allergy"
-        description={
-          deleteItem ? (
-            <span>
-              Are you sure you want to remove <span className="font-bold">{deleteItem.allergyName}</span> from this patient?
-            </span>
-          ) : (
-            "Are you sure you want to delete this allergy?"
-          )
-        }
-        isDeleting={deleteMutation.isPending}
+        initialAllergies={allergies}
+        isLoading={syncMutation.isPending}
       />
     </div>
   );

@@ -16,7 +16,7 @@ export function usePatientAllergies(patientId: number) {
 export function useCreatePatientAllergy(patientId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: PatientAllergyPayload) => patientAllergyService.create(patientId, payload),
+    mutationFn: (payload: PatientAllergyPayload | PatientAllergyPayload[]) => patientAllergyService.create(patientId, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: key(patientId) });
       toast.success('Patient allergy added');
@@ -52,6 +52,21 @@ export function useDeletePatientAllergy(patientId: number) {
     },
     onError: (err: Error) => {
       toast.error(err.message || 'Failed to remove allergy');
+    },
+  });
+}
+
+export function useSyncPatientAllergies(patientId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payloads: import('../types/patientAllergy.types').SyncPatientAllergyPayload[]) => 
+      patientAllergyService.sync(patientId, payloads),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: key(patientId) });
+      toast.success('Patient allergies updated');
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to sync allergies');
     },
   });
 }
