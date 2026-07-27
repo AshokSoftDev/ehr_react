@@ -31,6 +31,7 @@ const AppointmentsPage = lazy(() => import('../features/appointments/pages/Appoi
 const VisitsPage = lazy(() => import('../features/visits/pages/VisitsPage').then(module => ({ default: module.VisitsPage })))
 const DrugsPage = lazy(() => import('../features/drug/pages/DrugsPage').then(module => ({ default: module.DrugsPage })))
 const AllergiesPage = lazy(() => import('../features/allergy/pages/AllergiesPage').then(module => ({ default: module.AllergiesPage })))
+const PmhPage = lazy(() => import('../features/pmh/pages/PmhPage').then(module => ({ default: module.PmhPage })))
 const DocumentTypesPage = lazy(() => import('../features/document-types/pages/DocumentTypesPage').then(module => ({ default: module.DocumentTypesPage })))
 const LocationsPage = lazy(() => import('../features/locations/pages/LocationsPage').then(module => ({ default: module.LocationsPage })))
 const ClinicalNotesPage = lazy(() => import('../features/clinical-notes/pages/ClinicalNotesPage').then(module => ({ default: module.ClinicalNotesPage })))
@@ -236,6 +237,16 @@ export const routes: RouteConfig[] = [
         name: 'Allergy Master',
         icon: Users,
         component: AllergiesPage,
+        roles: [1],
+        showInNav: true,
+        module: 'Settings',
+      },
+      {
+        id: 'pmh-master',
+        path: '/main/settings/pmh',
+        name: 'PMH Master',
+        icon: Users,
+        component: PmhPage,
         roles: [1],
         showInNav: true,
         module: 'Settings',

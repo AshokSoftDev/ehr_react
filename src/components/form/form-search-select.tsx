@@ -19,7 +19,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormControl, FormItem, FormMessage } from "@/components/ui/form";
@@ -93,7 +92,7 @@ export function FormSearchSelect<
             </label>
 
             <FormControl>
-              <Popover open={open} onOpenChange={setOpen}>
+              <Popover open={open} onOpenChange={setOpen} modal={true}>
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
@@ -144,8 +143,7 @@ export function FormSearchSelect<
                       className="h-11 text-base sm:h-9 sm:text-sm"
                     />
 
-                    <ScrollArea className="max-h-[60vh] sm:max-h-[50vh]">
-                      <CommandList className="p-1">
+                      <CommandList className="p-1 max-h-[60vh] sm:max-h-[50vh]">
                         <CommandEmpty>{emptyText}</CommandEmpty>
                         <CommandGroup>
                           {options.map((opt) => (
@@ -172,7 +170,6 @@ export function FormSearchSelect<
                           ))}
                         </CommandGroup>
                       </CommandList>
-                    </ScrollArea>
                   </Command>
                 </PopoverContent>
               </Popover>

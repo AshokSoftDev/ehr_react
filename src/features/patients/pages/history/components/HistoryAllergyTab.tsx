@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, ShieldAlert, Pencil, Search } from "lucide-react";
+import { ShieldAlert, Pencil, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,7 @@ import {
   useSyncPatientAllergies
 } from "@/features/patients/hooks/usePatientAllergies";
 import { PatientAllergyFormSheet } from "./PatientAllergyFormSheet";
-import type { PatientAllergyPayload } from "@/features/patients/types/patientAllergy.types";
-import { SyncPatientAllergyPayload } from "@/features/patients/types/patientAllergy.types";
+import type { SyncPatientAllergyPayload } from "@/features/patients/types/patientAllergy.types";
 
 export default function HistoryAllergyTab({ patientId }: { patientId: number }) {
   const [openForm, setOpenForm] = useState(false);
@@ -35,18 +34,18 @@ export default function HistoryAllergyTab({ patientId }: { patientId: number }) 
   }, [allergies, searchQuery]);
 
   return (
-    <div className="p-4 sm:p-6 flex flex-col h-full gap-4">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full gap-2">
+      <div className="flex items-center justify-between p-2">
         <div>
           <h3 className="text-lg font-medium">Allergies</h3>
           <p className="text-muted-foreground text-sm">Manage patient allergies and reactions</p>
         </div>
-        <Button onClick={() => setOpenForm(true)} size="sm" variant="outline" className="border-primary/20 text-primary hover:bg-primary/10">
+        <Button onClick={() => setOpenForm(true)} size="sm" className="bg-primary-gradient shadow-sm">
           <Pencil className="h-4 w-4 mr-1" /> Edit Allergies
         </Button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 pb-2 border-b px-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -59,7 +58,7 @@ export default function HistoryAllergyTab({ patientId }: { patientId: number }) 
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto rounded-md border">
+      <div className="flex-1 overflow-auto rounded-md">
         {isLoading ? (
           <div className="flex flex-col gap-2 p-4">
             {[1, 2, 3].map((i) => (
@@ -79,7 +78,7 @@ export default function HistoryAllergyTab({ patientId }: { patientId: number }) 
         ) : (
           <div className="divide-y divide-border">
             {filteredAllergies.map((allergy) => (
-              <div key={allergy.id} className="group/item relative flex flex-col sm:flex-row justify-between p-4 transition-colors gap-4 bg-card items-start sm:items-center">
+              <div key={allergy.id} className="group/item relative flex flex-col sm:flex-row justify-between p-2 transition-colors gap-4 bg-card items-start sm:items-center">
                 <div className="flex-1 flex gap-3 min-w-0 items-start">
                   <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center mt-1">
                     <ShieldAlert className="h-5 w-5 text-red-600" />
