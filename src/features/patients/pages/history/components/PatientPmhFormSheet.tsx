@@ -38,7 +38,17 @@ const schema = z.object({
     month: z.string().nullable().optional(),
     year: z.string().nullable().optional(),
     comments: z.string().nullable().optional(),
-  })),
+  })).superRefine((data, ctx) => {
+    data.forEach((pmh, index) => {
+      if (pmh.selected && !pmh.month && !pmh.year) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Month or year is required",
+          path: [index, "year"], // attach error to year field
+        });
+      }
+    });
+  }),
 });
 
 export type PatientPmhFormValues = z.output<typeof schema>;
@@ -225,15 +235,17 @@ export function PatientPmhFormSheet({ open, onOpenChange, onSubmit, initialData,
                                   </FormItem>
                                 )}
                               />
-                              <FormSearchSelect
-                                control={form.control}
-                                name={`pmhs.${index}.year`}
-                                label=""
-                                placeholder="Year"
-                                options={YEAR_OPTIONS}
-                                className="w-full sm:w-24 shrink-0 m-0"
-                                buttonClassName="h-9 bg-background"
-                              />
+                              <div className="w-full sm:w-24 shrink-0 m-0">
+                                <FormSearchSelect
+                                  control={form.control}
+                                  name={`pmhs.${index}.year`}
+                                  label=""
+                                  placeholder="Year"
+                                  options={YEAR_OPTIONS}
+                                  className="w-full m-0"
+                                  buttonClassName="h-9 bg-background"
+                                />
+                              </div>
                               <div className="flex-1 m-0">
                                 <FormFloatingInput
                                   control={form.control}
