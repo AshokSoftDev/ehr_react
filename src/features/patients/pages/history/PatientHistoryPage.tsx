@@ -5,14 +5,12 @@ import HistoryPMHTab from "./components/HistoryPMHTab";
 import HistoryFamilyTab from "./components/HistoryFamilyTab";
 import HistorySocialTab from "./components/HistorySocialTab";
 import HistorySurgeryTab from "./components/HistorySurgeryTab";
-import HistoryMedicationTab from "./components/HistoryMedicationTab";
 import {
   ShieldAlert,
   Activity,
   Users,
   Coffee,
-  Scissors,
-  Pill
+  Scissors
 } from "lucide-react";
 
 const tabs = [
@@ -21,7 +19,6 @@ const tabs = [
   { id: "family", label: "Family", icon: Users },
   { id: "social", label: "Social", icon: Coffee },
   { id: "surgery", label: "Surgery", icon: Scissors },
-  { id: "medication", label: "Medication", icon: Pill },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -77,7 +74,6 @@ export function PatientHistoryPage() {
         {currentTab === "family" && <HistoryFamilyTab patientId={patientId} />}
         {currentTab === "social" && <HistorySocialTab patientId={patientId} />}
         {currentTab === "surgery" && <HistorySurgeryTab patientId={patientId} />}
-        {currentTab === "medication" && <HistoryMedicationTab patientId={patientId} />}
       </CardContent>
     </Card>
   );
