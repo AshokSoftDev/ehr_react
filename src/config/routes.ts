@@ -34,6 +34,7 @@ const AllergiesPage = lazy(() => import('../features/allergy/pages/AllergiesPage
 const PmhPage = lazy(() => import('../features/pmh/pages/PmhPage').then(module => ({ default: module.PmhPage })))
 const FamilyDiseasesPage = lazy(() => import('../features/family-disease/pages/FamilyDiseasesPage').then(module => ({ default: module.FamilyDiseasesPage })))
 const SocialMasterPage = lazy(() => import('../features/social/pages/SocialMasterPage').then(module => ({ default: module.SocialMasterPage })))
+const SurgeryMasterPage = lazy(() => import('../features/surgery/pages/SurgeryMasterPage').then(module => ({ default: module.SurgeryMasterPage })))
 const DocumentTypesPage = lazy(() => import('../features/document-types/pages/DocumentTypesPage').then(module => ({ default: module.DocumentTypesPage })))
 const LocationsPage = lazy(() => import('../features/locations/pages/LocationsPage').then(module => ({ default: module.LocationsPage })))
 const ClinicalNotesPage = lazy(() => import('../features/clinical-notes/pages/ClinicalNotesPage').then(module => ({ default: module.ClinicalNotesPage })))
@@ -269,6 +270,16 @@ export const routes: RouteConfig[] = [
         name: 'Social Master',
         icon: Users,
         component: SocialMasterPage,
+        roles: [1],
+        showInNav: true,
+        module: 'Settings',
+      },
+      {
+        id: 'surgery-master',
+        path: '/main/settings/surgery',
+        name: 'Surgery Master',
+        icon: Users,
+        component: SurgeryMasterPage,
         roles: [1],
         showInNav: true,
         module: 'Settings',
