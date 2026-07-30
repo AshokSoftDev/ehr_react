@@ -32,6 +32,7 @@ const VisitsPage = lazy(() => import('../features/visits/pages/VisitsPage').then
 const DrugsPage = lazy(() => import('../features/drug/pages/DrugsPage').then(module => ({ default: module.DrugsPage })))
 const AllergiesPage = lazy(() => import('../features/allergy/pages/AllergiesPage').then(module => ({ default: module.AllergiesPage })))
 const PmhPage = lazy(() => import('../features/pmh/pages/PmhPage').then(module => ({ default: module.PmhPage })))
+const FamilyDiseasesPage = lazy(() => import('../features/family-disease/pages/FamilyDiseasesPage').then(module => ({ default: module.FamilyDiseasesPage })))
 const DocumentTypesPage = lazy(() => import('../features/document-types/pages/DocumentTypesPage').then(module => ({ default: module.DocumentTypesPage })))
 const LocationsPage = lazy(() => import('../features/locations/pages/LocationsPage').then(module => ({ default: module.LocationsPage })))
 const ClinicalNotesPage = lazy(() => import('../features/clinical-notes/pages/ClinicalNotesPage').then(module => ({ default: module.ClinicalNotesPage })))
@@ -247,6 +248,16 @@ export const routes: RouteConfig[] = [
         name: 'PMH Master',
         icon: Users,
         component: PmhPage,
+        roles: [1],
+        showInNav: true,
+        module: 'Settings',
+      },
+      {
+        id: 'family-disease-master',
+        path: '/main/settings/family-diseases',
+        name: 'Family Disease Master',
+        icon: Users,
+        component: FamilyDiseasesPage,
         roles: [1],
         showInNav: true,
         module: 'Settings',
