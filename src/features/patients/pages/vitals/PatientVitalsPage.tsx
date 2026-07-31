@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { ListFilterBar } from '../../components/ListFilterBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Activity } from 'lucide-react';
@@ -25,8 +26,16 @@ export function PatientVitalsPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingVital, setEditingVital] = useState<PatientVital | null>(null);
   const [vitalToDelete, setVitalToDelete] = useState<PatientVital | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
-  const { data, isLoading } = usePatientVitals({ patientId });
+  const { data, isLoading } = usePatientVitals({
+    patientId,
+    search: searchQuery || undefined,
+    dateFrom: fromDate || undefined,
+    dateTo: toDate || undefined,
+  });
   const deleteVital = useDeleteVital();
 
   const handleAdd = () => {
@@ -51,6 +60,7 @@ export function PatientVitalsPage() {
   };
 
   const vitals = data?.vitals || [];
+  const filteredVitals = vitals;
 
   return (
     <div className="space-y-4">
@@ -67,9 +77,25 @@ export function PatientVitalsPage() {
             </Button>
           </div>
         </div>
+        {!isLoading && (vitals.length > 0 || Boolean(searchQuery || fromDate || toDate)) && (
+          <ListFilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search vitals by BP, pulse, temp, weight, date..."
+            fromDate={fromDate}
+            onFromDateChange={setFromDate}
+            toDate={toDate}
+            onToDateChange={setToDate}
+            onClear={() => {
+              setSearchQuery("");
+              setFromDate("");
+              setToDate("");
+            }}
+          />
+        )}
         <CardContent className="px-0">
           <PatientVitalsList
-            vitals={vitals}
+            vitals={filteredVitals}
             isLoading={isLoading}
             onEdit={handleEdit}
             onDelete={handleDeleteClick}

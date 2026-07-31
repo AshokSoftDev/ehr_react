@@ -28,6 +28,7 @@ import { PatientVisitClinicalNotesPage } from "./pages/PatientVisitClinicalNotes
 import { PatientVisitDocumentPage } from "./pages/PatientVisitDocumentPage";
 import { PatientVisitVitalsPage } from "./pages/PatientVisitVitalsPage";
 import { CreateVisitSheet } from "@/features/visits/components/CreateVisitSheet";
+import { ListFilterBar } from "@/features/patients/components/ListFilterBar";
 
 const tabs = [
   { id: "overview", label: "Overview", icon: ClipboardList },
@@ -53,6 +54,9 @@ export function PatientVisitPage() {
   );
   const currentTab = (searchParams.get("tab") as TabId) || "overview";
   const [showCreateSheet, setShowCreateSheet] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const { data: patient } = useQuery({
     queryKey: ["patient", patientId],
@@ -63,12 +67,16 @@ export function PatientVisitPage() {
   const visitFilters = useMemo(() => {
     if (!patient) return undefined;
     return {
+      patient_id: patientId,
       patient: patient.mrn || `${patient.firstName} ${patient.lastName}`,
+      search: searchQuery || undefined,
+      dateFrom: fromDate || undefined,
+      dateTo: toDate || undefined,
       status: "1",
       page: 1,
       limit: 50,
     };
-  }, [patient]);
+  }, [patient, patientId, searchQuery, fromDate, toDate]);
 
   const { data: visitsData, isLoading: visitsLoading } = useQuery({
     queryKey: ["patient-visits", visitFilters],
@@ -78,6 +86,7 @@ export function PatientVisitPage() {
 
   const visits: VisitItem[] = visitsData?.visits ?? [];
   const selectedVisit = visits.find((v) => v.visit_id === selectedVisitId) || null;
+  const filteredVisits = visits;
 
   const handleSelectVisit = (visitId: number) => {
     setSelectedVisitId(visitId);
@@ -110,7 +119,7 @@ export function PatientVisitPage() {
             <CalendarDays className="h-4 w-4 text-primary" />
             Patient Visits
             <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs font-semibold">
-              {visits.length}
+              {filteredVisits.length}
             </Badge>
           </CardTitle>
           <div className="pb-2">
@@ -119,21 +128,47 @@ export function PatientVisitPage() {
             </Button>
           </div>
         </CardHeader>
+        {!visitsLoading && (visits.length > 0 || Boolean(searchQuery || fromDate || toDate)) && (
+          <ListFilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search visits by type, doctor, reason..."
+            fromDate={fromDate}
+            onFromDateChange={setFromDate}
+            toDate={toDate}
+            onToDateChange={setToDate}
+            onClear={() => {
+              setSearchQuery("");
+              setFromDate("");
+              setToDate("");
+            }}
+          />
+        )}
         <CardContent className="p-0">
           {visitsLoading ? (
             <div className="flex justify-center p-8 text-sm text-muted-foreground">Loading visits...</div>
           ) : visits.length === 0 ? (
+            Boolean(searchQuery || fromDate || toDate) ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+                <p className="text-sm font-medium">No visits match your filter criteria.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+                <CalendarDays className="h-10 w-10 opacity-20 mx-auto mb-3" />
+                <p className="text-sm font-medium">No visits yet</p>
+                <Button variant="outline" size="sm" onClick={() => setShowCreateSheet(true)} className="mt-3 text-xs h-8">
+                  <Plus className="h-3 w-3 mr-1.5" />
+                  Create a visit to start
+                </Button>
+              </div>
+            )
+          ) : filteredVisits.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
-              <CalendarDays className="h-10 w-10 opacity-20 mx-auto mb-3" />
-              <p className="text-sm font-medium">No visits yet</p>
-              <Button variant="outline" size="sm" onClick={() => setShowCreateSheet(true)} className="mt-3 text-xs h-8">
-                <Plus className="h-3 w-3 mr-1.5" />
-                Create a visit to start
-              </Button>
+              <p className="text-sm font-medium">No visits match your filter criteria.</p>
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {visits.map((visit) => {
+              {filteredVisits.map((visit) => {
                 const date = new Date(visit.visit_date);
                 return (
                   <button

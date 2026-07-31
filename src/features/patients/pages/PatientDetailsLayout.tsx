@@ -22,7 +22,6 @@ import {
   ShieldCheck,
   Stethoscope,
   CalendarDays,
-  AlertTriangle,
   Wallet,
   ShieldAlert,
   Loader2,
@@ -106,7 +105,6 @@ export function PatientDetailsLayout() {
     { to: `/main/patients/${patientId}/document`, label: "Document", icon: FileText },
     { to: `/main/patients/${patientId}/prescription`, label: "Prescription", icon: Stethoscope },
     { to: `/main/patients/${patientId}/notes`, label: "Clinical Notes", icon: NotebookPen },
-    { to: `/main/patients/${patientId}/consent`, label: "Consent", icon: ShieldCheck },
   ] as const;
 
   return (
@@ -167,10 +165,9 @@ export function PatientDetailsLayout() {
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `group relative flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-xs font-medium transition-all duration-150 ${
-                    isActive
-                      ? "text-primary bg-primary/5"
-                      : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+                  `group relative flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-xs font-medium transition-all duration-150 ${isActive
+                    ? "text-primary bg-primary/5"
+                    : "text-muted-foreground hover:text-primary hover:bg-primary/5"
                   }`
                 }
               >
@@ -180,9 +177,8 @@ export function PatientDetailsLayout() {
                       <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[2px] bg-primary rounded-r-full" />
                     )}
                     <Icon
-                      className={`h-3.5 w-3.5 ${
-                        isActive ? "text-primary" : "group-hover:scale-110 transition-transform"
-                      }`}
+                      className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "group-hover:scale-110 transition-transform"
+                        }`}
                     />
                     <span>{label}</span>
                   </>
@@ -239,16 +235,14 @@ export function PatientDetailsLayout() {
 
               {/* Pending Invoices Total */}
               <div
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium border shadow-2xs ${
-                  pendingTotal > 0
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium border shadow-2xs ${pendingTotal > 0
                     ? "bg-amber-500/15 border-amber-500/30 text-amber-900 dark:text-amber-300"
                     : "bg-muted border-border/60 text-muted-foreground"
-                }`}
+                  }`}
               >
                 <Receipt
-                  className={`h-3.5 w-3.5 shrink-0 ${
-                    pendingTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
-                  }`}
+                  className={`h-3.5 w-3.5 shrink-0 ${pendingTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
+                    }`}
                 />
                 {pendingLoading ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -256,11 +250,10 @@ export function PatientDetailsLayout() {
                   <span>
                     Pending Dues:{" "}
                     <span
-                      className={`font-bold ${
-                        pendingTotal > 0
+                      className={`font-bold ${pendingTotal > 0
                           ? "text-amber-700 dark:text-amber-400"
                           : "text-foreground"
-                      }`}
+                        }`}
                     >
                       ₹{pendingTotal.toFixed(2)}
                     </span>

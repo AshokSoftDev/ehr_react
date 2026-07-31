@@ -41,6 +41,7 @@ export interface VisitFilters {
   patient?: string; // name or MRN
   patient_id?: number; // direct patient ID filter
   reason?: string;
+  search?: string;
   status?: string; // '1' or '0' (active/inactive)
   page?: number;
   limit?: number;

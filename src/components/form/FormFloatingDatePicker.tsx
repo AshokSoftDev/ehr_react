@@ -101,7 +101,7 @@ export function FormFloatingDatePicker<
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full h-10 pt-2 pb-1 px-3 justify-start text-left font-normal",
+                  "w-full h-9 pt-2 pb-1 px-3 justify-start text-left font-normal",
                   "border border-input bg-card rounded-md", // Use bg-card to match global Input style
                   !hasValue && "text-muted-foreground"
                 )}

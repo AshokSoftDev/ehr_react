@@ -2,8 +2,8 @@ import { api } from '@/lib/api';
 import type { VisitDocument, UpdateDocumentPayload } from '@/features/visits/types/visitDocument.types';
 
 class PatientDocumentService {
-  async list(patientId: number): Promise<VisitDocument[]> {
-    const response = await api.get(`/patients/${patientId}/documents`);
+  async list(patientId: number, filters?: { search?: string; dateFrom?: string; dateTo?: string }): Promise<VisitDocument[]> {
+    const response = await api.get(`/patients/${patientId}/documents`, { params: filters });
     return response.data.data;
   }
 

@@ -17,7 +17,6 @@ import {
   CalendarDays,
   ExternalLink,
   FileText,
-  Loader2,
   Mic,
   Plus,
   Type,
@@ -29,6 +28,7 @@ import type { VisitItem } from "@/features/visits/types/visit.types";
 import { useClinicalNotes } from "@/features/visits/hooks/useClinicalNotes";
 import { InlineClinicalNoteEditor } from "@/features/clinical-notes/components/InlineClinicalNoteEditor";
 import { InlinePrescriptionAccordion } from "@/features/clinical-notes/components/InlinePrescriptionAccordion";
+import { ListFilterBar } from "@/features/patients/components/ListFilterBar";
 
 const formatDate = (dt?: string) => (dt ? new Date(dt).toLocaleDateString() : "");
 
@@ -48,6 +48,9 @@ export function PatientClinicalNotesPage() {
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [showPrescription, setShowPrescription] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const { data: patient } = useQuery({
     queryKey: ["patient", patientId],
@@ -58,12 +61,16 @@ export function PatientClinicalNotesPage() {
   const visitFilters = useMemo(() => {
     if (!patient) return undefined;
     return {
+      patient_id: patientId,
       patient: patient.mrn || `${patient.firstName} ${patient.lastName}`,
+      search: searchQuery || undefined,
+      dateFrom: fromDate || undefined,
+      dateTo: toDate || undefined,
       status: "1",
       page: 1,
       limit: 50,
     };
-  }, [patient]);
+  }, [patient, patientId, searchQuery, fromDate, toDate]);
 
   const { data: visitsData, isLoading: visitsLoading } = useQuery({
     queryKey: ["patient-visits", visitFilters],
@@ -73,6 +80,7 @@ export function PatientClinicalNotesPage() {
 
   const visits: VisitItem[] = visitsData?.visits ?? [];
   const selectedVisit = visits.find((v) => v.visit_id === selectedVisitId) || null;
+  const filteredVisits = visits;
 
   const { data: notes = [], isLoading: notesLoading } = useClinicalNotes(
     selectedVisitId || undefined
@@ -93,21 +101,46 @@ export function PatientClinicalNotesPage() {
             <FileText className="h-4 w-4 text-blue-500" />
             <h2 className="text-sm font-semibold">Clinical Notes</h2>
           </div>
-          {visitsLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </div>
+        {!visitsLoading && (visits.length > 0 || Boolean(searchQuery || fromDate || toDate)) && (
+          <ListFilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search visits by type, doctor, date..."
+            fromDate={fromDate}
+            onFromDateChange={setFromDate}
+            toDate={toDate}
+            onToDateChange={setToDate}
+            onClear={() => {
+              setSearchQuery("");
+              setFromDate("");
+              setToDate("");
+            }}
+          />
+        )}
         <CardContent className="px-0">
           {visitsLoading ? (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 p-3">
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
             </div>
           ) : visits.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 m-3 text-center">
-              <CalendarDays className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm font-medium">No visits found</p>
+            Boolean(searchQuery || fromDate || toDate) ? (
+              <div className="p-6 text-center text-muted-foreground m-3">
+                <p className="text-sm font-medium">No visits match your filter criteria.</p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 m-3 text-center">
+                <CalendarDays className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm font-medium">No visits found</p>
+              </div>
+            )
+          ) : filteredVisits.length === 0 ? (
+            <div className="p-6 text-center text-muted-foreground m-3">
+              <p className="text-sm font-medium">No visits match your filter criteria.</p>
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {visits.map((v) => {
+              {filteredVisits.map((v) => {
                 const date = new Date(v.visit_date);
                 return (
                   <button

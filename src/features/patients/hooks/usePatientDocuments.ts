@@ -5,10 +5,10 @@ import { patientDocumentService } from '../services/patientDocument.service';
 
 const key = (patientId: number) => ['patient-documents', patientId];
 
-export function usePatientDocuments(patientId?: number) {
+export function usePatientDocuments(patientId?: number, filters?: { search?: string; dateFrom?: string; dateTo?: string }) {
   return useQuery({
-    queryKey: patientId ? key(patientId) : ['patient-documents'],
-    queryFn: () => patientDocumentService.list(patientId as number),
+    queryKey: patientId ? [...key(patientId), filters] : ['patient-documents', filters],
+    queryFn: () => patientDocumentService.list(patientId as number, filters),
     enabled: !!patientId,
   });
 }

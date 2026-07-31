@@ -26,7 +26,6 @@ const PatientVitalsPage = lazy(() => import('../features/patients/pages/vitals/P
 const PatientDocumentsPage = lazy(() => import('../features/patients/pages/document/PatientDocumentsPage').then(module => ({ default: module.PatientDocumentsPage })))
 const PatientPrescriptionsPage = lazy(() => import('../features/patients/pages/prescription/PatientPrescriptionsPage').then(module => ({ default: module.PatientPrescriptionsPage })))
 const PatientClinicalNotesPage = lazy(() => import('../features/patients/pages/notes/PatientClinicalNotesPage').then(module => ({ default: module.PatientClinicalNotesPage })))
-const PatientConsentPage = lazy(() => import('../features/patients/pages/consent/PatientConsentPage').then(module => ({ default: module.PatientConsentPage })))
 const AppointmentsPage = lazy(() => import('../features/appointments/pages/AppointmentsPage').then(module => ({ default: module.AppointmentsPage })))
 const VisitsPage = lazy(() => import('../features/visits/pages/VisitsPage').then(module => ({ default: module.VisitsPage })))
 const DrugsPage = lazy(() => import('../features/drug/pages/DrugsPage').then(module => ({ default: module.DrugsPage })))
@@ -131,7 +130,6 @@ export const routes: RouteConfig[] = [
       { id: 'patient-document', path: '/main/patients/:id/document', name: 'Document', icon: Users, component: PatientDocumentsPage, roles: [1], showInNav: false, module: 'Patient Management' },
       { id: 'patient-prescription', path: '/main/patients/:id/prescription', name: 'Prescription', icon: Users, component: PatientPrescriptionsPage, roles: [1], showInNav: false, module: 'Patient Management' },
       { id: 'patient-notes', path: '/main/patients/:id/notes', name: 'Clinical Notes', icon: Users, component: PatientClinicalNotesPage, roles: [1], showInNav: false, module: 'Patient Management' },
-      { id: 'patient-consent', path: '/main/patients/:id/consent', name: 'Consent', icon: Users, component: PatientConsentPage, roles: [1], showInNav: false, module: 'Patient Management' },
     ],
   },
   {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +30,7 @@ import { visitDocumentService } from "@/features/visits/services/visitDocument.s
 import { PatientDocumentUploadSheet } from "@/features/patients/components/PatientDocumentUploadSheet";
 import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 import type { VisitDocument } from "@/features/visits/types/visitDocument.types";
+import { ListFilterBar } from "@/features/patients/components/ListFilterBar";
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -55,6 +56,9 @@ export function PatientDocumentsPage() {
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<VisitDocument | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   useQuery({
     queryKey: ["patient", patientId],
@@ -62,8 +66,13 @@ export function PatientDocumentsPage() {
     enabled: Number.isFinite(patientId) && patientId > 0,
   });
 
-  const { data: patientDocuments = [], isLoading: patientDocumentsLoading } = usePatientDocuments(patientId);
+  const { data: patientDocuments = [], isLoading: patientDocumentsLoading } = usePatientDocuments(patientId, {
+    search: searchQuery || undefined,
+    dateFrom: fromDate || undefined,
+    dateTo: toDate || undefined,
+  });
   const deletePatientDocMutation = useDeletePatientDocument(patientId);
+  const filteredDocuments = patientDocuments;
 
   // Load blob URL when viewing document
   useEffect(() => {
@@ -110,19 +119,45 @@ export function PatientDocumentsPage() {
             Add Document
           </Button>
         </div>
+        {!patientDocumentsLoading && (patientDocuments.length > 0 || Boolean(searchQuery || fromDate || toDate)) && (
+          <ListFilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search documents by name, type, description..."
+            fromDate={fromDate}
+            onFromDateChange={setFromDate}
+            toDate={toDate}
+            onToDateChange={setToDate}
+            onClear={() => {
+              setSearchQuery("");
+              setFromDate("");
+              setToDate("");
+            }}
+          />
+        )}
         <CardContent className="px-0">
           {patientDocumentsLoading ? (
             <div className="p-4 space-y-2">
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-lg" />)}
             </div>
           ) : patientDocuments.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border bg-muted/10 p-6 text-center m-4">
-              <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-              <p className="text-sm font-medium text-muted-foreground">No documents found for this patient.</p>
+            Boolean(searchQuery || fromDate || toDate) ? (
+              <div className="p-6 text-center text-muted-foreground m-4">
+                <p className="text-sm font-medium">No documents match your filter criteria.</p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-border bg-muted/10 p-6 text-center m-4">
+                <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                <p className="text-sm font-medium text-muted-foreground">No documents found for this patient.</p>
+              </div>
+            )
+          ) : filteredDocuments.length === 0 ? (
+            <div className="p-6 text-center text-muted-foreground m-4">
+              <p className="text-sm font-medium">No documents match your filter criteria.</p>
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {patientDocuments.map((doc) => (
+              {filteredDocuments.map((doc) => (
                 <div key={doc.document_id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-muted/30 transition-colors gap-2 group">
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-2">

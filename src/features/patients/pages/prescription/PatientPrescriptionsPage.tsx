@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   CalendarDays,
   ExternalLink,
-  Loader2,
   Pill,
   User,
 } from "lucide-react";
@@ -18,6 +17,7 @@ import { patientService } from "@/features/patients/services/patient.service";
 import { visitService } from "@/features/visits/services/visit.service";
 import type { VisitItem } from "@/features/visits/types/visit.types";
 import { usePrescriptions } from "@/features/visits/hooks/usePrescriptions";
+import { ListFilterBar } from "@/features/patients/components/ListFilterBar";
 
 /**
  * PatientPrescriptionsPage
@@ -32,6 +32,9 @@ export function PatientPrescriptionsPage() {
   const patientId = Number(id);
   const navigate = useNavigate();
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const { data: patient } = useQuery({
     queryKey: ["patient", patientId],
@@ -42,12 +45,16 @@ export function PatientPrescriptionsPage() {
   const visitFilters = useMemo(() => {
     if (!patient) return undefined;
     return {
+      patient_id: patientId,
       patient: patient.mrn || `${patient.firstName} ${patient.lastName}`,
+      search: searchQuery || undefined,
+      dateFrom: fromDate || undefined,
+      dateTo: toDate || undefined,
       status: "1",
       page: 1,
       limit: 50,
     };
-  }, [patient]);
+  }, [patient, patientId, searchQuery, fromDate, toDate]);
 
   const { data: visitsData, isLoading: visitsLoading } = useQuery({
     queryKey: ["patient-visits", visitFilters],
@@ -57,6 +64,7 @@ export function PatientPrescriptionsPage() {
 
   const visits: VisitItem[] = visitsData?.visits ?? [];
   const selectedVisit = visits.find((v) => v.visit_id === selectedVisitId) || null;
+  const filteredVisits = visits;
 
   const { data: prescriptions = [], isLoading: prescriptionsLoading } = usePrescriptions(
     selectedVisitId || undefined
@@ -77,21 +85,46 @@ export function PatientPrescriptionsPage() {
             <Pill className="h-4 w-4 text-emerald-500" />
             <h2 className="text-sm font-semibold">Prescriptions</h2>
           </div>
-          {visitsLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </div>
+        {!visitsLoading && (visits.length > 0 || Boolean(searchQuery || fromDate || toDate)) && (
+          <ListFilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search visits by type, doctor, date..."
+            fromDate={fromDate}
+            onFromDateChange={setFromDate}
+            toDate={toDate}
+            onToDateChange={setToDate}
+            onClear={() => {
+              setSearchQuery("");
+              setFromDate("");
+              setToDate("");
+            }}
+          />
+        )}
         <CardContent className="px-0">
           {visitsLoading ? (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 p-3">
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
             </div>
           ) : visits.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 m-3 text-center">
-              <CalendarDays className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm font-medium">No visits found</p>
+            Boolean(searchQuery || fromDate || toDate) ? (
+              <div className="p-6 text-center text-muted-foreground m-3">
+                <p className="text-sm font-medium">No visits match your filter criteria.</p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 m-3 text-center">
+                <CalendarDays className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm font-medium">No visits found</p>
+              </div>
+            )
+          ) : filteredVisits.length === 0 ? (
+            <div className="p-6 text-center text-muted-foreground m-3">
+              <p className="text-sm font-medium">No visits match your filter criteria.</p>
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {visits.map((v) => {
+              {filteredVisits.map((v) => {
                 const date = new Date(v.visit_date);
                 return (
                   <button

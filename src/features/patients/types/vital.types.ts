@@ -32,6 +32,9 @@ export interface PatientVital {
 export interface VitalFilters {
   patientId: number;
   visitId?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
   page?: number;
   limit?: number;
 }

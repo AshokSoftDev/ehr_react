@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, FileText, HeartPulse, History, LayoutDashboard, NotebookPen, ShieldCheck, Stethoscope } from "lucide-react";
+import { ArrowLeft, FileText, HeartPulse, History, LayoutDashboard, NotebookPen, Stethoscope } from "lucide-react";
 import { patientService } from "../services/patient.service";
 import type { Patient } from "../types/patient.types";
 import { PatientPrescriptionsPage } from "./prescription/PatientPrescriptionsPage";
 import { PatientClinicalNotesPage } from "./notes/PatientClinicalNotesPage";
 
-type Section = "dashboard" | "history" | "vitals" | "document" | "prescription" | "notes" | "consent";
+type Section = "dashboard" | "history" | "vitals" | "document" | "prescription" | "notes";
 
 export function PatientDetailsPage() {
   const params = useParams();
@@ -72,7 +72,6 @@ export function PatientDetailsPage() {
               { key: "document", label: "Document", icon: FileText },
               { key: "prescription", label: "Prescription", icon: Stethoscope },
               { key: "notes", label: "Clinical Notes", icon: NotebookPen },
-              { key: "consent", label: "Consent", icon: ShieldCheck },
             ].map((item) => {
               const active = section === (item.key as Section);
               const Icon = item.icon;
