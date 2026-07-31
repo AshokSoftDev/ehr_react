@@ -16,7 +16,7 @@ import { FormFloatingDatePicker } from "@/components/form/FormFloatingDatePicker
 import { FormSearchSelect } from "@/components/form/form-search-select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-import { Loader2, Pencil, Plus, Droplet, Stethoscope, Globe, Briefcase, Building2, Calendar, FileText, Fingerprint, Tags, Hash } from "lucide-react";
+import { Loader2, Pencil, Plus, Droplet, Stethoscope, Globe, Briefcase, Building2, Calendar, FileText, Fingerprint, Tags, Hash, User, Phone, MapPin } from "lucide-react";
 
 import {
   patientInfoService,
@@ -32,9 +32,17 @@ type Props = Readonly<{ patientId: number }>;
 import { patientService } from "@/features/patients/services/patient.service";
 import type { Patient } from "@/features/patients/types/patient.types";
 import { cn } from "@/lib/utils";
+import { PatientFormSheet } from "@/features/patients/components/PatientFormSheet";
+import { usePatientManagement } from "@/features/patients/hooks/usePatientManagement";
 
 export function PatientInfoTab({ patientId }: Props) {
   const queryClient = useQueryClient();
+
+  // Patient Profile & Management State
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const { updatePatient, isUpdating } = usePatientManagement({
+    onUpdateSuccess: () => setEditProfileOpen(false),
+  });
 
   // Patient
   const { data: patient } = useQuery<Patient>({
@@ -202,6 +210,10 @@ export function PatientInfoTab({ patientId }: Props) {
     } else {
       createMutation.mutate(payload as any);
     }
+  };
+
+  const handlePatientSubmit = (data: any) => {
+    updatePatient({ id: patientId, data });
   };
 
   // Avoid potential Control type identity issues across modules
@@ -390,166 +402,369 @@ export function PatientInfoTab({ patientId }: Props) {
   }
 
   return (
-    <Card className="bg-card">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle>
-          {patient ? `${patient.title} ${patient.firstName} ${patient.lastName}  Information` : "Patient Information"}
-        </CardTitle>
-        <Button
-          size="sm"
-          variant="outline"
-          className={cn(info ? "text-blue-500 hover:text-blue-700 hover:bg-blue-50" : "")}
-          disabled={infoQuery.isLoading}
-          onClick={() => {
-            if (info) {
-              setEditing(true);
-              form.reset({
-                bloodGroup: info.bloodGroup || "",
-                overseas: !!info.overseas,
-                passportNumber: info.passportNumber ?? "",
-                validityDate: coerceDate(info.validityDate),
-                occupation: info.occupation ?? "",
-                department: info.department ?? "",
-                companyName: info.companyName ?? "",
-                designation: info.designation ?? "",
-                employeeCode: info.employeeCode ?? "",
-                primaryDoctorId: info.primaryDoctorId ?? "",
-              });
-            } else {
-              setEditing(false);
-              form.reset();
-            }
-            setOpen(true);
-          }}
-        >
-          {info ? (
-            <>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </>
+    <div className="space-y-4">
+      {/* Patient Profile & Demographics (Patient Created Details) */}
+      <Card className="bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b">
+          <div>
+            <CardTitle className="text-base font-bold text-foreground">
+              {patient ? `${patient.title} ${patient.firstName} ${patient.lastName || ""}` : "Patient Registration Details"}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Primary registration, demographics & contact details
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-primary hover:bg-primary/5 border-primary/20 shadow-sm"
+            onClick={() => setEditProfileOpen(true)}
+            disabled={!patient}
+          >
+            <Pencil className="mr-1.5 h-3.5 w-3.5" />
+            Edit Profile
+          </Button>
+        </CardHeader>
+        <CardContent className="pt-4">
+          {!patient ? (
+            <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              Loading patient profile details...
+            </div>
           ) : (
-            <>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Info
-            </>
-          )}
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div>{viewBody}</div>
-
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="right" preventClose className="w-full sm:max-w-lg p-0 flex flex-col">
-            <SheetHeader className="px-4 py-3 border-b shrink-0">
-              <SheetTitle>{editing ? "Edit Patient Info" : "Add Patient Info"}</SheetTitle>
-            </SheetHeader>
-
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="flex flex-col flex-1 overflow-hidden"
-              >
-                <div className="flex-1 overflow-y-auto px-2 py-4">
-                  <div className="space-y-5 px-1">
-                    <FormFloatingSelect
-                      control={control}
-                      name="bloodGroup"
-                      label="Blood Group"
-                      options={bloodGroupOptions.map((g) => ({
-                        label: g,
-                        value: g,
-                      }))}
-                      placeholder="Select blood group"
-                    />
-                    <div className="flex items-center gap-4 rounded-md border p-3">
-                      <Label htmlFor="overseas">Overseas</Label>
-                      <Controller
-                        control={form.control}
-                        name="overseas"
-                        render={({ field }) => (
-                          <Switch
-                            id="overseas"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        )}
-                      />
+            <div className="space-y-6">
+              {/* Demographics & Identifiers */}
+              <div>
+                <h3 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-1.5 uppercase tracking-wider">
+                  <User className="h-3.5 w-3.5 text-primary" /> Demographics & Identifiers
+                </h3>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all shadow-sm">
+                    <div className="bg-primary/10 p-2 rounded-lg shrink-0">
+                      <User className="h-4 w-4 text-primary" />
                     </div>
-                    <FormSearchSelect
-                      control={control}
-                      name="primaryDoctorId"
-                      label="Primary Doctor"
-                      options={doctorOptions}
-                      placeholder="Search doctor..."
-                    />
-                    <FormFloatingInput
-                      control={control}
-                      name="passportNumber"
-                      label="Passport Number"
-                    />
-                    <FormFloatingDatePicker
-                      control={control}
-                      name="validityDate"
-                      label="Passport Expiry Date"
-                      fromDate={new Date()}
-                      toDate={new Date(2100, 11, 31)}
-                    />
-                    <FormFloatingInput
-                      control={control}
-                      name="occupation"
-                      label="Occupation"
-                    />
-                    <FormFloatingInput
-                      control={control}
-                      name="department"
-                      label="Department"
-                    />
-                    <FormFloatingInput
-                      control={control}
-                      name="companyName"
-                      label="Company Name"
-                    />
-                    <FormFloatingInput
-                      control={control}
-                      name="designation"
-                      label="Designation"
-                    />
-                    <FormFloatingInput
-                      control={control}
-                      name="employeeCode"
-                      label="Employee Code"
-                    />
+                    <div className="overflow-hidden">
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Full Name & Gender</p>
+                      <div className="font-semibold text-sm truncate flex items-center gap-1.5">
+                        <span className="truncate">{patient.title} {patient.firstName} {patient.lastName || ""}</span>
+                        <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-normal shrink-0">{patient.gender}</Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-violet-200 dark:hover:border-violet-900/50 hover:bg-violet-50/50 dark:hover:bg-violet-900/10 transition-all shadow-sm">
+                    <div className="bg-violet-100 dark:bg-violet-900/30 p-2 rounded-lg shrink-0">
+                      <Hash className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">MRN</p>
+                      <div className="font-semibold text-sm truncate">
+                        {patient.mrn || "—"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-orange-200 dark:hover:border-orange-900/50 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-all shadow-sm">
+                    <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-lg shrink-0">
+                      <Calendar className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Date of Birth & Age</p>
+                      <div className="font-semibold text-sm truncate">
+                        {patient.dateOfBirth ? coerceDate(patient.dateOfBirth)?.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "—"} {patient.age ? `(${patient.age} yrs)` : ""}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-emerald-200 dark:hover:border-emerald-900/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all shadow-sm">
+                    <div className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-lg shrink-0">
+                      <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Mobile Number</p>
+                      <div className="font-semibold text-sm truncate">
+                        {patient.mobileNumber || "—"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {patient.aadhar && (
+                    <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-blue-200 dark:hover:border-blue-900/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all shadow-sm">
+                      <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg shrink-0">
+                        <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Aadhar Number</p>
+                        <div className="font-semibold text-sm truncate">
+                          {patient.aadhar}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Address & Location */}
+              {(patient.address || patient.area || patient.city || patient.state || patient.country || patient.pincode) && (
+                <div>
+                  <h3 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-1.5 uppercase tracking-wider">
+                    <MapPin className="h-3.5 w-3.5 text-rose-500" /> Address & Location Details
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {patient.address && (
+                      <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-rose-200 dark:hover:border-rose-900/50 hover:bg-rose-50/50 dark:hover:bg-rose-900/10 transition-all shadow-sm">
+                        <div className="bg-rose-100 dark:bg-rose-900/30 p-2 rounded-lg shrink-0">
+                          <MapPin className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Street Address</p>
+                          <div className="font-semibold text-sm truncate" title={patient.address}>{patient.address}</div>
+                        </div>
+                      </div>
+                    )}
+                    {(patient.area || patient.city) && (
+                      <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-amber-200 dark:hover:border-amber-900/50 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-all shadow-sm">
+                        <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg shrink-0">
+                          <Building2 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Area & City</p>
+                          <div className="font-semibold text-sm truncate">
+                            {[patient.area, patient.city].filter(Boolean).join(", ")}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {(patient.state || patient.country || patient.pincode) && (
+                      <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-teal-200 dark:hover:border-teal-900/50 hover:bg-teal-50/50 dark:hover:bg-teal-900/10 transition-all shadow-sm">
+                        <div className="bg-teal-100 dark:bg-teal-900/30 p-2 rounded-lg shrink-0">
+                          <Globe className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">State, Country & Pincode</p>
+                          <div className="font-semibold text-sm truncate">
+                            {[patient.state, patient.country, patient.pincode ? `PIN: ${patient.pincode}` : ""].filter(Boolean).join(", ")}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
+              )}
 
-                <div className="flex justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setOpen(false)}
-                    disabled={createMutation.isPending || updateMutation.isPending}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="bg-primary-gradient hover:opacity-90"
-                    disabled={createMutation.isPending || updateMutation.isPending}
-                  >
-                    {(createMutation.isPending || updateMutation.isPending) && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {/* Additional Registration Notes & Referral */}
+              {(patient.referalSource || patient.comments) && (
+                <div>
+                  <h3 className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-1.5 uppercase tracking-wider">
+                    <FileText className="h-3.5 w-3.5 text-indigo-500" /> Additional Registration Notes
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {patient.referalSource && (
+                      <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-indigo-200 dark:hover:border-indigo-900/50 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all shadow-sm">
+                        <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg shrink-0">
+                          <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Referral Source</p>
+                          <div className="font-semibold text-sm truncate" title={patient.referalSource}>{patient.referalSource}</div>
+                        </div>
+                      </div>
                     )}
-                    {createMutation.isPending || updateMutation.isPending
-                      ? "Saving..."
-                      : "Save"}
-                  </Button>
+                    {patient.comments && (
+                      <div className="flex items-start gap-3 p-3 rounded-xl border bg-card hover:border-purple-200 dark:hover:border-purple-900/50 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-all shadow-sm">
+                        <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg shrink-0">
+                          <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div className="overflow-hidden flex-1">
+                          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Comments & Notes</p>
+                          <div className="text-sm font-medium whitespace-pre-wrap break-words">{patient.comments}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </form>
-            </Form>
-          </SheetContent>
-        </Sheet>
-      </CardContent>
-    </Card>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Existing Patient Information Card */}
+      <Card className="bg-card shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b">
+          <div>
+            <CardTitle className="text-base font-bold text-foreground">
+              Clinical & General Information
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Manage blood group, primary doctor and occupational details
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className={cn(info ? "text-blue-500 hover:text-blue-700 hover:bg-blue-50" : "")}
+            disabled={infoQuery.isLoading}
+            onClick={() => {
+              if (info) {
+                setEditing(true);
+                form.reset({
+                  bloodGroup: info.bloodGroup || "",
+                  overseas: !!info.overseas,
+                  passportNumber: info.passportNumber ?? "",
+                  validityDate: coerceDate(info.validityDate),
+                  occupation: info.occupation ?? "",
+                  department: info.department ?? "",
+                  companyName: info.companyName ?? "",
+                  designation: info.designation ?? "",
+                  employeeCode: info.employeeCode ?? "",
+                  primaryDoctorId: info.primaryDoctorId ?? "",
+                });
+              } else {
+                setEditing(false);
+                form.reset();
+              }
+              setOpen(true);
+            }}
+          >
+            {info ? (
+              <>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Info
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Info
+              </>
+            )}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div>{viewBody}</div>
+
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetContent side="right" preventClose className="w-full sm:max-w-lg p-0 flex flex-col">
+              <SheetHeader className="px-4 py-3 border-b shrink-0">
+                <SheetTitle>{editing ? "Edit Patient Info" : "Add Patient Info"}</SheetTitle>
+              </SheetHeader>
+
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="flex flex-col flex-1 overflow-hidden"
+                >
+                  <div className="flex-1 overflow-y-auto px-2 py-4">
+                    <div className="space-y-5 px-1">
+                      <FormFloatingSelect
+                        control={control}
+                        name="bloodGroup"
+                        label="Blood Group"
+                        options={bloodGroupOptions.map((g) => ({
+                          label: g,
+                          value: g,
+                        }))}
+                        placeholder="Select blood group"
+                      />
+                      <div className="flex items-center gap-4 rounded-md border p-3">
+                        <Label htmlFor="overseas">Overseas</Label>
+                        <Controller
+                          control={form.control}
+                          name="overseas"
+                          render={({ field }) => (
+                            <Switch
+                              id="overseas"
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          )}
+                        />
+                      </div>
+                      <FormSearchSelect
+                        control={control}
+                        name="primaryDoctorId"
+                        label="Primary Doctor"
+                        options={doctorOptions}
+                        placeholder="Search doctor..."
+                      />
+                      <FormFloatingInput
+                        control={control}
+                        name="passportNumber"
+                        label="Passport Number"
+                      />
+                      <FormFloatingDatePicker
+                        control={control}
+                        name="validityDate"
+                        label="Passport Expiry Date"
+                        fromDate={new Date()}
+                        toDate={new Date(2100, 11, 31)}
+                      />
+                      <FormFloatingInput
+                        control={control}
+                        name="occupation"
+                        label="Occupation"
+                      />
+                      <FormFloatingInput
+                        control={control}
+                        name="department"
+                        label="Department"
+                      />
+                      <FormFloatingInput
+                        control={control}
+                        name="companyName"
+                        label="Company Name"
+                      />
+                      <FormFloatingInput
+                        control={control}
+                        name="designation"
+                        label="Designation"
+                      />
+                      <FormFloatingInput
+                        control={control}
+                        name="employeeCode"
+                        label="Employee Code"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 px-5 py-3 border-t bg-background shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setOpen(false)}
+                      disabled={createMutation.isPending || updateMutation.isPending}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="bg-primary-gradient hover:opacity-90"
+                      disabled={createMutation.isPending || updateMutation.isPending}
+                    >
+                      {(createMutation.isPending || updateMutation.isPending) && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      {createMutation.isPending || updateMutation.isPending
+                        ? "Saving..."
+                        : "Save"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </SheetContent>
+          </Sheet>
+        </CardContent>
+      </Card>
+
+      {/* Patient Profile Slide-Over Editor */}
+      <PatientFormSheet
+        open={editProfileOpen}
+        onOpenChange={setEditProfileOpen}
+        patient={patient}
+        onSubmit={handlePatientSubmit}
+        isLoading={isUpdating}
+      />
+    </div>
   );
 }
 

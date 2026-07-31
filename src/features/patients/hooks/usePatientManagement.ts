@@ -21,8 +21,9 @@ export const usePatientManagement = (options?: UsePatientManagementOptions) => {
 
   const { mutate: updatePatient, isPending: isUpdating } = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<PatientFormData> }) => patientService.updatePatient(id, data),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['patients'] });
+      queryClient.invalidateQueries({ queryKey: ['patient', variables.id] });
       options?.onUpdateSuccess?.();
     },
   });
