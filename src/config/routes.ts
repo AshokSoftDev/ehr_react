@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { LayoutDashboardIcon, Users, Settings, ThermometerIcon, CalendarDays, NotebookPen, Receipt, Bot } from 'lucide-react';
+import { LayoutDashboardIcon, Users, Settings, ThermometerIcon, CalendarDays, NotebookPen, Receipt, Bot, BarChart3 } from 'lucide-react';
 import { type RouteConfig } from '../interface/routes.interface';
 
 const Dashboard = lazy(() => import('../pages/Dashboard'));
@@ -41,6 +41,8 @@ const BillingPage = lazy(() => import('../features/billing/pages/BillingPage').t
 const PatientBillingDashboard = lazy(() => import('../features/billing/pages/patient/PatientBillingDashboard').then(module => ({ default: module.PatientBillingDashboard })))
 const InvoicePage = lazy(() => import('../features/billing/pages/InvoicePage'))
 const AIChatPage = lazy(() => import('../features/ai-chat/pages/AIChatPage').then(module => ({ default: module.AIChatPage })))
+const ReportsOverviewPage = lazy(() => import('../features/reports/pages/ReportsOverviewPage').then(module => ({ default: module.ReportsOverviewPage })))
+const DynamicReportViewer = lazy(() => import('../features/reports/pages/DynamicReportViewer').then(module => ({ default: module.DynamicReportViewer })))
 
 export const routes: RouteConfig[] = [
   {
@@ -52,6 +54,26 @@ export const routes: RouteConfig[] = [
     roles: [1],
     showInNav: true,
     module: 'Dashboard', // Add module name
+  },
+  {
+    id: 'reports-analytics',
+    path: '/main/reports',
+    name: 'Reports & Analytics',
+    icon: BarChart3,
+    component: ReportsOverviewPage,
+    roles: [1],
+    showInNav: true,
+    module: 'Dashboard',
+  },
+  {
+    id: 'reports-viewer',
+    path: '/main/reports/:reportType',
+    name: 'Report Workspace',
+    icon: BarChart3,
+    component: DynamicReportViewer,
+    roles: [1],
+    showInNav: false,
+    module: 'Dashboard',
   },
   {
     id: 'user-management',
