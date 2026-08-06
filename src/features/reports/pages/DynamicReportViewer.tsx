@@ -38,7 +38,7 @@ export const DynamicReportViewer: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [reportData, setReportData] = useState<any>(null);
-  const [datePreset, setDatePreset] = useState<string>('30d');
+  const [datePreset, setDatePreset] = useState<string>(reportType === 'custom' ? 'all' : '30d');
   const [customSource, setCustomSource] = useState<'invoices' | 'appointments' | 'visits' | 'patients' | 'receipts'>('invoices');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
@@ -71,9 +71,11 @@ export const DynamicReportViewer: React.FC = () => {
       else if (reportType === 'custom') {
         res = await reportService.getCustomReport({
           dataSource: customSource,
+          dateFrom: params.dateFrom,
+          dateTo: params.dateTo,
           page: 1,
-          limit: 50,
-          sortBy: 'createdAt',
+          limit: 100,
+          sortBy: customSource === 'visits' ? 'visit_date' : customSource === 'receipts' ? 'payment_date' : customSource === 'invoices' ? 'invoice_date' : 'createdAt',
           sortOrder: 'desc',
         });
       }
@@ -87,6 +89,7 @@ export const DynamicReportViewer: React.FC = () => {
   };
 
   useEffect(() => {
+    setPage(1);
     fetchReport();
   }, [reportType, datePreset, customSource]);
 
