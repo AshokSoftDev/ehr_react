@@ -144,7 +144,7 @@ export function AdvancedDataTable<TData, TValue>({
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className={cn("px-4 py-[2px] text-sm", cellClassName)}>
+                    <TableCell key={cell.id} className={cn("px-4 py-3.5 text-sm", cellClassName)}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()

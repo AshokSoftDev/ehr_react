@@ -38,7 +38,7 @@ export const DynamicReportViewer: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [reportData, setReportData] = useState<any>(null);
-  const [datePreset, setDatePreset] = useState<string>(reportType === 'custom' ? 'all' : '30d');
+  const [datePreset, setDatePreset] = useState<string>('all');
   const [customSource, setCustomSource] = useState<'invoices' | 'appointments' | 'visits' | 'patients' | 'receipts'>('invoices');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
@@ -136,9 +136,9 @@ export const DynamicReportViewer: React.FC = () => {
     if (!reportData) return { columns: [], rows: [] };
     let rows: any[] = [];
     if (reportType === 'financial') rows = reportData.recentTransactions || [];
-    else if (reportType === 'clinical') rows = reportData.topDrugs || [];
-    else if (reportType === 'operational') rows = reportData.doctorUtilization || [];
-    else if (reportType === 'demographics') rows = reportData.topCities || [];
+    else if (reportType === 'clinical') rows = reportData.recentEncounters || reportData.topDrugs || [];
+    else if (reportType === 'operational') rows = reportData.recentAppointments || reportData.doctorUtilization || [];
+    else if (reportType === 'demographics') rows = reportData.patientRegister || reportData.topCities || [];
     else if (reportType === 'custom') rows = reportData.data || [];
 
     if (searchTerm) {
@@ -149,6 +149,16 @@ export const DynamicReportViewer: React.FC = () => {
 
     if (!rows || rows.length === 0) return { columns: [], rows: [] };
     const firstItem = rows[0];
+
+    const getColumnPriority = (key: string) => {
+      const k = key.toLowerCase();
+      if (k === 'mrn' || k === 'patient_mrn') return 1;
+      if (k === 'patientname' || k === 'patient_name' || k === 'fullname' || k === 'full_name') return 2;
+      if (k.includes('patient_first') || k.includes('patient_last') || k === 'firstname' || k === 'lastname') return 3;
+      if (k === 'gender' || k === 'age' || k === 'mobilenumber' || k === 'phone') return 4;
+      return 100;
+    };
+
     const columns = Object.keys(firstItem)
       .filter((key) => {
         const kLower = key.toLowerCase();
@@ -165,6 +175,13 @@ export const DynamicReportViewer: React.FC = () => {
         if (kLower === 'id' || kLower === '_id' || kLower.endsWith('_id') || (key !== 'id' && key.endsWith('Id') && !key.endsWith('Paid'))) {
           return false;
         }
+        // Hide specific user-requested operational and administrative fields
+        if (kLower === 'receipt_type' || kLower === 'receipttype' || kLower === 'activestatus' || kLower === 'active_status') {
+          return false;
+        }
+        if ((kLower === 'status' || kLower === 'appointment_status') && (customSource === 'appointments' || reportType === 'operational')) {
+          return false;
+        }
         // Exclude relational objects (e.g., patient details JSON) so raw JSON never clutters table cells
         const val = firstItem[key];
         if (val && typeof val === 'object' && !(val instanceof Date)) {
@@ -172,6 +189,7 @@ export const DynamicReportViewer: React.FC = () => {
         }
         return true;
       })
+      .sort((a, b) => getColumnPriority(a) - getColumnPriority(b))
       .map((key) => ({
         accessorKey: key,
         header: key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').toUpperCase().trim(),
@@ -182,6 +200,11 @@ export const DynamicReportViewer: React.FC = () => {
           // Format ISO date strings into readable timestamps
           if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(v)) {
             const d = new Date(v);
+            const kLower = key.toLowerCase();
+            // In APPOINTMENT DATE or DOB columns only show the date (no time component)
+            if (kLower === 'appointment_date' || kLower === 'date' || kLower.includes('dob') || kLower === 'dateofbirth') {
+              return <span>{d.toLocaleDateString()}</span>;
+            }
             return <span>{d.toLocaleDateString()} {d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>;
           }
           if (typeof v === 'object') return <span>{JSON.stringify(v)}</span>;
