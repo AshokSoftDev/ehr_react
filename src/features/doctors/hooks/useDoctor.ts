@@ -2,9 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { doctorService } from '../services/doctor.service';
-import type { 
-  Doctor, 
-  CreateDoctorDto, 
+import type {
+  Doctor,
+  CreateDoctorDto,
   UpdateDoctorDto
 } from '../types/doctor.types';
 
@@ -84,7 +84,7 @@ export const useDoctor = (id?: string, options?: UseDoctorOptions) => {
   const syncAppointmentTypesMutation = useMutation({
     mutationFn: ({ id, types }: { id: string; types: { appointment_type: string; duration_minutes: number }[] }) =>
       doctorService.syncAppointmentTypes(id, types),
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['doctor', variables.id] });
       toast.success('Appointment types updated successfully');
     },
@@ -118,19 +118,19 @@ export const useDoctor = (id?: string, options?: UseDoctorOptions) => {
     isLoading: doctorQuery.isLoading,
     isError: doctorQuery.isError,
     error: doctorQuery.error,
-    
+
     // Mutations
     createDoctor,
     updateDoctor,
     deleteDoctor,
     syncAppointmentTypes,
-    
+
     // Mutation states
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     isSyncingAppointmentTypes: syncAppointmentTypesMutation.isPending,
-    
+
     // Mutation errors
     createError: createMutation.error,
     updateError: updateMutation.error,

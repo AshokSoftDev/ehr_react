@@ -1,7 +1,6 @@
 import React from "react";
-import { X, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { Button } from "../../../components/ui/button";
-import { Badge } from "../../../components/ui/badge";
 import type { DoctorFiltersType } from "../types/doctor.types";
 import { FormFloatingInput } from "@/components/form/form-floating-input";
 import { FormFloatingSelect } from "@/components/form/FormFloatingSelect";
@@ -89,13 +88,13 @@ export const DoctorFilters: React.FC<DoctorFiltersProps> = ({
     });
   };
 
-  const handleClearFilter = (key: keyof DoctorFiltersType) => {
-    if (key === "search") {
-      handleChange({ search: "" });
-    } else {
-      handleChange({ [key]: undefined } as Partial<DoctorFiltersType>);
-    }
-  };
+  // const handleClearFilter = (key: keyof DoctorFiltersType) => {
+  //   if (key === "search") {
+  //     handleChange({ search: "" });
+  //   } else {
+  //     handleChange({ [key]: undefined } as Partial<DoctorFiltersType>);
+  //   }
+  // };
 
   return (
     <>

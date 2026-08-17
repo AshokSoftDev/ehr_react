@@ -68,10 +68,10 @@ function VisitListItem({
   navigate: (path: string) => void;
 }) {
 
-  let age = '';
-  if (visit.patient?.age) {
-    age = visit.patient.age.toString() + 'y';
-  }
+  // let age = '';
+  // if (visit.patient?.age) {
+  //   age = visit.patient.age.toString() + 'y';
+  // }
 
   const visitDate = new Date(visit.visit_date);
   const isToday = format(new Date(), 'yyyy-MM-dd') === format(visitDate, 'yyyy-MM-dd');

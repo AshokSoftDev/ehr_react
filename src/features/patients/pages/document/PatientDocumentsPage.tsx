@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -78,7 +78,7 @@ export function PatientDocumentsPage() {
   useEffect(() => {
     if (viewingDoc) {
       setIsLoadingPreview(true);
-      const promise = viewingDoc.visit_id 
+      const promise = viewingDoc.visit_id
         ? visitDocumentService.getFileBlob(viewingDoc.visit_id, viewingDoc.document_id)
         : patientDocumentService.getFileBlob(patientId, viewingDoc.document_id);
 
@@ -199,7 +199,7 @@ export function PatientDocumentsPage() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3 sm:self-start opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="flex items-center gap-1 border-l pl-3 border-border/50">
                       <Button
@@ -238,7 +238,7 @@ export function PatientDocumentsPage() {
           )}
         </CardContent>
       </Card>
-      
+
       <PatientDocumentUploadSheet
         patientId={patientId}
         open={showUploadSheet}
@@ -272,7 +272,7 @@ export function PatientDocumentsPage() {
         }
         isDeleting={deletePatientDocMutation.isPending}
       />
-      
+
       {/* Document Preview Dialog (for Patient Documents) */}
       <Dialog open={!!viewingDoc} onOpenChange={(open) => !open && setViewingDoc(null)}>
         <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] flex flex-col">

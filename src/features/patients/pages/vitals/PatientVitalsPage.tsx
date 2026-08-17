@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ListFilterBar } from '../../components/ListFilterBar';
 import { Card, CardContent } from '@/components/ui/card';
