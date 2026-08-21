@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { billingService } from '@/features/billing/services/billing.service';
 import type { Receipt as ReceiptType } from '@/features/billing/types/billing.types';
+import { PRINT_BASE_STYLES } from "@/utils/printStyles";
 
 // Payment method icon mapping
 const paymentIcons: Record<string, typeof Banknote> = {
@@ -86,7 +87,8 @@ export function PatientBillingTab({ patientId }: Props) {
           <title>${receipt.receipt_number}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; padding: 40px; }
+            ${PRINT_BASE_STYLES}
+            body { padding: 40px; }
             .container { max-width: 350px; margin: 0 auto; border: 1px solid #ddd; padding: 30px; }
             .header { text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px dashed #ccc; }
             .header h1 { font-size: 22px; margin-bottom: 8px; }

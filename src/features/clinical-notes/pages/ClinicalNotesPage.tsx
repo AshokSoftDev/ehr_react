@@ -48,6 +48,7 @@ import { StatusCountCards } from "../components/StatusCountCards";
 import { InlineClinicalNoteEditor } from "../components/InlineClinicalNoteEditor";
 import { InlinePrescriptionAccordion } from "../components/InlinePrescriptionAccordion";
 import MedicalNoteEditor from "@/features/patients/components/MedicalNoteEditor";
+import { PRINT_BASE_STYLES } from "@/utils/printStyles";
 
 const formatDate = (dt: string | Date) => new Date(dt).toLocaleDateString();
 
@@ -145,7 +146,7 @@ function VisitAccordionContent({
           <head>
             <title>Clinical Note - ${noteDate}</title>
             <style>
-              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+              ${PRINT_BASE_STYLES}
               .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
               .header h1 { margin: 0 0 5px 0; font-size: 18px; }
               .header p { margin: 0; color: #666; font-size: 12px; }
@@ -481,7 +482,7 @@ function VisitAccordionContent({
                               <head>
                                 <title>Prescriptions</title>
                                 <style>
-                                  body { font-family: Arial, sans-serif; padding: 20px; }
+                                  ${PRINT_BASE_STYLES}
                                   h1 { font-size: 18px; margin-bottom: 15px; }
                                   table { width: 100%; border-collapse: collapse; font-size: 12px; }
                                   th { background: #f5f5f5; padding: 10px 8px; border: 1px solid #ddd; text-align: left; }

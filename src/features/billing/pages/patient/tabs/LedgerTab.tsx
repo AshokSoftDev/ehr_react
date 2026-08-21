@@ -5,6 +5,7 @@ import { billingService } from "@/features/billing/services/billing.service";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { type Receipt } from "@/features/billing/types/billing.types";
 import { ReceiptList } from "@/features/billing/components/ReceiptList";
+import { PRINT_BASE_STYLES } from "@/utils/printStyles";
 
 interface Props {
   patientId: number;
@@ -39,7 +40,8 @@ export default function LedgerTab({ patientId }: Props) {
           <title>${receipt.receipt_number}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; padding: 40px; }
+            ${PRINT_BASE_STYLES}
+            body { padding: 40px; }
             .container { max-width: 350px; margin: 0 auto; border: 1px solid #ddd; padding: 30px; }
             .header { text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px dashed #ccc; }
             .header h1 { font-size: 22px; margin-bottom: 8px; }

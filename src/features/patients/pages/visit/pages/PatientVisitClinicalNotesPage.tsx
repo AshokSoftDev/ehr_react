@@ -23,6 +23,7 @@ import {
 import { AudioPlayer } from "@/features/clinical-notes/components/AudioPlayer";
 import MedicalNoteEditor from "@/features/patients/components/MedicalNoteEditor";
 import DictationRecorder from "@/features/patients/components/DictationRecorder";
+import { PRINT_BASE_STYLES } from "@/utils/printStyles";
 import {
   useClinicalNotes,
   useCreateClinicalNote,
@@ -199,7 +200,7 @@ export function PatientVisitClinicalNotesPage({ isReadOnly }: { isReadOnly?: boo
           <head>
             <title>Clinical Note - ${noteDate}</title>
             <style>
-              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+              ${PRINT_BASE_STYLES}
               .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
               .header h1 { margin: 0 0 5px 0; font-size: 18px; }
               .header p { margin: 0; color: #666; font-size: 12px; }

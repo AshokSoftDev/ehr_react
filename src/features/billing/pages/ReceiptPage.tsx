@@ -27,6 +27,7 @@ import {
 import { format } from "date-fns";
 import { billingService } from "../services/billing.service";
 import type { Receipt as ReceiptType, Invoice, ReceiptFilters } from "../types/billing.types";
+import { PRINT_BASE_STYLES } from "@/utils/printStyles";
 
 // Payment method icon mapping
 const paymentIcons = {
@@ -94,7 +95,8 @@ export function ReceiptPage() {
           <title>${receipt.receipt_number}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; padding: 40px; }
+            ${PRINT_BASE_STYLES}
+            body { padding: 40px; }
             .container { max-width: 350px; margin: 0 auto; border: 1px solid #ddd; padding: 30px; }
             .header { text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px dashed #ccc; }
             .header h1 { font-size: 22px; margin-bottom: 8px; }
@@ -213,7 +215,8 @@ export function ReceiptPage() {
           <title>${selectedInvoice.invoice_number}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; padding: 30px; background: #fff; }
+            ${PRINT_BASE_STYLES}
+            body { padding: 30px; background: #fff; }
             .container { max-width: 550px; margin: 0 auto; border: 1px solid #ddd; padding: 30px; }
             .header { text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px dashed #ccc; }
             .header h1 { font-size: 24px; margin-bottom: 8px; color: #1e40af; }
